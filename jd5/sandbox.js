@@ -55,21 +55,23 @@ module.exports = class SandBox {
             }
         await fsp.unlink(`${this.dir}/jd5.lock`);
     }
-    async run({ time_limit_ms = 1000, memory_limit_mb = 128, process_limit = 32 } = {}) {
+    async run({
+        time_limit_ms = 1000, memory_limit_mb = 128, process_limit = 32,
+        cache = [], execute = [], stdin = 'stdin', stdout = 'stdout', stderr = 'stderr'
+    } = {}) {
         let result;
-        let config = JSON.parse((await fsp.readFile(path.resolve(this.dir, 'config.json'))).toString());
-        if (config.cache)
-            await fsp.copyFile(path.resolve(this.dir, 'cache', config.cache), path.resolve(this.dir, 'home', path.cache));
+        for (let i in cache)
+            await fsp.copyFile(path.resolve(this.dir, 'cache', cache[i]), path.resolve(this.dir, 'home', cache[i]));
         try {
             this.config = {
                 chroot: '/opt/jd5/root',
                 mounts: this.mounts,
-                executable: config.execute[0],
-                parameters: config.execute,
+                executable: execute[0],
+                parameters: execute,
                 environments: ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'],
-                stdin: `${this.dir}/stdin`,
-                stdout: `${this.dir}/stdout`,
-                stderr: `${this.dir}/stderr`,
+                stdin: `${this.dir}/${stdin}`,
+                stdout: `${this.dir}/${stdout}`,
+                stderr: `${this.dir}/${stderr}`,
                 time: time_limit_ms,
                 mountProc: true,
                 redirectBeforeChroot: true,

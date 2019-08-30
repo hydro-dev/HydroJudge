@@ -97,9 +97,9 @@ module.exports = class AxiosInstance {
     async update_problem_data() {
         console.info('Update problem data');
         let result = await this.judge_datalist(this.config.last_update_at || 0);
-        for (let i in result.pids) {
-            await cache_invalidate(result.pids[i].domain_id, result.pids[i].pid);
-            console.debug('Invalidated %s/%s', result.pids[i].domain_id, result.pids[i].pid);
+        for (let pid of result.pids) {
+            await cache_invalidate(pid.domain_id, pid.pid);
+            console.debug('Invalidated %s/%s', pid.domain_id, pid.pid);
         }
         this.config.last_update_at = result.time;
         await this.save_config();

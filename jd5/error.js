@@ -4,7 +4,14 @@ class CompileError extends Error {
         this.type = 'CompileError';
     }
 }
+class FormatError extends Error {
+    constructor(message) {
+        super(message);
+        this.type = "FormatError";
+    }
+}
 
 module.exports = {
-    CompileError
+    CompileError,
+    FormatError
 };

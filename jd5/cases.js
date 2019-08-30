@@ -1,0 +1,117 @@
+const
+    fs = require('fs'),
+    fsp = fs.promises,
+    path = require('path'),
+    yaml = require('js-yaml'),
+    { FormatError } = require('./errors'),
+    { parseTimeMS, parseMemoryMB } = require('./utils'),
+    restrict = path => {
+        if (path[0] == '/') path = '';
+        return path.replace(/\.\./i, '');
+    };
+
+async function read_ini_cases(folder) {
+    let config = {
+        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        count: 0,
+        subtasks: []
+    };
+    try {
+        let config_file = (await fsp.readFile(path.resolve(folder, 'Config.ini'))).toString();
+        config_file = config_file.split('\n');
+        let count = parseInt(config_file[0]);
+        for (let i = 1; i <= count; i++) {
+            let line = config_file[i].split('|');
+            config.count++;
+            let cfg = {
+                input: path.join(folder + restrict(line[0])),
+                output: path.join(folder + restrict(line[1])),
+                id: config.count
+            };
+            if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+            config.subtasks.push({
+                score: parseInt(line[3]),
+                time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
+                memory_limit_mb: parseInt(line[4]) / 1024,
+                cases: [cfg]
+            });
+        }
+    } catch (e) {
+        throw new FormatError('Invalid file: Config.ini');
+    }
+    return config;
+}
+
+async function read_yaml_cases(folder) {
+    let config = {
+        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        count: 0,
+        subtasks: []
+    };
+    try {
+        let config_file = (await fsp.readFile(path.resolve(folder, 'config.yaml'))).toString();
+        config_file = yaml.safeLoad(config_file);
+        if (config_file.checker) config.checker = path.join(folder, config_file.checker);
+        if (!fs.existsSync(config.checker)) throw new Error();
+        if (config_file.cases) { //Legacy format
+            for (let c of config_file.cases) {
+                config.count++;
+                let cfg = {
+                    input: path.join(folder + restrict(c.input)),
+                    output: path.join(folder + restrict(c.output)),
+                    id: config.count
+                };
+                if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+                config.subtasks.push({
+                    score: parseInt(c.score),
+                    time_limit_ms: parseTimeMS(c.time),
+                    memory_limit_mb: parseMemoryMB(c.memory),
+                    cases: [cfg]
+                });
+            }
+        } else if (config_file.subtasks) { //New format
+            for (let subtask of config_file.subtasks) {
+                let cases = [];
+                for (let c of subtask) {
+                    config.count++;
+                    let cfg = {
+                        input: path.join(folder + restrict(c.input)),
+                        output: path.join(folder + restrict(c.output)),
+                        id: config.count
+                    };
+                    if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+                    cases.push(cfg);
+                }
+                config.subtasks.push({
+                    score: parseInt(subtask.score), cases,
+                    time_limit_ms: parseTimeMS(subtask.time),
+                    memory_limit_mb: parseMemoryMB(subtask.memory)
+                });
+            }
+        }
+    } catch (e) {
+        throw new FormatError('Invalid file: config.yml');
+    }
+    return config;
+}
+async function read_auto_cases(folder) {
+    let config = {
+        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        count: 0,
+        subtasks: []
+    };
+    try {
+        // TODO(masnn)
+    } catch (e) {
+        throw new Error('Failed to read cases.');
+    }
+    if (!config.count) throw new FormatError('No cases found.');
+    return config;
+}
+
+async function read_cases(folder) {
+    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return read_ini_cases(folder);
+    else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return read_yaml_cases(folder);
+    else return read_auto_cases(folder);
+}
+module.exports = read_cases;

@@ -28,6 +28,9 @@
         "semi": [
             "warn",
             "always"
+        ],
+        "no-unused-vars":[
+            "warn"
         ]
     }
 }

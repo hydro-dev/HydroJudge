@@ -15,13 +15,17 @@ try {
     console.error('Language file %s not found or invalidate.', _LANGS_FILE);
     process.exit(1);
 }
-async function compile(lang, code, sandbox) {
+async function check(lang, code, input, output, ans, sandbox) {
     if (!_langs[lang]) throw new Error('Language not supported');
     let info = _langs[lang], result;
     let run_config = {};
     if (info.type == 'compiler') {
+        await fsp.writeFile(
+            path.resolve(sandbox.dir, 'config.json'),
+            JSON.stringify({ execute: info.compile.split(' ') })
+        );
         await fsp.writeFile(path.resolve(sandbox.dir, 'home', info.code_file), code);
-        result = await sandbox.run({ execute: info.compile.split(' ') });
+        result = await sandbox.run(config);
         if (!result || result.code)
             throw new CompileError(
                 fs.readFileSync(path.resolve(sandbox.dir, 'stdout')).toString(),

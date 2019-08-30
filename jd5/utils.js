@@ -8,6 +8,12 @@ const
     _mkdirp = require('mkdirp'),
     max = (a, b) => (a > b ? a : b);
 
+function parseTimeMS(str) {
+    //TODO(masnn)
+}
+function parseMemoryMB(str) {
+    //TODO(masnn)
+}
 function sleep(timeout) {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -73,5 +79,6 @@ class Queue extends EventEmitter {
 }
 
 module.exports = {
-    download, Queue, mkdirp, max, rmdir, sleep
+    download, Queue, mkdirp, max, rmdir, sleep, 
+    parseMemoryMB, parseTimeMS
 };
