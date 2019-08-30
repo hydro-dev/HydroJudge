@@ -8,7 +8,13 @@ const
     restrict = path => {
         if (path[0] == '/') path = '';
         return path.replace(/\.\./i, '');
-    };
+    },
+    CASES = [
+        [/^([a-zA-Z]*)([0-9]+).in$/, a => { return a[1] + a[2] + '.out'; }, a => { return parseInt(a[2]); }],
+        [/^([a-zA-Z]*)([0-9]+).in$/, a => { return a[1] + a[2] + '.ans'; }, a => { return parseInt(a[2]); }],
+        [/^([a-zA-Z0-9]*)\.in([0-9]+)$/, a => { return a[1] + '.ou' + a[2]; }, a => { return parseInt(a[2]); }],
+        [/^(input)([0-9]+).txt$/, a => { return 'output' + a[2] + '.txt'; }, a => { return parseInt(a[2]); }],
+    ];
 
 async function read_ini_cases(folder) {
     let config = {
@@ -41,7 +47,6 @@ async function read_ini_cases(folder) {
     }
     return config;
 }
-
 async function read_yaml_cases(folder) {
     let config = {
         checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
@@ -90,7 +95,7 @@ async function read_yaml_cases(folder) {
             }
         }
     } catch (e) {
-        throw new FormatError('Invalid file: config.yml');
+        throw new FormatError('Invalid file: config.yaml');
     }
     return config;
 }
@@ -102,16 +107,42 @@ async function read_auto_cases(folder) {
     };
     try {
         // TODO(masnn)
+        let files = await fsp.readdir(folder);
+        let cases = [];
+        for (let file of files)
+            for (let REG in CASES)
+                if (REG[0].test(file)) {
+                    let data = REG[0].exec(file);
+                    let c = { input: file, output: REG[1](data), sort: REG[2](data) };
+                    if (!fs.existsSync(path.resolve(folder, c.output))) continue;
+                    cases.push(c);
+                    break;
+                }
+        cases.sort((a, b) => { return a.sort - b.sort; });
+        let basic = Math.floor(100 / cases.length);
+        let extra = 100 % cases.length;
+        for (let i in cases) {
+            config.count++;
+            config.subtasks.push({
+                score: i > extra ? (basic + 1) : basic,
+                time_limit_ms: 1000,
+                memory_limit_mb: 256,
+                cases: [{
+                    id: config.count,
+                    input: cases[i].input,
+                    output: cases[i].output
+                }]
+            });
+        }
     } catch (e) {
         throw new Error('Failed to read cases.');
     }
     if (!config.count) throw new FormatError('No cases found.');
     return config;
 }
-
 async function read_cases(folder) {
     if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return read_ini_cases(folder);
-    else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return read_yaml_cases(folder);
+    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return read_yaml_cases(folder);
     else return read_auto_cases(folder);
 }
 module.exports = read_cases;

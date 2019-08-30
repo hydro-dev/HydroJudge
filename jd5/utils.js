@@ -6,13 +6,22 @@ const
     _ = require('lodash'),
     EventEmitter = require('events'),
     _mkdirp = require('mkdirp'),
-    max = (a, b) => (a > b ? a : b);
+    { FormatError } = require('./error'),
+    max = (a, b) => (a > b ? a : b),
+    TIME_RE = /^([0-9]+(?:\.[0-9]*)?)([mu]?)s?$/i,
+    TIME_UNITS = { '': 1000, 'm': 1, 'u': 0.001 },
+    MEMORY_RE = /^([0-9]+(?:\.[0-9]*)?)([kmg])b?$/i,
+    MEMORY_UNITS = { 'k': 0.1, 'm': 1, 'g': 1024 };
 
 function parseTimeMS(str) {
-    //TODO(masnn)
+    let match = TIME_RE.exec(str);
+    if (!match) throw new FormatError(str, 'error parsing time');
+    return parseInt(parseFloat(match[1]) * TIME_UNITS[match[2]]);
 }
 function parseMemoryMB(str) {
-    //TODO(masnn)
+    let match = MEMORY_RE.exec(str);
+    if (!match) throw new FormatError(str, 'error parsing memory');
+    return parseInt(parseFloat(match[1]) * MEMORY_UNITS[match[2]]);
 }
 function sleep(timeout) {
     return new Promise(resolve => {
@@ -79,6 +88,6 @@ class Queue extends EventEmitter {
 }
 
 module.exports = {
-    download, Queue, mkdirp, max, rmdir, sleep, 
+    download, Queue, mkdirp, max, rmdir, sleep,
     parseMemoryMB, parseTimeMS
 };

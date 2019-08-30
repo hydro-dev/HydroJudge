@@ -7,7 +7,8 @@ const
     { max } = require('utils'),
     readCases = require('./cases'),
     path = require('path'),
-    compile = require('./compile');
+    compile = require('./compile'),
+    check = require('./check');
 
 module.exports = class JudgeHandler {
     constructor(session, request, ws, sandbox) {
@@ -78,9 +79,6 @@ module.exports = class JudgeHandler {
             throw new CompileError(message);
         }
     }
-    async check(config) {
-
-    }
     async judge(folder) {
         this.next({ status: STATUS_JUDGING, progress: 0 });
         let config = await readCases(folder);
@@ -108,7 +106,7 @@ module.exports = class JudgeHandler {
                         status = STATUS_RUNTIME_ERROR;
                         message = `Your program exited with code ${code}.`;
                     } else {
-                        [status, score, message] = await this.check({
+                        [status, score, message] = await check(sandbox, {
                             input: c.input,
                             output: c.output,
                             user_ans: stdout,

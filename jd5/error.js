@@ -7,7 +7,7 @@ class CompileError extends Error {
 class FormatError extends Error {
     constructor(message) {
         super(message);
-        this.type = "FormatError";
+        this.type = 'FormatError';
     }
 }
 
