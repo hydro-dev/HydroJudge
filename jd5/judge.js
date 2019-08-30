@@ -106,7 +106,7 @@ module.exports = class JudgeHandler {
                         status = STATUS_RUNTIME_ERROR;
                         message = `Your program exited with code ${code}.`;
                     } else {
-                        [status, score, message] = await check(sandbox, {
+                        [status, score, message] = await check(this.sandbox, {
                             input: c.input,
                             output: c.output,
                             user_ans: stdout,
