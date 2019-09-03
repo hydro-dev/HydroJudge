@@ -64,6 +64,10 @@ async function download(axios, url, filepath) {
         file.on('error', err => { reject(err); });
     });
 }
+function parseLang(filename) {
+    //TODO
+    return 'cpp';
+}
 class Queue extends EventEmitter {
     constructor() {
         super();
@@ -89,5 +93,5 @@ class Queue extends EventEmitter {
 
 module.exports = {
     download, Queue, mkdirp, max, rmdir, sleep,
-    parseMemoryMB, parseTimeMS
+    parseMemoryMB, parseTimeMS, parseLang
 };

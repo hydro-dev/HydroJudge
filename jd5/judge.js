@@ -8,7 +8,9 @@ const
     readCases = require('./cases'),
     path = require('path'),
     compile = require('./compile'),
-    check = require('./check');
+    check = require('./check'),
+    fs = require('fs'),
+    fsp = fs.promises;
 
 module.exports = class JudgeHandler {
     constructor(session, request, ws, sandbox) {
@@ -36,9 +38,10 @@ module.exports = class JudgeHandler {
             else if (this.type == 1) await this.do_pretest();
             else throw new Error(`Unsupported type: ${this.type}`);
         } catch (e) {
-            if (e instanceof CompileError)
+            if (e instanceof CompileError) {
+                this.next({ judge_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
-            else {
+            } else {
                 console.error(e);
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
@@ -55,9 +58,12 @@ module.exports = class JudgeHandler {
     async do_submission() {
         console.info('Submission: %s/%s, %s', this.domain_id, this.pid, this.rid);
         let [folder] = await Promise.all([
-            await cache_open(this.session, this.domain_id, this.pid),
-            await this.build()
+            cache_open(this.session, this.domain_id, this.pid),
+            this.build()
         ]);
+        let config = await readCases(folder);
+        if (config.checker) await this.build_checker(config.checker);
+        this.config = config;
         await this.judge(folder);
     }
     async do_pretest() {
@@ -65,25 +71,37 @@ module.exports = class JudgeHandler {
         let folder = path.join(`_/${this.rid}`);
         await Promise.all([
             this.session.record_pretest_data(this.rid, folder),
-            await this.build()
+            this.build()
         ]);
+        this.config = await readCases(folder);
         await this.judge(folder);
     }
     async build() {
         this.next({ status: STATUS_COMPILING });
-        let [status, message, run_config] = await compile(this.lang, this.code, this.sandbox);
-        this.next({ compiler_text: message });
-        this.run_config = run_config;
-        if (status) {
-            console.debug('Compile error: %s', message);
-            throw new CompileError(message);
+        let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox);
+        if (code) {
+            console.debug('Compile error: %s\n%s', stdout, stderr);
+            throw new CompileError({ stdout, stderr });
         }
+        stdout = await fsp.readFile(stdout).toString();
+        stderr = await fsp.readFile(stderr).toString();
+        this.next({ compiler_text: [stdout, stderr].join('\n') });
+        this.run_config = run_config;
     }
-    async judge(folder) {
+    async build_checker(checker_file) {
+        let checker_code = await fsp.readFile(checker_file);
+        let checker_lang = checker_file.split('.')[checker_file.split('.').length - 1];
+        let { code, stdout, stderr, run_config } = await compile(checker_lang, checker_code, this.sandbox);
+        if (code) {
+            console.debug('Checker compile error: %s\n%s', stdout, stderr);
+            throw new CompileError({ stdout, stderr });
+        }
+        this.checker_config = run_config;
+    }
+    async judge() {
         this.next({ status: STATUS_JUDGING, progress: 0 });
-        let config = await readCases(folder);
         let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
-        for (let subtask of config.subtasks) {
+        for (let subtask of this.config.subtasks) {
             let failed = false, subtask_score = 0;
             for (let c in subtask) {
                 if (failed) {
@@ -94,7 +112,7 @@ module.exports = class JudgeHandler {
                             time_ms: 0, memory_kb: 0,
                             judge_text: ''
                         },
-                        progress: c.id * 100 / config.count
+                        progress: c.id * 100 / this.config.count
                     });
                 } else {
                     let { code, time_usage_ms, memory_usage_kb, stdout } = await this.sandbox.run({
@@ -110,7 +128,8 @@ module.exports = class JudgeHandler {
                             input: c.input,
                             output: c.output,
                             user_ans: stdout,
-                            checker: config.checker,
+                            checker: this.config.checker,
+                            checker_type:this.config.checker_type,
                             score: subtask.score
                         });
                     }
@@ -127,7 +146,7 @@ module.exports = class JudgeHandler {
                             memory_kb: memory_usage_kb,
                             judge_text: message
                         },
-                        progress: c.id * 100 / config.count
+                        progress: c.id * 100 / this.config.count
                     });
                 }
             } //End: for(case)

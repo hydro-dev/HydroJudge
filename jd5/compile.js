@@ -17,29 +17,34 @@ try {
 }
 async function compile(lang, code, sandbox) {
     if (!_langs[lang]) throw new Error('Language not supported');
-    let info = _langs[lang], result;
-    let run_config = {};
+    let info = _langs[lang], stdout, exit_code, stderr;
+    let run_config;
     if (info.type == 'compiler') {
         await fsp.writeFile(path.resolve(sandbox.dir, 'home', info.code_file), code);
-        result = await sandbox.run({ execute: info.compile.split(' ') });
-        if (!result || result.code)
-            throw new CompileError(
-                fs.readFileSync(path.resolve(sandbox.dir, 'stdout')).toString(),
-                fs.readFileSync(path.resolve(sandbox.dir, 'stderr')).toString()
-            );
+        ({ exit_code, stdout, stderr } = await sandbox.run({ execute: info.compile.split(' ') }));
+        if (exit_code) throw new CompileError({ stdout, stderr });
         await fsp.rename(
             path.resolve(sandbox.dir, 'home', info.cache),
-            path.resolve(sandbox.dir, 'cache', info.cache)
+            path.resolve(sandbox.dir, 'cache', 'code_cache')
         );
-        run_config = { cache: info.cache, execute: info.execute.split(' ') };
+        run_config = {
+            cache: {
+                source: path.resolve(sandbox.dir, 'cache', 'code_cache'),
+                target: path.resolve(sandbox.dir, 'home', info.cache)
+            },
+            execute: info.execute.split(' ')
+        };
     } else if (info.type == 'interpreter') {
-        await fsp.writeFile(path.resolve(sandbox.dir, 'cache', info.code_file), code);
-        run_config = { cache: info.code_file, execute: info.execute.split(' ') };
+        await fsp.writeFile(path.resolve(sandbox.dir, 'cache', 'code_cache'), code);
+        run_config = {
+            cache: {
+                source: path.resolve(sandbox.dir, 'cache', 'code_cache'),
+                target: path.resolve(sandbox.dir, 'home', info.cache)
+            },
+            execute: info.execute.split(' ')
+        };
     }
-    return [0, [
-        fs.readFileSync(path.resolve(sandbox.dir, 'stdout')).toString(),
-        fs.readFileSync(path.resolve(sandbox.dir, 'stderr')).toString()
-    ].join('\n'), run_config];
+    return { code: 0, stdout, stderr, run_config };
 }
 
 module.exports = compile;

@@ -4,6 +4,7 @@ const
     fsp = fs.promises,
     path = require('path'),
     { mkdirp } = require('./utils'),
+    { SYSTEM_TIME_LIMIT_MS, SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT } = require('./config'),
     mounts = [
         '/usr/bin', '/bin', '/lib', '/usr/include', '/usr/local/lib', '/usr/lib64',
         '/usr/libexec', '/usr/share', '/var/lib', '/opt/kotlin', '/etc/alternatives',
@@ -56,7 +57,9 @@ module.exports = class SandBox {
         await fsp.unlink(`${this.dir}/jd5.lock`);
     }
     async run({
-        time_limit_ms = 1000, memory_limit_mb = 128, process_limit = 32,
+        time_limit_ms = SYSTEM_TIME_LIMIT_MS,
+        memory_limit_mb = SYSTEM_MEMORY_LIMIT_MB,
+        process_limit = SYSTEM_PROCESS_LIMIT,
         cache = [], execute = [], stdin = 'stdin', stdout = 'stdout', stderr = 'stderr'
     } = {}) {
         let result;
