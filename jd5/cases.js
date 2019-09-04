@@ -3,7 +3,7 @@ const
     fsp = fs.promises,
     path = require('path'),
     yaml = require('js-yaml'),
-    { FormatError } = require('./errors'),
+    { FormatError, SystemError } = require('./errors'),
     { parseTimeMS, parseMemoryMB } = require('./utils'),
     restrict = path => {
         if (path[0] == '/') path = '';
@@ -18,7 +18,7 @@ const
 
 async function read_ini_cases(folder) {
     let config = {
-        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        checker_type: 'builtin',
         count: 0,
         subtasks: []
     };
@@ -34,7 +34,8 @@ async function read_ini_cases(folder) {
                 output: path.join(folder + restrict(line[1])),
                 id: config.count
             };
-            if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+            if (!fs.existsSync(cfg.input)) throw new FormatError('Input file not found:', [line[0]]);
+            if (!fs.existsSync(cfg.output)) throw new FormatError('Output file not found', [line[1]]);
             config.subtasks.push({
                 score: parseInt(line[3]),
                 time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
@@ -49,15 +50,18 @@ async function read_ini_cases(folder) {
 }
 async function read_yaml_cases(folder) {
     let config = {
-        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        checker_type: 'builtin',
         count: 0,
         subtasks: []
     };
     try {
         let config_file = (await fsp.readFile(path.resolve(folder, 'config.yaml'))).toString();
         config_file = yaml.safeLoad(config_file);
-        if (config_file.checker) config.checker = path.join(folder, config_file.checker);
-        if (!fs.existsSync(config.checker)) throw new Error();
+        if (config_file.checker) {
+            config.checker = path.join(folder, restrict(config_file.checker));
+            if (config_file.checker_type) config.checker_type = config_file.checker_type;
+        }
+        if (!fs.existsSync(config.checker)) throw new FormatError('Checker not found.', [config_file.checker]);
         if (config_file.cases) { //Legacy format
             for (let c of config_file.cases) {
                 config.count++;
@@ -66,7 +70,8 @@ async function read_yaml_cases(folder) {
                     output: path.join(folder + restrict(c.output)),
                     id: config.count
                 };
-                if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+                if (!fs.existsSync(cfg.input)) throw new FormatError('Input file not found:', [c.input]);
+                if (!fs.existsSync(cfg.output)) throw new FormatError('Output file not found', [c.output]);
                 config.subtasks.push({
                     score: parseInt(c.score),
                     time_limit_ms: parseTimeMS(c.time),
@@ -84,7 +89,8 @@ async function read_yaml_cases(folder) {
                         output: path.join(folder + restrict(c.output)),
                         id: config.count
                     };
-                    if (!(fs.existsSync(cfg.input) && fs.existsSync(cfg.output))) throw new Error();
+                    if (!fs.existsSync(cfg.input)) throw new FormatError('Input file not found:', [c.input]);
+                    if (!fs.existsSync(cfg.output)) throw new FormatError('Output file not found', [c.output]);
                     cases.push(cfg);
                 }
                 config.subtasks.push({
@@ -101,12 +107,11 @@ async function read_yaml_cases(folder) {
 }
 async function read_auto_cases(folder) {
     let config = {
-        checker: path.resolve(__dirname, 'checkers', 'builtin.cc'),
+        checker_type: 'builtin',
         count: 0,
         subtasks: []
     };
     try {
-        // TODO(masnn)
         let files = await fsp.readdir(folder);
         let cases = [];
         for (let file of files)
@@ -135,7 +140,7 @@ async function read_auto_cases(folder) {
             });
         }
     } catch (e) {
-        throw new Error('Failed to read cases.');
+        throw new SystemError('Failed to read cases.');
     }
     if (!config.count) throw new FormatError('No cases found.');
     return config;

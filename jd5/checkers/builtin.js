@@ -1,26 +1,22 @@
-//TODO
 const
-    fs = require('fs'),
-    fsp = fs.promises,
-    { SystemError } = require('../error'),
-    { parseLang } = require('../utils'),
-    _compile = require('../compile');
+    { STATUS_WRONG_ANSWER, STATUS_ACCEPTED } = require('../status'),
+    fs = require('fs');
 
 async function check(sandbox, config) {
-    await sandbox.createfd(config.input, 3);
-    let { code, stdout, stderr } = await sandbox.run({
-        input: config.user_output
-    });
-    stdout = await fsp.readFile(stdout);
-    let message = await fsp.readFile(stderr);
-    let [status, score] = stdout.split(' ');
-    return { code, status, score, message };
+    let stdout = fs.createReadStream(config.output);
+    let usrout = fs.createReadStream(config.user_output);
+    let a, b;
+    stdout.setEncoding('utf8');
+    usrout.setEncoding('utf8');
+    while ('Orz soha') { // eslint-disable-line no-constant-condition
+        a = stdout.read(1);
+        b = usrout.read(1);
+        if (!a) return { code: 0, status: STATUS_ACCEPTED, score: 0, message: '' };
+        if (a != b) return { code: 0, status: STATUS_WRONG_ANSWER, score: 0, message: '' };
+    }
 }
-async function compile(sandbox, config) {
-    let checker_code = await fsp.readFile('./builtin.cc');
-    let { code, stdout, stderr } = await _compile(parseLang(config.checker), checker_code, sandbox);
-    if (code) throw new SystemError('Cannot compile checker');
-    return { code, stdout, stderr };
+async function compile() {
+    return { code: 0 };
 }
 
 module.exports = { check, compile };

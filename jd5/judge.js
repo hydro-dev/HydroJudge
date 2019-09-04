@@ -3,7 +3,7 @@ const
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR, STATUS_ACCEPTED,
         STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
         STATUS_IGNORED } = require('./status'),
-    { CompileError } = require('./error'),
+    { CompileError, SystemError } = require('./error'),
     { max } = require('utils'),
     readCases = require('./cases'),
     path = require('path'),
@@ -36,7 +36,7 @@ module.exports = class JudgeHandler {
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
-            else throw new Error(`Unsupported type: ${this.type}`);
+            else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
             if (e instanceof CompileError) {
                 this.next({ judge_text: e.message });
@@ -129,7 +129,7 @@ module.exports = class JudgeHandler {
                             output: c.output,
                             user_ans: stdout,
                             checker: this.config.checker,
-                            checker_type:this.config.checker_type,
+                            checker_type: this.config.checker_type,
                             score: subtask.score
                         });
                     }

@@ -11,9 +11,10 @@ class CompileError extends Error {
     }
 }
 class FormatError extends Error {
-    constructor(message) {
+    constructor(message, params = []) {
         super(message);
         this.type = 'FormatError';
+        this.params = params;
     }
 }
 class RuntimeError extends Error {

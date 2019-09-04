@@ -3,7 +3,7 @@ const
     path = require('path'),
     yaml = require('js-yaml'),
     fs = require('fs'),
-    { CompileError } = require('./error'),
+    { CompileError, SystemError } = require('./error'),
     fsp = fs.promises,
     _CONFIG_DIR = path.resolve(os.homedir(), '.config', 'jd5'),
     _LANGS_FILE = path.join(_CONFIG_DIR, 'langs.yaml');
@@ -16,7 +16,7 @@ try {
     process.exit(1);
 }
 async function compile(lang, code, sandbox) {
-    if (!_langs[lang]) throw new Error('Language not supported');
+    if (!_langs[lang]) throw new SystemError('Language not supported');
     let info = _langs[lang], stdout, exit_code, stderr;
     let run_config;
     if (info.type == 'compiler') {
