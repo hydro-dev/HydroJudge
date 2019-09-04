@@ -38,6 +38,7 @@ module.exports = class JudgeHandler {
             else if (this.type == 1) await this.do_pretest();
             else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
+            await this.sandbox.reset();
             if (e instanceof CompileError) {
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
@@ -65,6 +66,7 @@ module.exports = class JudgeHandler {
         if (config.checker) await this.build_checker(config.checker);
         this.config = config;
         await this.judge(folder);
+        await this.sandbox.reset();
     }
     async do_pretest() {
         console.info('Pretest: %s/%s, %s', this.domain_id, this.pid, this.rid);
@@ -75,6 +77,7 @@ module.exports = class JudgeHandler {
         ]);
         this.config = await readCases(folder);
         await this.judge(folder);
+        await this.sandbox.reset();
     }
     async build() {
         this.next({ status: STATUS_COMPILING });
@@ -138,6 +141,7 @@ module.exports = class JudgeHandler {
                     total_time_usage_ms += time_usage_ms;
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
+                    await this.sandbox.clean();
                     this.next({
                         total_status,
                         case: {

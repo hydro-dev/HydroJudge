@@ -6,7 +6,7 @@ const
     _compile = require('../compile');
 
 async function check(sandbox, config) {
-    await sandbox.createfd(config.input, 3);
+    await sandbox.addFile(config.input, 3);
     let { code, stdout, stderr } = await sandbox.run({
         input: config.user_output
     });
