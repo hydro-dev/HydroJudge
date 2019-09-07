@@ -65,11 +65,9 @@ async function download(axios, url, filepath) {
 function parseLang(filename) {
     let t = filename.split('.');
     let ext = t[t.length - 1];
-    switch (t) {
-        case 'cpp': return 'cc';
-        case 'py2': return 'py';
-        case 'pas', 'cc', 'c', 'java', 'py', 'py3', 'php', 'rs', 'js', 'hs', 'go', 'rb', 'cs': return ext;
-    }
+    if (ext == 'cpp') return 'cc';
+    else if (ext == 'py2') return 'py';
+    else if (['pas', 'cc', 'c', 'java', 'py', 'py3', 'php', 'rs', 'js', 'hs', 'go', 'rb', 'cs'].includes(ext)) return ext;
     throw new FormatError('Unknown checker language', [ext]);
 }
 class Queue extends EventEmitter {

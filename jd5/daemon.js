@@ -23,7 +23,7 @@ async function daemon() {
     let sandbox = new SandBox('jd5');
     await Promise.all([session.init(), sandbox.init()]);
     setInterval(() => { session.axios.get('judge/noop'); }, 30000000);
-    while (true) {  //eslint-disable-line no-constant-condition
+    while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
             await session.ensureLogin();
             await session.update_problem_data();

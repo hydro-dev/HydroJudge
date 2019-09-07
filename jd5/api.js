@@ -127,7 +127,7 @@ module.exports = class AxiosInstance {
             this.ws.once('open', () => { resolve(); });
         });
         console.info('Connected');
-        while (true) { //eslint-disable-line
+        while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
             let request = await queue.get();
             await new handler(this, request, this.ws, sandbox).handle();
         }
