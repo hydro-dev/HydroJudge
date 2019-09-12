@@ -6,23 +6,24 @@ const
     yaml = require('js-yaml'),
     WebSocket = require('ws'),
     AdmZip = require('adm-zip'),
+    log = require('./log'),
     { download, Queue } = require('./utils'),
-    { cache_invalidate } = require('./cache'),
-    _CONFIG_DIR = path.resolve(os.homedir(), '.config', 'jd5'),
-    _CONFIG_FILE = path.resolve(_CONFIG_DIR, 'config.yaml'),
-    _COOKIES_FILE = path.resolve(_CONFIG_DIR, 'cookies');
+    cache = require('./cache'),
+    { CONFIG_DIR } = require('./config'),
+    _CONFIG_FILE = path.resolve(CONFIG_DIR, 'config.yaml'),
+    _COOKIES_FILE = path.resolve(CONFIG_DIR, 'cookies');
 
 module.exports = class AxiosInstance {
     constructor() { }
     async init() {
         let config = await fsp.readFile(_CONFIG_FILE).catch(() => {
-            console.error(`Config file not found at ${_CONFIG_FILE}`);
+            log.error(`Config file not found at ${_CONFIG_FILE}`);
             process.exit(1);
         });
         try {
             this.config = yaml.safeLoad(config.toString());
         } catch (e) {
-            console.error('Invalid config file.');
+            log.error('Invalid config file.');
             process.exit(1);
         }
         let cookie = (await fsp.readFile(_COOKIES_FILE).catch(() => { })) || '';
@@ -30,7 +31,7 @@ module.exports = class AxiosInstance {
         await this.ensureLogin();
     }
     async setCookie(cookie) {
-        console.log(`Setting cookie: ${cookie}`);
+        log.log(`Setting cookie: ${cookie}`);
         this.cookie = cookie;
         await fsp.writeFile(_COOKIES_FILE, cookie);
         this.axios = axios.create({
@@ -63,7 +64,7 @@ module.exports = class AxiosInstance {
         }
     }
     async problem_data(domain_id, pid, save_path) {
-        console.info('Getting problem data: %s, %s', domain_id, pid);
+        log.info('Getting problem data: %s, %s', domain_id, pid);
         let tmp_file_path = path.resolve(os.tmpdir(), `jd5_testdata_download_${domain_id}_${pid}`);
         await download(this.axios, `d/${domain_id}/p/${pid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
@@ -77,7 +78,7 @@ module.exports = class AxiosInstance {
         return save_path;
     }
     async record_pretest_data(rid, save_path) {
-        console.info('Getting pretest data: %s', rid);
+        log.info('Getting pretest data: %s', rid);
         let tmp_file_path = path.resolve(os.tmpdir(), `jd5_testdata_download_${rid}`);
         await download(this.axios, `records/${rid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
@@ -95,19 +96,19 @@ module.exports = class AxiosInstance {
         return res.data;
     }
     async update_problem_data() {
-        console.info('Update problem data');
+        log.info('Update problem data');
         let result = await this.judge_datalist(this.config.last_update_at || 0);
         for (let pid of result.pids) {
-            await cache_invalidate(pid.domain_id, pid.pid);
-            console.debug('Invalidated %s/%s', pid.domain_id, pid.pid);
+            await cache.invalidate(pid.domain_id, pid.pid);
+            log.debug('Invalidated %s/%s', pid.domain_id, pid.pid);
         }
         this.config.last_update_at = result.time;
         await this.save_config();
     }
     async judge_consume(handler, sandbox) {
-        console.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
+        log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
-        console.log(res.data);
+        log.log(res.data);
         this.ws = new WebSocket(this.config.server_url.replace(/https?:\/\//i, 'ws://') + 'judge/consume-conn/websocket?t=' + res.entropy, {
             headers: {
                 cookie: this.cookie
@@ -118,15 +119,15 @@ module.exports = class AxiosInstance {
             queue.push(JSON.parse(data));
         });
         this.ws.on('close', (data, reason) => {
-            console.log('websocket closed:', data, reason);
+            log.log('websocket closed:', data, reason);
         });
         this.ws.on('error', data => {
-            console.log('websocket error', data);
+            log.log('websocket error', data);
         });
         await new Promise(resolve => {
             this.ws.once('open', () => { resolve(); });
         });
-        console.info('Connected');
+        log.info('Connected');
         while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
             let request = await queue.get();
             await new handler(this, request, this.ws, sandbox).handle();

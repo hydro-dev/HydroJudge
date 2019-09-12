@@ -1,14 +1,15 @@
 const
-    { cache_open, cache_invalidate } = require('./cache'),
+    cache = require('./cache'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR, STATUS_ACCEPTED,
         STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
         STATUS_IGNORED } = require('./status'),
     { CompileError, SystemError } = require('./error'),
-    { max } = require('utils'),
+    { max } = require('./utils'),
     readCases = require('./cases'),
     path = require('path'),
     compile = require('./compile'),
     check = require('./check'),
+    log = require('./log'),
     fs = require('fs'),
     fsp = fs.promises;
 
@@ -20,10 +21,10 @@ module.exports = class JudgeHandler {
         this.sandbox = sandbox;
     }
     async handle() {
-        console.log(this.request);
+        log.log(this.request);
         if (!this.request.event) await this.do_record();
         else if (this.request.event == 'problem_data_change') await this.update_problem_data();
-        else console.warn('Unknown event: %s', this.request.event);
+        else log.warn('Unknown event: %s', this.request.event);
     }
     async do_record() {
         this.tag = this.request.tag;
@@ -43,7 +44,7 @@ module.exports = class JudgeHandler {
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else {
-                console.error(e);
+                log.error(e);
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
@@ -52,14 +53,14 @@ module.exports = class JudgeHandler {
     async update_problem_data() {
         let domain_id = this.request.domain_id;
         let pid = this.request.pid;
-        await cache_invalidate(domain_id, pid);
-        console.debug('Invalidated %s/%s', domain_id, pid);
+        await cache.invalidate(domain_id, pid);
+        log.debug('Invalidated %s/%s', domain_id, pid);
         await this.session.update_problem_data();
     }
     async do_submission() {
-        console.info('Submission: %s/%s, %s', this.domain_id, this.pid, this.rid);
+        log.info('Submission: %s/%s, %s', this.domain_id, this.pid, this.rid);
         let [folder] = await Promise.all([
-            cache_open(this.session, this.domain_id, this.pid),
+            cache.open(this.session, this.domain_id, this.pid),
             this.build()
         ]);
         let config = await readCases(folder);
@@ -69,7 +70,7 @@ module.exports = class JudgeHandler {
         await this.sandbox.reset();
     }
     async do_pretest() {
-        console.info('Pretest: %s/%s, %s', this.domain_id, this.pid, this.rid);
+        log.info('Pretest: %s/%s, %s', this.domain_id, this.pid, this.rid);
         let folder = path.join(`_/${this.rid}`);
         await Promise.all([
             this.session.record_pretest_data(this.rid, folder),
@@ -83,7 +84,7 @@ module.exports = class JudgeHandler {
         this.next({ status: STATUS_COMPILING });
         let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox);
         if (code) {
-            console.debug('Compile error: %s\n%s', stdout, stderr);
+            log.debug('Compile error: %s\n%s', stdout, stderr);
             throw new CompileError({ stdout, stderr });
         }
         stdout = await fsp.readFile(stdout).toString();
@@ -96,7 +97,7 @@ module.exports = class JudgeHandler {
         let checker_lang = checker_file.split('.')[checker_file.split('.').length - 1];
         let { code, stdout, stderr, run_config } = await compile(checker_lang, checker_code, this.sandbox);
         if (code) {
-            console.debug('Checker compile error: %s\n%s', stdout, stderr);
+            log.debug('Checker compile error: %s\n%s', stdout, stderr);
             throw new CompileError({ stdout, stderr });
         }
         this.checker_config = run_config;

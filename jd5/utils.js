@@ -28,7 +28,7 @@ function sleep(timeout) {
         }, timeout);
     });
 }
-function rmdir(path, { recursive = false }) {
+function rmdir(path, { recursive = false } = {}) {
     if (recursive) {
         if (fs.existsSync(path))
             fs.readdirSync(path).forEach(file => {
@@ -70,6 +70,10 @@ function parseLang(filename) {
     else if (['pas', 'cc', 'c', 'java', 'py', 'py3', 'php', 'rs', 'js', 'hs', 'go', 'rb', 'cs'].includes(ext)) return ext;
     throw new FormatError('Unknown checker language', [ext]);
 }
+function parseFilename(path) {
+    let t = path.split('/');
+    return t[t.length - 1];
+}
 class Queue extends EventEmitter {
     constructor() {
         super();
@@ -95,5 +99,5 @@ class Queue extends EventEmitter {
 
 module.exports = {
     download, Queue, mkdirp, max, rmdir, sleep,
-    parseMemoryMB, parseTimeMS, parseLang
+    parseMemoryMB, parseTimeMS, parseLang, parseFilename
 };

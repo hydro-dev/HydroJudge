@@ -11,7 +11,7 @@
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
     "randomstring": "^1.1.5",
-    "sandbox": "https://github.com/vijos/sandbox.git",
+    "vijos-sandbox": "https://github.com/vijos/sandbox.git",
     "ws": "^7.1.2"
   },
   "devDependencies": {

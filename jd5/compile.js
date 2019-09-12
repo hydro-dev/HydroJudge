@@ -1,18 +1,18 @@
 const
-    os = require('os'),
     path = require('path'),
     yaml = require('js-yaml'),
     fs = require('fs'),
-    { CompileError, SystemError } = require('./error'),
     fsp = fs.promises,
-    _CONFIG_DIR = path.resolve(os.homedir(), '.config', 'jd5'),
-    _LANGS_FILE = path.join(_CONFIG_DIR, 'langs.yaml');
+    { CompileError, SystemError } = require('./error'),
+    log = require('./log'),
+    { CONFIG_DIR } = require('./config'),
+    _LANGS_FILE = path.join(CONFIG_DIR, 'langs.yaml');
 
 let _langs = {};
 try {
     _langs = yaml.safeLoad((fs.readFileSync(_LANGS_FILE)).toString());
 } catch (e) {
-    console.error('Language file %s not found or invalidate.', _LANGS_FILE);
+    log.error('Language file %s not found or invalidate.', _LANGS_FILE);
     process.exit(1);
 }
 async function compile(lang, code, sandbox) {

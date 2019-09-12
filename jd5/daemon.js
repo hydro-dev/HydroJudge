@@ -14,9 +14,10 @@
 const
     VJ4Session = require('./api'),
     { sleep } = require('./utils'),
-    { SandBox } = require('jd5-sandbox'),
+    SandBox = require('./sandbox'),
     JudgeHandler = require('./judge'),
-    RETRY_DELAY_SEC = 30;
+    log = require('./log'),
+    { RETRY_DELAY_SEC } = require('./config');
 
 async function daemon() {
     let session = new VJ4Session();
@@ -29,8 +30,8 @@ async function daemon() {
             await session.update_problem_data();
             await session.judge_consume(JudgeHandler, sandbox);
         } catch (e) {
-            console.error(e);
-            console.info('Retrying after %d seconds', RETRY_DELAY_SEC);
+            log.error(e);
+            log.info('Retrying after %d seconds', RETRY_DELAY_SEC);
             await sleep(RETRY_DELAY_SEC * 1000);
         }
     }

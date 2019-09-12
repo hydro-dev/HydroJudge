@@ -3,7 +3,7 @@ const
     fsp = fs.promises,
     path = require('path'),
     yaml = require('js-yaml'),
-    { FormatError, SystemError } = require('./errors'),
+    { FormatError, SystemError } = require('./error'),
     { parseTimeMS, parseMemoryMB } = require('./utils'),
     restrict = path => {
         if (path[0] == '/') path = '';
