@@ -28,7 +28,7 @@ function sleep(timeout) {
         }, timeout);
     });
 }
-function rmdir(path, { recursive = false } = {}) {
+function rmdir(path, recursive = false) {
     if (recursive) {
         if (fs.existsSync(path))
             fs.readdirSync(path).forEach(file => {
@@ -37,7 +37,7 @@ function rmdir(path, { recursive = false } = {}) {
                 else fs.unlinkSync(curPath);
             });
         fs.rmdirSync(path);
-    } else fs.rmdirSync(path);
+    } else if (fs.existsSync(path)) fs.rmdirSync(path);
 }
 function mkdirp(p) {
     return new Promise((resolve, reject) => {
@@ -49,16 +49,12 @@ function mkdirp(p) {
 }
 async function download(axios, url, filepath) {
     let res = await axios.get(url, { responseType: 'stream' });
-    let file = fs.createWriteStream(filepath);
+    await mkdirp(path.dirname(filepath));
     await new Promise((resolve, reject) => {
-        mkdirp(path.dirname(filepath), err => {
-            if (err) reject(err);
-            else resolve();
-        });
-    });
-    await new Promise((resolve, reject) => {
+        let file = fs.createWriteStream(filepath);
         res.data.pipe(file);
         res.data.on('end', () => { resolve(); });
+        file.on('finish', () => { resolve(); });
         file.on('error', err => { reject(err); });
     });
 }

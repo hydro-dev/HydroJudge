@@ -9,7 +9,7 @@ const
     log = require('./log'),
     { download, Queue } = require('./utils'),
     cache = require('./cache'),
-    { CONFIG_DIR } = require('./config'),
+    { CONFIG_DIR, CACHE_DIR } = require('./config'),
     _CONFIG_FILE = path.resolve(CONFIG_DIR, 'config.yaml'),
     _COOKIES_FILE = path.resolve(CONFIG_DIR, 'cookies');
 
@@ -65,21 +65,25 @@ module.exports = class AxiosInstance {
     }
     async problem_data(domain_id, pid, save_path) {
         log.info('Getting problem data: %s, %s', domain_id, pid);
-        let tmp_file_path = path.resolve(os.tmpdir(), `jd5_testdata_download_${domain_id}_${pid}`);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${domain_id}_${pid}`);
+        console.log(3);
         await download(this.axios, `d/${domain_id}/p/${pid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
+        console.log(4);
         await new Promise((resolve, reject) => {
             zipfile.extractAllToAsync(save_path, true, err => {
                 if (err) reject(err);
                 else resolve();
             });
         });
+        console.log(5);
         await fsp.unlink(tmp_file_path);
+        console.log(6);
         return save_path;
     }
     async record_pretest_data(rid, save_path) {
         log.info('Getting pretest data: %s', rid);
-        let tmp_file_path = path.resolve(os.tmpdir(), `jd5_testdata_download_${rid}`);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${rid}`);
         await download(this.axios, `records/${rid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
         await new Promise((resolve, reject) => {

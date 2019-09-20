@@ -63,7 +63,9 @@ module.exports = class JudgeHandler {
             cache.open(this.session, this.domain_id, this.pid),
             this.build()
         ]);
+        console.log(folder);
         let config = await readCases(folder);
+        console.log(config);
         if (config.checker) await this.build_checker(config.checker);
         this.config = config;
         await this.judge(folder);
@@ -87,8 +89,8 @@ module.exports = class JudgeHandler {
             log.debug('Compile error: %s\n%s', stdout, stderr);
             throw new CompileError({ stdout, stderr });
         }
-        stdout = await fsp.readFile(stdout).toString();
-        stderr = await fsp.readFile(stderr).toString();
+        stdout = (await fsp.readFile(stdout)).toString();
+        stderr = (await fsp.readFile(stderr)).toString();
         this.next({ compiler_text: [stdout, stderr].join('\n') });
         this.run_config = run_config;
     }
@@ -107,7 +109,7 @@ module.exports = class JudgeHandler {
         let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
         for (let subtask of this.config.subtasks) {
             let failed = false, subtask_score = 0;
-            for (let c in subtask) {
+            for (let c of subtask.cases) {
                 if (failed) {
                     this.next({
                         total_status,
@@ -119,19 +121,26 @@ module.exports = class JudgeHandler {
                         progress: c.id * 100 / this.config.count
                     });
                 } else {
-                    let { code, time_usage_ms, memory_usage_kb, stdout } = await this.sandbox.run({
-                        input: c.input, time_limit_ms: subtask.time_limit_ms,
-                        memory_limit_mb: subtask.memory_limit_mb
-                    });
+                    let stdout = path.resolve(this.sandbox.dir, 'stdout');
+                    let stderr = path.resolve(this.sandbox.dir, 'stderr');
+                    await fsp.symlink(this.run_config.cache.source, this.run_config.cache.target);
+                    let { code, time_usage_ms, memory_usage_kb } = await this.sandbox.run(
+                        this.run_config.execute[0], this.run_config.execute[1] || [],
+                        {
+                            stdin: c.input, stdout, stderr,
+                            time_limit_ms: subtask.time_limit_ms,
+                            memory_limit_mb: subtask.memory_limit_mb
+                        }
+                    );
                     let status, message = '', score = 0;
                     if (code) {
                         status = STATUS_RUNTIME_ERROR;
                         message = `Your program exited with code ${code}.`;
                     } else {
                         [status, score, message] = await check(this.sandbox, {
-                            input: c.input,
-                            output: c.output,
-                            user_ans: stdout,
+                            stdin: c.input,
+                            stdout: c.output,
+                            user_stdout: stdout,
                             checker: this.config.checker,
                             checker_type: this.config.checker_type,
                             score: subtask.score

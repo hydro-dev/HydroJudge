@@ -30,8 +30,8 @@ async function read_ini_cases(folder) {
             let line = config_file[i].split('|');
             config.count++;
             let cfg = {
-                input: path.join(folder + restrict(line[0])),
-                output: path.join(folder + restrict(line[1])),
+                input: path.join(folder, 'Input', restrict(line[0])),
+                output: path.join(folder, 'Output', restrict(line[1])),
                 id: config.count
             };
             if (!fs.existsSync(cfg.input)) throw new FormatError('Input file not found:', [line[0]]);
@@ -44,7 +44,7 @@ async function read_ini_cases(folder) {
             });
         }
     } catch (e) {
-        throw new FormatError('Invalid file: Config.ini');
+        throw new FormatError('Invalid file: Config.ini', [e]);
     }
     return config;
 }

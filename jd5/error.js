@@ -1,9 +1,10 @@
 const fs = require('fs');
 
 class CompileError extends Error {
-    constructor({ stdout, stderr }) {
-        let out = fs.readFileSync(stdout).toString();
-        let err = fs.readFileSync(stderr).toString();
+    constructor({ stdout, stderr } = {}) {
+        let out = '', err = '';
+        if (stdout) out = fs.readFileSync(stdout).toString();
+        if (stderr) err = fs.readFileSync(stderr).toString();
         super([out, err].join('\n'));
         this.type = 'CompileError';
         this.stdout = out;

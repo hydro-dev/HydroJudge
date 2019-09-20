@@ -3,7 +3,8 @@ const
     fs = require('fs');
 
 async function check(sandbox, config) {
-    let stdout = fs.createReadStream(config.output);
+    console.log('checking', config);
+    let stdout = fs.createReadStream(config.stdout);
     let usrout = fs.createReadStream(config.user_output);
     let a, b;
     stdout.setEncoding('utf8');
