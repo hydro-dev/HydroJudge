@@ -1,7 +1,6 @@
 const
     axios = require('axios'),
     fsp = require('fs').promises,
-    os = require('os'),
     path = require('path'),
     yaml = require('js-yaml'),
     WebSocket = require('ws'),
@@ -29,6 +28,7 @@ module.exports = class AxiosInstance {
         let cookie = (await fsp.readFile(_COOKIES_FILE).catch(() => { })) || '';
         await this.setCookie(cookie.toString());
         await this.ensureLogin();
+        global.onDestory.push(() => this.save_config());
     }
     async setCookie(cookie) {
         log.log(`Setting cookie: ${cookie}`);
@@ -57,6 +57,7 @@ module.exports = class AxiosInstance {
         await this.setCookie(res.headers['set-cookie'][0].split(';')[0]);
     }
     async ensureLogin() {
+        log.log('Updating session');
         try {
             await this.axios.get('judge/noop');
         } catch (e) {
@@ -66,19 +67,15 @@ module.exports = class AxiosInstance {
     async problem_data(domain_id, pid, save_path) {
         log.info('Getting problem data: %s, %s', domain_id, pid);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${domain_id}_${pid}`);
-        console.log(3);
         await download(this.axios, `d/${domain_id}/p/${pid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
-        console.log(4);
         await new Promise((resolve, reject) => {
             zipfile.extractAllToAsync(save_path, true, err => {
                 if (err) reject(err);
                 else resolve();
             });
         });
-        console.log(5);
         await fsp.unlink(tmp_file_path);
-        console.log(6);
         return save_path;
     }
     async record_pretest_data(rid, save_path) {
@@ -99,7 +96,7 @@ module.exports = class AxiosInstance {
         let res = await this.axios.get('judge/datalist', { params: { last } });
         return res.data;
     }
-    async update_problem_data() {
+    async updateProblemData() {
         log.info('Update problem data');
         let result = await this.judge_datalist(this.config.last_update_at || 0);
         for (let pid of result.pids) {
@@ -109,14 +106,11 @@ module.exports = class AxiosInstance {
         this.config.last_update_at = result.time;
         await this.save_config();
     }
-    async judge_consume(handler, sandbox) {
+    async judgeConsume(handler, sandbox) {
         log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
-        log.log(res.data);
         this.ws = new WebSocket(this.config.server_url.replace(/https?:\/\//i, 'ws://') + 'judge/consume-conn/websocket?t=' + res.entropy, {
-            headers: {
-                cookie: this.cookie
-            }
+            headers: { cookie: this.cookie }
         });
         let queue = new Queue();
         this.ws.on('message', data => {

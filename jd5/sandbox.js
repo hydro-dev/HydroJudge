@@ -19,10 +19,7 @@ module.exports = class SandBox {
             await new Promise(resolve => {
                 mkdirp(`${this.dir}/home`, resolve());
             });
-        process.on('SIGINT', async () => {
-            await this.close();
-            process.exit(0);
-        });
+        global.onDestory.push(() => this.close());
     }
     async close() {
         await fsp.unlink(path.resolve(this.sandbox.dir, 'jd5.lock'));
@@ -46,6 +43,9 @@ module.exports = class SandBox {
             await fsp.symlink(path.join(this.sandbox.dir, 'home', target), src);
         } else throw new SystemError('Error while parsing target');
     }
+    async writeFile(target, file) {
+        return await fsp.writeFile(path.resolve(this.dir, 'home', target), file);
+    }
     async saveFile(src) {
         await fsp.copyFile(path.resolve(this.sandbox.dir, 'home', src), path.resolve(this.sandbox.dir, 'cache', src));
     }
@@ -55,14 +55,14 @@ module.exports = class SandBox {
         process_limit = SYSTEM_PROCESS_LIMIT,
         stdin, stdout, stderr
     } = {}) {
-        this.config = {
+        let config = {
             stdin, stdout, stderr,
             time: time_limit_ms,
             memory: memory_limit_mb * 1024 * 1024,
             process: process_limit
         };
-        log.log(this.config);
-        this.process = await this.sandbox.spawn(file, params, this.config);
+        log.log(config);
+        this.process = await this.sandbox.spawn(file, params, config);
         let result = await this.sandbox.wait();
         log.log('Your sandbox finished!', result);
         return result || { code: -1 };

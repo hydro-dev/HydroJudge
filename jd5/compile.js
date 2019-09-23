@@ -21,7 +21,7 @@ async function compile(lang, code, sandbox) {
     let stdout = path.resolve(sandbox.dir, 'stdout');
     let stderr = path.resolve(sandbox.dir, 'stderr');
     if (info.type == 'compiler') {
-        await fsp.writeFile(path.resolve(sandbox.dir, 'home', info.code_file), code);
+        await sandbox.writeFile(info.code_file, code);
         ({ code: exit_code } = await sandbox.run(info.compile[0], info.compile[1], {
             stdout, stderr
         }));

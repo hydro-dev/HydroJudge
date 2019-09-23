@@ -5,18 +5,18 @@ const
     yaml = require('js-yaml'),
     { FormatError, SystemError } = require('./error'),
     { parseTimeMS, parseMemoryMB } = require('./utils'),
-    restrict = path => {
-        if (path[0] == '/') path = '';
-        return path.replace(/\.\./i, '');
+    restrict = p => {
+        if (p[0] == '/') p = '';
+        return p.replace(/\.\./i, '');
     },
     CASES = [
-        [/^([a-zA-Z]*)([0-9]+).in$/, a => { return a[1] + a[2] + '.out'; }, a => { return parseInt(a[2]); }],
-        [/^([a-zA-Z]*)([0-9]+).in$/, a => { return a[1] + a[2] + '.ans'; }, a => { return parseInt(a[2]); }],
-        [/^([a-zA-Z0-9]*)\.in([0-9]+)$/, a => { return a[1] + '.ou' + a[2]; }, a => { return parseInt(a[2]); }],
-        [/^(input)([0-9]+).txt$/, a => { return 'output' + a[2] + '.txt'; }, a => { return parseInt(a[2]); }],
+        [/^([a-zA-Z]*)([0-9]+).in$/, a => a[1] + a[2] + '.out', a => parseInt(a[2])],
+        [/^([a-zA-Z]*)([0-9]+).in$/, a => a[1] + a[2] + '.ans', a => parseInt(a[2])],
+        [/^([a-zA-Z0-9]*)\.in([0-9]+)$/, a => a[1] + '.ou' + a[2], a => parseInt(a[2])],
+        [/^(input)([0-9]+).txt$/, a => 'output' + a[2] + '.txt', a => parseInt(a[2])],
     ];
 
-async function read_ini_cases(folder) {
+async function readIniCases(folder) {
     let config = {
         checker_type: 'builtin',
         count: 0,
@@ -48,7 +48,7 @@ async function read_ini_cases(folder) {
     }
     return config;
 }
-async function read_yaml_cases(folder) {
+async function readYamlCases(folder) {
     let config = {
         checker_type: 'builtin',
         count: 0,
@@ -105,7 +105,7 @@ async function read_yaml_cases(folder) {
     }
     return config;
 }
-async function read_auto_cases(folder) {
+async function readAutoCases(folder) {
     let config = {
         checker_type: 'builtin',
         count: 0,
@@ -145,9 +145,9 @@ async function read_auto_cases(folder) {
     if (!config.count) throw new FormatError('No cases found.');
     return config;
 }
-async function read_cases(folder) {
-    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return read_ini_cases(folder);
-    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return read_yaml_cases(folder);
-    else return read_auto_cases(folder);
+async function readCases(folder) {
+    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return readIniCases(folder);
+    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder);
+    else return readAutoCases(folder);
 }
-module.exports = read_cases;
+module.exports = readCases;

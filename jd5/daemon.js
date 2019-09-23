@@ -19,6 +19,16 @@ const
     log = require('./log'),
     { RETRY_DELAY_SEC } = require('./config');
 
+global.onDestory = [];
+process.on('SIGINT', async () => {
+    log.log('Saving data');
+    for (let f of global.onDestory) {
+        let r = f();
+        if (r instanceof Promise) await r;
+    }
+    process.exit(0);
+});
+
 async function daemon() {
     let session = new VJ4Session();
     let sandbox = new SandBox('jd5');
@@ -27,8 +37,8 @@ async function daemon() {
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
             await session.ensureLogin();
-            await session.update_problem_data();
-            await session.judge_consume(JudgeHandler, sandbox);
+            await session.updateProblemData();
+            await session.judgeConsume(JudgeHandler, sandbox);
         } catch (e) {
             log.error(e);
             log.info('Retrying after %d seconds', RETRY_DELAY_SEC);
