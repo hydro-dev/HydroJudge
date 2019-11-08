@@ -22,9 +22,17 @@ const
 global.onDestory = [];
 process.on('SIGINT', async () => {
     log.log('Saving data');
-    for (let f of global.onDestory) {
-        let r = f();
-        if (r instanceof Promise) await r;
+    try {
+        for (let f of global.onDestory) {
+            let r = f();
+            if (r instanceof Promise) await r;
+        }
+    } catch (e) {
+        if (global.SI) process.exit(0);
+        log.error(e);
+        log.error('An error occured when destorying the sandbox.');
+        log.error('Press Ctrl-C again for force exit.');
+        global.SI = true;
     }
     process.exit(0);
 });
@@ -32,6 +40,7 @@ process.on('SIGINT', async () => {
 async function daemon() {
     let session = new VJ4Session();
     let sandbox = new SandBox('jd5');
+    global.sandbox = sandbox;
     await Promise.all([session.init(), sandbox.init()]);
     setInterval(() => { session.axios.get('judge/noop'); }, 30000000);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
@@ -47,3 +56,13 @@ async function daemon() {
     }
 }
 daemon();
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', async input => {
+    try {
+        let t = eval(input.toString().trim());
+        if (t instanceof Promise) console.log(await t);
+        else console.log(t);
+    } catch (e) {
+        console.warn(e);
+    }
+});

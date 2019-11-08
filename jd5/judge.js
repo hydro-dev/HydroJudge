@@ -63,9 +63,8 @@ module.exports = class JudgeHandler {
             cache.open(this.session, this.domain_id, this.pid),
             this.build()
         ]);
-        console.log(folder);
         let config = await readCases(folder);
-        console.log(config);
+        console.log(config.subtasks);
         if (config.checker) await this.build_checker(config.checker);
         this.config = config;
         await this.judge(folder);
@@ -112,7 +111,7 @@ module.exports = class JudgeHandler {
             for (let c of subtask.cases) {
                 if (failed) {
                     this.next({
-                        total_status,
+                        status: total_status,
                         case: {
                             status: STATUS_IGNORED, score: 0,
                             time_ms: 0, memory_kb: 0,
@@ -123,9 +122,10 @@ module.exports = class JudgeHandler {
                 } else {
                     let stdout = path.resolve(this.sandbox.dir, 'stdout');
                     let stderr = path.resolve(this.sandbox.dir, 'stderr');
-                    await fsp.symlink(this.run_config.cache.source, this.run_config.cache.target);
+                    await fsp.copyFile(this.run_config.cache.source, this.run_config.cache.target);
+                    console.log(this.run_config);
                     let { code, time_usage_ms, memory_usage_kb } = await this.sandbox.run(
-                        this.run_config.execute[0], this.run_config.execute[1] || [],
+                        this.run_config.execute,
                         {
                             stdin: c.input, stdout, stderr,
                             time_limit_ms: subtask.time_limit_ms,
@@ -141,6 +141,7 @@ module.exports = class JudgeHandler {
                             stdin: c.input,
                             stdout: c.output,
                             user_stdout: stdout,
+                            user_stderr: stderr,
                             checker: this.config.checker,
                             checker_type: this.config.checker_type,
                             score: subtask.score
@@ -152,8 +153,9 @@ module.exports = class JudgeHandler {
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
                     await this.sandbox.clean();
+                    console.log('TOTAL_STATUS', total_status, total_score);
                     this.next({
-                        total_status,
+                        status: total_status,
                         case: {
                             status, score,
                             time_ms: time_usage_ms,
@@ -173,6 +175,7 @@ module.exports = class JudgeHandler {
             time_ms: total_time_usage_ms,
             memory_kb: total_memory_usage_kb
         });
+        console.log('end');
     }
     next(data) {
         data.key = 'next';

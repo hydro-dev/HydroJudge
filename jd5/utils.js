@@ -1,6 +1,7 @@
 const
     fs = require('fs'),
     path = require('path'),
+    parse = require('shell-quote').parse,
     _ = require('lodash'),
     EventEmitter = require('events'),
     _mkdirp = require('mkdirp'),
@@ -53,7 +54,6 @@ async function download(axios, url, filepath) {
     await new Promise((resolve, reject) => {
         let file = fs.createWriteStream(filepath);
         res.data.pipe(file);
-        res.data.on('end', () => { resolve(); });
         file.on('finish', () => { resolve(); });
         file.on('error', err => { reject(err); });
     });
@@ -92,8 +92,7 @@ class Queue extends EventEmitter {
         this.emit('new');
     }
 }
-
 module.exports = {
     download, Queue, mkdirp, max, rmdir, sleep,
-    parseMemoryMB, parseTimeMS, parseLang, parseFilename
+    parseMemoryMB, parseTimeMS, parseLang, parseFilename, cmd: parse
 };

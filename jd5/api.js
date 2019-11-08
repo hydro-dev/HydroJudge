@@ -1,6 +1,7 @@
 const
     axios = require('axios'),
-    fsp = require('fs').promises,
+    fs=require('fs'),
+    fsp = fs.promises,
     path = require('path'),
     yaml = require('js-yaml'),
     WebSocket = require('ws'),

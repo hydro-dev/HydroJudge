@@ -6,7 +6,7 @@ module.exports = {
     CACHE_DIR: path.resolve(os.homedir(), '.cache', 'jd5'),
     SYSTEM_MEMORY_LIMIT_MB: 512,
     SYSTEM_TIME_LIMIT_MS: 10000,
-    SYSTEM_PROCESS_LIMIT: 32,
+    SYSTEM_PROCESS_LIMIT: 8,
     RETRY_DELAY_SEC: 30,
     SANDBOX_ROOT: '/tmp/jd5',
     SANDBOX_ENV: 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',

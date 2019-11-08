@@ -1,37 +1,49 @@
 const
-    sb = require('./builtin-sandbox.js'),
     fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
-    { mkdirp, rmdir, parseFilename } = require('./utils'),
+    { mkdirp, rmdir, parseFilename, cmd } = require('./utils'),
     { SystemError } = require('./error'),
     log = require('./log'),
+    os = require('os'),
     { SYSTEM_TIME_LIMIT_MS, SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT } = require('./config');
 
 module.exports = class SandBox {
-    constructor(name) {
+    constructor(name, type = 'simple-sandbox') {
         this.name = name;
-        this.sandbox = new sb(name);
-        this.dir = this.sandbox.dir;
+        this.SandBox = require(path.resolve(__dirname, 'sandbox', type));
+        this.sandbox = new this.SandBox(name);
+        this.dir = `${os.tmpdir()}/jd5/${name}`;
     }
     async init() {
+        log.log(`Sandbox init: ${this.dir}`);
         if (!fs.existsSync(`${this.dir}/home`))
             await new Promise(resolve => {
                 mkdirp(`${this.dir}/home`, resolve());
             });
+        if (!fs.existsSync(`${this.dir}/cache`))
+            await new Promise(resolve => {
+                mkdirp(`${this.dir}/cache`, resolve());
+            });
+        if (!fs.existsSync(`${this.dir}/jd5.lock`))
+            fs.writeFileSync(`${this.dir}/jd5.lock`, process.pid);
+        else {
+            //TODO(masnn) check if the pid exited.
+            throw new Error('Sandbox dir locked!');
+        }
         global.onDestory.push(() => this.close());
     }
     async close() {
-        await fsp.unlink(path.resolve(this.sandbox.dir, 'jd5.lock'));
+        await fsp.unlink(path.resolve(this.dir, 'jd5.lock'));
     }
     async reset() {
         await this.clean();
-        rmdir(path.join(this.sandbox.dir, 'cache'), true);
-        mkdirp(path.join(this.sandbox.dir, 'cache'));
+        rmdir(path.join(this.dir, 'cache'), true);
+        mkdirp(path.join(this.dir, 'cache'));
     }
     async clean() {
-        rmdir(path.join(this.sandbox.dir, 'home'), true);
-        mkdirp(path.join(this.sandbox.dir, 'home'));
+        rmdir(path.join(this.dir, 'home'), true);
+        mkdirp(path.join(this.dir, 'home'));
     }
     async addFile(src, target) {
         if (!src) throw new SystemError('Error while parsing source');
@@ -40,32 +52,34 @@ module.exports = class SandBox {
             //file descriptor
         } else if (typeof target == 'string') {
             //path in sandbox
-            await fsp.symlink(path.join(this.sandbox.dir, 'home', target), src);
+            await fsp.symlink(path.join(this.dir, 'home', target), src);
         } else throw new SystemError('Error while parsing target');
     }
-    async writeFile(target, file) {
-        return await fsp.writeFile(path.resolve(this.dir, 'home', target), file);
+    writeFile(target, file) {
+        console.log(path.resolve(this.dir, 'home', target))
+        return fsp.writeFile(path.resolve(this.dir, 'home', target), file);
     }
     async saveFile(src) {
-        await fsp.copyFile(path.resolve(this.sandbox.dir, 'home', src), path.resolve(this.sandbox.dir, 'cache', src));
+        await fsp.copyFile(path.resolve(this.dir, 'home', src), path.resolve(this.dir, 'cache', src));
     }
-    async run(file, params, {
+    async command(command) {
+        this.run(command, { stdout: '/tmp/stdout', stderr: '/tmp/stderr' });
+    }
+    async run(execute, {
         time_limit_ms = SYSTEM_TIME_LIMIT_MS,
         memory_limit_mb = SYSTEM_MEMORY_LIMIT_MB,
         process_limit = SYSTEM_PROCESS_LIMIT,
         stdin, stdout, stderr
     } = {}) {
-        let config = {
+        let params = cmd(execute);
+        let result = await this.sandbox.execute({
+            file: params[0], params, 
+            cwd: path.resolve(this.dir, 'home'),
             stdin, stdout, stderr,
             time: time_limit_ms,
             memory: memory_limit_mb * 1024 * 1024,
             process: process_limit
-        };
-        log.log(config);
-        this.process = await this.sandbox.spawn(file, params, config);
-        let result = await this.sandbox.wait();
-        log.log('Your sandbox finished!', result);
+        });
         return result || { code: -1 };
     }
-
 };

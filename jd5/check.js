@@ -3,7 +3,6 @@ const
     { SystemError } = require('./error');
 
 async function check(sandbox, config) {
-    console.log('checker_main', config);
     if (!checkers[config.checker_type])
         throw new SystemError('Unknown checker type:', [config.checker_type]);
     let { code, status, score, message } = await checkers[config.checker_type].check(sandbox, {
