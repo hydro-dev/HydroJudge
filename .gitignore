@@ -2,3 +2,4 @@ node_modules
 *.ignore.*
 yarn-error.log
 __*
+simple-sandbox

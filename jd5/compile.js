@@ -28,7 +28,7 @@ try {
         process.exit(1);
     }
 }
-async function compile(lang, code, sandbox) {
+async function compile(lang, code, sandbox, target) {
     if (!_langs[lang]) throw new SystemError('Language not supported');
     let info = _langs[lang], exit_code, run_config;
     let stdout = path.resolve(sandbox.dir, 'stdout');
@@ -41,22 +41,16 @@ async function compile(lang, code, sandbox) {
         if (exit_code) throw new CompileError({ stdout, stderr });
         await fsp.rename(
             path.resolve(sandbox.dir, 'home', info.cache),
-            path.resolve(sandbox.dir, 'cache', 'code_cache')
+            path.resolve(sandbox.dir, 'cache', target)
         );
         run_config = {
-            cache: {
-                source: path.resolve(sandbox.dir, 'cache', 'code_cache'),
-                target: path.resolve(sandbox.dir, 'home', info.cache)
-            },
+            target: path.resolve(sandbox.dir, 'home', info.cache),
             execute: info.execute
         };
     } else if (info.type == 'interpreter') {
-        await fsp.writeFile(path.resolve(sandbox.dir, 'cache', 'code_cache'), code);
+        await fsp.writeFile(path.resolve(sandbox.dir, 'cache', target), code);
         run_config = {
-            cache: {
-                source: path.resolve(sandbox.dir, 'cache', 'code_cache'),
-                target: path.resolve(sandbox.dir, 'home', info.cache)
-            },
+            target: path.resolve(sandbox.dir, 'home', info.cache),
             execute: info.execute
         };
     }

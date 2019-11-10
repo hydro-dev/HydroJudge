@@ -1,30 +1,27 @@
 const
     path = require('path'),
-    { STATUS_WRONG_ANSWER, STATUS_ACCEPTED } = require('../status'),
+    _compile = require('../compile'),
+    { SystemError } = require('../error'),
     fs = require('fs');
 
 async function check(sandbox, config) {
-    let usrout = await sandbox.addFile(config.user_stdout);
-    let stdans = await sandbox.addFile(config.output);
-    let { code } = await sandbox.run(
-        `/usr/bin/diff -ZB ${usrout} ${stdans}`, {}
-    );
-    let stdout = path.resolve(sandbox.dir, 'stdout');
-    let stderr = path.resolve(sandbox.dir, 'stderr');
-    stdout = (await fs.promises.readFile(stdout)).toString();
-    stderr = (await fs.promises.readFile(stderr)).toString();
-    stdout = stdout.split('\n');
-    if (stdout) return {
-        code: 0, status: STATUS_WRONG_ANSWER,
-        message: stdout, score: 0
-    };
-    else return {
-        code: 0, score: config.score,
-        status: STATUS_ACCEPTED, message: ''
+    await Promise.all([
+        sandbox.addFile(config.user_stdout, 'usrout'),
+        sandbox.addFile(config.output, 'stdout')
+    ]);
+    await fs.promises.copyFile(path.resolve(sandbox.dir, 'cache', 'checker'), path.resolve(sandbox.dir, 'home', 'checker'));
+    let { code } = await sandbox.run('/home/checker', {});
+    let message = fs.readFileSync(path.resolve(sandbox.dir, 'home', 'message')).toString();
+    return {
+        code: 0, score: code == 1 ? config.score : 0,
+        status: code, message
     };
 }
-async function compile() {
-    return { code: 0 };
+async function compile(sandbox) {
+    let checker_code = await fs.promises.readFile(path.resolve(__dirname, 'checker.cpp'));
+    let { code, stdout, stderr } = await _compile('cc', checker_code, sandbox, 'checker');
+    if (code) throw new SystemError('Cannot compile checker');
+    return { code, stdout, stderr };
 }
 
 module.exports = { check, compile };

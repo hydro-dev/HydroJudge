@@ -8,7 +8,7 @@ const
     readCases = require('./cases'),
     path = require('path'),
     compile = require('./compile'),
-    check = require('./check'),
+    { check, compile_checker } = require('./check'),
     log = require('./log'),
     fs = require('fs'),
     fsp = fs.promises;
@@ -63,7 +63,7 @@ module.exports = class JudgeHandler {
             this.build()
         ]);
         let config = await readCases(folder);
-        if (config.checker) await this.build_checker(config.checker);
+        await compile_checker(this.sandbox, config.checker || 'builtin', config.checker_file);
         this.config = config;
         await this.judge(folder);
         await this.sandbox.reset();
@@ -81,19 +81,12 @@ module.exports = class JudgeHandler {
     }
     async build() {
         this.next({ status: STATUS_COMPILING });
-        let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox);
+        let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox, 'code');
         if (code) throw new CompileError({ stdout, stderr });
         stdout = (await fsp.readFile(stdout)).toString();
         stderr = (await fsp.readFile(stderr)).toString();
         this.next({ compiler_text: [stdout, stderr].join('\n') });
         this.run_config = run_config;
-    }
-    async build_checker(checker_file) {
-        let checker_code = await fsp.readFile(checker_file);
-        let checker_lang = checker_file.split('.')[checker_file.split('.').length - 1];
-        let { code, stdout, stderr, run_config } = await compile(checker_lang, checker_code, this.sandbox);
-        if (code) throw new CompileError({ stdout, stderr });
-        this.checker_config = run_config;
     }
     async judge() {
         this.next({ status: STATUS_JUDGING, progress: 0 });
@@ -116,7 +109,7 @@ module.exports = class JudgeHandler {
                 } else {
                     let stdout = path.resolve(this.sandbox.dir, 'stdout');
                     let stderr = path.resolve(this.sandbox.dir, 'stderr');
-                    await fsp.copyFile(this.run_config.cache.source, this.run_config.cache.target);
+                    await fsp.copyFile(path.resolve(this.sandbox.dir, 'cache', 'code'), this.run_config.target);
                     let { code, time_usage_ms, memory_usage_kb } = await this.sandbox.run(
                         this.run_config.execute,
                         {
