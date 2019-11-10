@@ -46,6 +46,8 @@ module.exports = class SIMPLE_SANDBOX {
         });
         let result = await this.process.waitForStop();
         this.process = null;
+        result.time_usage_ms = Math.floor(result.time / 1000000);
+        result.memory_usage_kb = result.memory / 1024;
         if (result.code == 126) throw new SystemError('Executable file not found!');
         return result;
     }

@@ -52,11 +52,10 @@ module.exports = class SandBox {
             //file descriptor
         } else if (typeof target == 'string') {
             //path in sandbox
-            await fsp.symlink(path.join(this.dir, 'home', target), src);
+            await fsp.copyFile(src, path.join(this.dir, 'home', target));
         } else throw new SystemError('Error while parsing target');
     }
     writeFile(target, file) {
-        console.log(path.resolve(this.dir, 'home', target))
         return fsp.writeFile(path.resolve(this.dir, 'home', target), file);
     }
     async saveFile(src) {
@@ -73,13 +72,13 @@ module.exports = class SandBox {
     } = {}) {
         let params = cmd(execute);
         let result = await this.sandbox.execute({
-            file: params[0], params, 
+            file: params[0], params,
             cwd: path.resolve(this.dir, 'home'),
             stdin, stdout, stderr,
             time: time_limit_ms,
             memory: memory_limit_mb * 1024 * 1024,
             process: process_limit
         });
-        return result || { code: -1 };
+        return result || { code: -1, time_ms: 0, memory_kb: 0 };
     }
 };

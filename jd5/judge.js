@@ -21,7 +21,6 @@ module.exports = class JudgeHandler {
         this.sandbox = sandbox;
     }
     async handle() {
-        log.log(this.request);
         if (!this.request.event) await this.do_record();
         else if (this.request.event == 'problem_data_change') await this.update_problem_data();
         else log.warn('Unknown event: %s', this.request.event);
@@ -64,7 +63,6 @@ module.exports = class JudgeHandler {
             this.build()
         ]);
         let config = await readCases(folder);
-        console.log(config.subtasks);
         if (config.checker) await this.build_checker(config.checker);
         this.config = config;
         await this.judge(folder);
@@ -84,10 +82,7 @@ module.exports = class JudgeHandler {
     async build() {
         this.next({ status: STATUS_COMPILING });
         let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox);
-        if (code) {
-            log.debug('Compile error: %s\n%s', stdout, stderr);
-            throw new CompileError({ stdout, stderr });
-        }
+        if (code) throw new CompileError({ stdout, stderr });
         stdout = (await fsp.readFile(stdout)).toString();
         stderr = (await fsp.readFile(stderr)).toString();
         this.next({ compiler_text: [stdout, stderr].join('\n') });
@@ -97,10 +92,7 @@ module.exports = class JudgeHandler {
         let checker_code = await fsp.readFile(checker_file);
         let checker_lang = checker_file.split('.')[checker_file.split('.').length - 1];
         let { code, stdout, stderr, run_config } = await compile(checker_lang, checker_code, this.sandbox);
-        if (code) {
-            log.debug('Checker compile error: %s\n%s', stdout, stderr);
-            throw new CompileError({ stdout, stderr });
-        }
+        if (code) throw new CompileError({ stdout, stderr });
         this.checker_config = run_config;
     }
     async judge() {
@@ -113,17 +105,18 @@ module.exports = class JudgeHandler {
                     this.next({
                         status: total_status,
                         case: {
-                            status: STATUS_IGNORED, score: 0,
-                            time_ms: 0, memory_kb: 0,
+                            status: STATUS_IGNORED,
+                            score: 0,
+                            time_ms: 0,
+                            memory_kb: 0,
                             judge_text: ''
                         },
-                        progress: c.id * 100 / this.config.count
+                        progress: Math.floor(c.id * 100 / this.config.count)
                     });
                 } else {
                     let stdout = path.resolve(this.sandbox.dir, 'stdout');
                     let stderr = path.resolve(this.sandbox.dir, 'stderr');
                     await fsp.copyFile(this.run_config.cache.source, this.run_config.cache.target);
-                    console.log(this.run_config);
                     let { code, time_usage_ms, memory_usage_kb } = await this.sandbox.run(
                         this.run_config.execute,
                         {
@@ -153,16 +146,16 @@ module.exports = class JudgeHandler {
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
                     await this.sandbox.clean();
-                    console.log('TOTAL_STATUS', total_status, total_score);
                     this.next({
                         status: total_status,
                         case: {
-                            status, score,
+                            status,
+                            score,
                             time_ms: time_usage_ms,
                             memory_kb: memory_usage_kb,
                             judge_text: message
                         },
-                        progress: c.id * 100 / this.config.count
+                        progress: Math.floor(c.id * 100 / this.config.count)
                     });
                 }
             } //End: for(case)
@@ -175,7 +168,6 @@ module.exports = class JudgeHandler {
             time_ms: total_time_usage_ms,
             memory_kb: total_memory_usage_kb
         });
-        console.log('end');
     }
     next(data) {
         data.key = 'next';
