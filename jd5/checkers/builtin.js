@@ -1,7 +1,6 @@
 const
     path = require('path'),
-    _compile = require('../compile'),
-    { SystemError } = require('../error'),
+    { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     fs = require('fs');
 
 async function check(sandbox, config) {
@@ -9,19 +8,26 @@ async function check(sandbox, config) {
         sandbox.addFile(config.user_stdout, 'usrout'),
         sandbox.addFile(config.output, 'stdout')
     ]);
-    await fs.promises.copyFile(path.resolve(sandbox.dir, 'cache', 'checker'), path.resolve(sandbox.dir, 'home', 'checker'));
-    let { code } = await sandbox.run('/home/checker', {});
-    let message = fs.readFileSync(path.resolve(sandbox.dir, 'home', 'message')).toString();
+    let stdout = path.resolve(sandbox.dir, 'home', 'message');
+    let { code } = await sandbox.run('/usr/bin/diff -BZ usrout stdout', {
+        time_limit_ms: 1000, stdout
+    });
+    let status, message = '';
+    let opt = fs.readFileSync(stdout).toString();
+    if (opt) {
+        status = STATUS_WRONG_ANSWER;
+        opt = opt.split('---');
+        let t = opt[0].split('\n');
+        let q = opt[1].split('\n');
+        message = [t[0], t[1], q[1]].join('\n');
+    } else status = STATUS_ACCEPTED;
     return {
-        code: 0, score: code == 1 ? config.score : 0,
-        status: code, message
+        code: 0, score: status == STATUS_ACCEPTED ? config.score : 0,
+        status, message
     };
 }
-async function compile(sandbox) {
-    let checker_code = await fs.promises.readFile(path.resolve(__dirname, 'checker.cpp'));
-    let { code, stdout, stderr } = await _compile('cc', checker_code, sandbox, 'checker');
-    if (code) throw new SystemError('Cannot compile checker');
-    return { code, stdout, stderr };
+async function compile() {
+    return { code: 0 };
 }
 
 module.exports = { check, compile };

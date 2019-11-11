@@ -30,31 +30,18 @@ try {
 }
 async function compile(lang, code, sandbox, target) {
     if (!_langs[lang]) throw new SystemError('Language not supported');
-    let info = _langs[lang], exit_code, run_config;
+    let info = _langs[lang], exit_code;
     let stdout = path.resolve(sandbox.dir, 'stdout');
     let stderr = path.resolve(sandbox.dir, 'stderr');
     if (info.type == 'compiler') {
         await sandbox.writeFile(info.code_file, code);
-        ({ code: exit_code } = await sandbox.run(info.compile, {
+        ({ code: exit_code } = await sandbox.run(info.compile.replace('%filename%', target), {
             stdout, stderr
         }));
         if (exit_code) throw new CompileError({ stdout, stderr });
-        await fsp.rename(
-            path.resolve(sandbox.dir, 'home', info.cache),
-            path.resolve(sandbox.dir, 'cache', target)
-        );
-        run_config = {
-            target: path.resolve(sandbox.dir, 'home', info.cache),
-            execute: info.execute
-        };
-    } else if (info.type == 'interpreter') {
+    } else if (info.type == 'interpreter')
         await fsp.writeFile(path.resolve(sandbox.dir, 'cache', target), code);
-        run_config = {
-            target: path.resolve(sandbox.dir, 'home', info.cache),
-            execute: info.execute
-        };
-    }
-    return { code: 0, stdout, stderr, run_config };
+    return { code: 0, stdout, stderr, execute: info.execute };
 }
 
 module.exports = compile;

@@ -1,4 +1,5 @@
 const
+    EventEmitter = require('events'),
     fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
@@ -8,8 +9,9 @@ const
     os = require('os'),
     { SYSTEM_TIME_LIMIT_MS, SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT } = require('./config');
 
-module.exports = class SandBox {
+module.exports = class SandBox extends EventEmitter {
     constructor(name, type = 'simple-sandbox') {
+        super();
         this.name = name;
         this.SandBox = require(path.resolve(__dirname, 'sandbox', type));
         this.sandbox = new this.SandBox(name);
@@ -17,6 +19,10 @@ module.exports = class SandBox {
     }
     async init() {
         log.log(`Sandbox init: ${this.dir}`);
+        if (!fs.existsSync(`${this.dir}`))
+            await new Promise(resolve => {
+                mkdirp(`${this.dir}`, resolve());
+            });
         if (!fs.existsSync(`${this.dir}/home`))
             await new Promise(resolve => {
                 mkdirp(`${this.dir}/home`, resolve());
@@ -24,6 +30,10 @@ module.exports = class SandBox {
         if (!fs.existsSync(`${this.dir}/cache`))
             await new Promise(resolve => {
                 mkdirp(`${this.dir}/cache`, resolve());
+            });
+        if (!fs.existsSync(`${this.dir}/tmp`))
+            await new Promise(resolve => {
+                mkdirp(`${this.dir}/tmp`, resolve());
             });
         if (!fs.existsSync(`${this.dir}/jd5.lock`))
             fs.writeFileSync(`${this.dir}/jd5.lock`, process.pid);
@@ -70,6 +80,7 @@ module.exports = class SandBox {
         process_limit = SYSTEM_PROCESS_LIMIT,
         stdin, stdout, stderr
     } = {}) {
+        if (execute[0] == '.') execute = execute.replace('.', this.dir + '/home');
         let params = cmd(execute);
         let result = await this.sandbox.execute({
             file: params[0], params,
@@ -80,5 +91,9 @@ module.exports = class SandBox {
             process: process_limit
         });
         return result || { code: -1, time_ms: 0, memory_kb: 0 };
+    }
+    async free() {
+        await this.reset();
+        this.emit('free');
     }
 };

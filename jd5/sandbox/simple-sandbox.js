@@ -6,7 +6,7 @@ const
 
 module.exports = class SIMPLE_SANDBOX {
     constructor(name) {
-        if (!name) name = 'jd5';
+        if (typeof name == 'number') name = name + '';
         if (typeof name != 'string') throw new SystemError('Typeof sandbox_name should be string, receive ' + (typeof name));
         this.mounts = [
             {
@@ -48,7 +48,7 @@ module.exports = class SIMPLE_SANDBOX {
         this.process = null;
         result.time_usage_ms = Math.floor(result.time / 1000000);
         result.memory_usage_kb = result.memory / 1024;
-        if (result.code == 126) throw new SystemError('Executable file not found!');
+        if (result.code == 126) throw new SystemError('Executable file not found!', [config]);
         return result;
     }
 };

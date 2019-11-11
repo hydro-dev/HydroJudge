@@ -14,11 +14,11 @@ const
     fsp = fs.promises;
 
 module.exports = class JudgeHandler {
-    constructor(session, request, ws, sandbox) {
+    constructor(session, request, ws, pool) {
         this.session = session;
         this.request = request;
         this.ws = ws;
-        this.sandbox = sandbox;
+        this.pool = pool;
     }
     async handle() {
         if (!this.request.event) await this.do_record();
@@ -33,12 +33,17 @@ module.exports = class JudgeHandler {
         this.rid = this.request.rid;
         this.lang = this.request.lang;
         this.code = this.request.code;
+        this.usr_sandbox = await this.pool.get();
+        this.judge_sandbox = await this.pool.get();
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
             else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
-            await this.sandbox.reset();
+            await Promise.all([
+                this.usr_sandbox.free(),
+                this.judge_sandbox.free()
+            ]);
             if (e instanceof CompileError) {
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
@@ -63,10 +68,13 @@ module.exports = class JudgeHandler {
             this.build()
         ]);
         let config = await readCases(folder);
-        await compile_checker(this.sandbox, config.checker || 'builtin', config.checker_file);
+        await compile_checker(this.judge_sandbox, config.checker || 'builtin', config.checker_file);
         this.config = config;
         await this.judge(folder);
-        await this.sandbox.reset();
+        await Promise.all([
+            this.judge_sandbox.free(),
+            this.usr_sandbox.free()
+        ]);
     }
     async do_pretest() {
         log.info('Pretest: %s/%s, %s', this.domain_id, this.pid, this.rid);
@@ -77,16 +85,19 @@ module.exports = class JudgeHandler {
         ]);
         this.config = await readCases(folder);
         await this.judge(folder);
-        await this.sandbox.reset();
+        await Promise.all([
+            this.judge_sandbox.free(),
+            this.usr_sandbox.free()
+        ]);
     }
     async build() {
         this.next({ status: STATUS_COMPILING });
-        let { code, stdout, stderr, run_config } = await compile(this.lang, this.code, this.sandbox, 'code');
+        let { code, stdout, stderr, execute } = await compile(this.lang, this.code, this.usr_sandbox, 'code');
         if (code) throw new CompileError({ stdout, stderr });
         stdout = (await fsp.readFile(stdout)).toString();
         stderr = (await fsp.readFile(stderr)).toString();
         this.next({ compiler_text: [stdout, stderr].join('\n') });
-        this.run_config = run_config;
+        this.execute = execute;
     }
     async judge() {
         this.next({ status: STATUS_JUDGING, progress: 0 });
@@ -107,11 +118,10 @@ module.exports = class JudgeHandler {
                         progress: Math.floor(c.id * 100 / this.config.count)
                     });
                 } else {
-                    let stdout = path.resolve(this.sandbox.dir, 'stdout');
-                    let stderr = path.resolve(this.sandbox.dir, 'stderr');
-                    await fsp.copyFile(path.resolve(this.sandbox.dir, 'cache', 'code'), this.run_config.target);
-                    let { code, time_usage_ms, memory_usage_kb } = await this.sandbox.run(
-                        this.run_config.execute,
+                    let stdout = path.resolve(this.usr_sandbox.dir, 'stdout');
+                    let stderr = path.resolve(this.usr_sandbox.dir, 'stderr');
+                    let { code, time_usage_ms, memory_usage_kb } = await this.usr_sandbox.run(
+                        this.execute.replace('%filename%', 'code'),
                         {
                             stdin: c.input, stdout, stderr,
                             time_limit_ms: subtask.time_limit_ms,
@@ -123,7 +133,7 @@ module.exports = class JudgeHandler {
                         status = STATUS_RUNTIME_ERROR;
                         message = `Your program exited with code ${code}.`;
                     } else {
-                        [status, score, message] = await check(this.sandbox, {
+                        [status, score, message] = await check(this.judge_sandbox, {
                             stdin: c.input,
                             stdout: c.output,
                             user_stdout: stdout,
@@ -138,7 +148,6 @@ module.exports = class JudgeHandler {
                     total_time_usage_ms += time_usage_ms;
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
-                    await this.sandbox.clean();
                     this.next({
                         status: total_status,
                         case: {

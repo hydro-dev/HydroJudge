@@ -1,6 +1,6 @@
 const
     axios = require('axios'),
-    fs=require('fs'),
+    fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
     yaml = require('js-yaml'),
@@ -107,7 +107,7 @@ module.exports = class AxiosInstance {
         this.config.last_update_at = result.time;
         await this.save_config();
     }
-    async judgeConsume(handler, sandbox) {
+    async judgeConsume(handler, pool) {
         log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
         this.ws = new WebSocket(this.config.server_url.replace(/https?:\/\//i, 'ws://') + 'judge/consume-conn/websocket?t=' + res.entropy, {
@@ -129,7 +129,7 @@ module.exports = class AxiosInstance {
         log.info('Connected');
         while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
             let request = await queue.get();
-            await new handler(this, request, this.ws, sandbox).handle();
+            await new handler(this, request, this.ws, pool).handle();
         }
     }
     async save_config() {

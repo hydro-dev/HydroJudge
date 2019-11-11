@@ -14,10 +14,10 @@
 const
     VJ4Session = require('./api'),
     { sleep } = require('./utils'),
-    SandBox = require('./sandbox'),
     JudgeHandler = require('./judge'),
     log = require('./log'),
-    { RETRY_DELAY_SEC } = require('./config');
+    Pool = require('./pool'),
+    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT } = require('./config');
 
 global.onDestory = [];
 process.on('SIGINT', async () => {
@@ -39,16 +39,14 @@ process.on('SIGINT', async () => {
 
 async function daemon() {
     let session = new VJ4Session();
-    let sandbox = new SandBox('jd5');
-    global.sandbox = sandbox;
-    await Promise.all([session.init(), sandbox.init()]);
-    await sandbox.reset();
+    let pool = new Pool();
+    await Promise.all([session.init(), pool.create(SANDBOX_POOL_COUNT || 2)]);
     setInterval(() => { session.axios.get('judge/noop'); }, 30000000);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
             await session.ensureLogin();
             await session.updateProblemData();
-            await session.judgeConsume(JudgeHandler, sandbox);
+            await session.judgeConsume(JudgeHandler, pool);
         } catch (e) {
             log.error(e);
             log.info('Retrying after %d seconds', RETRY_DELAY_SEC);
