@@ -1,17 +1,11 @@
 const
     cache = require('./cache'),
-    { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR, STATUS_ACCEPTED,
-        STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
-        STATUS_IGNORED } = require('./status'),
+    { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError } = require('./error'),
-    { max } = require('./utils'),
     readCases = require('./cases'),
+    judger = require('./judger'),
     path = require('path'),
-    compile = require('./compile'),
-    { check, compile_checker } = require('./check'),
-    log = require('./log'),
-    fs = require('fs'),
-    fsp = fs.promises;
+    log = require('./log');
 
 module.exports = class JudgeHandler {
     constructor(session, request, ws, pool) {
@@ -33,23 +27,19 @@ module.exports = class JudgeHandler {
         this.rid = this.request.rid;
         this.lang = this.request.lang;
         this.code = this.request.code;
-        this.usr_sandbox = await this.pool.get();
-        this.judge_sandbox = await this.pool.get();
+        this.next = this.get_next(this.ws, this.tag);
+        this.end = this.get_end(this.ws, this.tag);
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
             else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
-            await Promise.all([
-                this.usr_sandbox.free(),
-                this.judge_sandbox.free()
-            ]);
             if (e instanceof CompileError) {
                 this.next({ judge_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else {
                 log.error(e);
-                this.next({ judge_text: e.message });
+                this.next({ judge_text: e.message + '\n' + e.stack + '\n' + JSON.stringify(e.params) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
@@ -63,122 +53,29 @@ module.exports = class JudgeHandler {
     }
     async do_submission() {
         log.info('Submission: %s/%s, %s', this.domain_id, this.pid, this.rid);
-        let [folder] = await Promise.all([
-            cache.open(this.session, this.domain_id, this.pid),
-            this.build()
-        ]);
-        let config = await readCases(folder);
-        await compile_checker(this.judge_sandbox, config.checker || 'builtin', config.checker_file);
-        this.config = config;
-        await this.judge(folder);
-        await Promise.all([
-            this.judge_sandbox.free(),
-            this.usr_sandbox.free()
-        ]);
+        this.folder = await cache.open(this.session, this.domain_id, this.pid);
+        this.config = await readCases(this.folder);
+        await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {
         log.info('Pretest: %s/%s, %s', this.domain_id, this.pid, this.rid);
-        let folder = path.join(`_/${this.rid}`);
-        await Promise.all([
-            this.session.record_pretest_data(this.rid, folder),
-            this.build()
-        ]);
-        this.config = await readCases(folder);
-        await this.judge(folder);
-        await Promise.all([
-            this.judge_sandbox.free(),
-            this.usr_sandbox.free()
-        ]);
+        this.folder = path.join(`_/${this.rid}`);
+        await this.session.record_pretest_data(this.rid, this.folder);
+        this.config = await readCases(this.folder);
+        await judger.default.judge(this);
     }
-    async build() {
-        this.next({ status: STATUS_COMPILING });
-        let { code, stdout, stderr, execute } = await compile(this.lang, this.code, this.usr_sandbox, 'code');
-        if (code) throw new CompileError({ stdout, stderr });
-        stdout = (await fsp.readFile(stdout)).toString();
-        stderr = (await fsp.readFile(stderr)).toString();
-        this.next({ compiler_text: [stdout, stderr].join('\n') });
-        this.execute = execute;
+    get_next(ws, tag) {
+        return data => {
+            data.key = 'next';
+            data.tag = tag;
+            ws.send(JSON.stringify(data));
+        };
     }
-    async judge() {
-        this.next({ status: STATUS_JUDGING, progress: 0 });
-        let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
-        for (let subtask of this.config.subtasks) {
-            let failed = false, subtask_score = 0;
-            for (let c of subtask.cases) {
-                if (failed) {
-                    this.next({
-                        status: total_status,
-                        case: {
-                            status: STATUS_IGNORED,
-                            score: 0,
-                            time_ms: 0,
-                            memory_kb: 0,
-                            judge_text: ''
-                        },
-                        progress: Math.floor(c.id * 100 / this.config.count)
-                    });
-                } else {
-                    let stdout = path.resolve(this.usr_sandbox.dir, 'stdout');
-                    let stderr = path.resolve(this.usr_sandbox.dir, 'stderr');
-                    let { code, time_usage_ms, memory_usage_kb } = await this.usr_sandbox.run(
-                        this.execute.replace('%filename%', 'code'),
-                        {
-                            stdin: c.input, stdout, stderr,
-                            time_limit_ms: subtask.time_limit_ms,
-                            memory_limit_mb: subtask.memory_limit_mb
-                        }
-                    );
-                    let status, message = '', score = 0;
-                    if (code) {
-                        status = STATUS_RUNTIME_ERROR;
-                        message = `Your program exited with code ${code}.`;
-                    } else {
-                        [status, score, message] = await check(this.judge_sandbox, {
-                            stdin: c.input,
-                            stdout: c.output,
-                            user_stdout: stdout,
-                            user_stderr: stderr,
-                            checker: this.config.checker,
-                            checker_type: this.config.checker_type,
-                            score: subtask.score
-                        });
-                    }
-                    subtask_score += score;
-                    total_status = max(total_status, status);
-                    total_time_usage_ms += time_usage_ms;
-                    total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
-                    if (status != STATUS_ACCEPTED) failed = true;
-                    this.next({
-                        status: total_status,
-                        case: {
-                            status,
-                            score,
-                            time_ms: time_usage_ms,
-                            memory_kb: memory_usage_kb,
-                            judge_text: message
-                        },
-                        progress: Math.floor(c.id * 100 / this.config.count)
-                    });
-                }
-            } //End: for(case)
-            if (failed) total_score += subtask_score;
-            else total_score += subtask.score;
-        } //End: for(subtask)
-        this.end({
-            status: total_status,
-            score: total_score,
-            time_ms: total_time_usage_ms,
-            memory_kb: total_memory_usage_kb
-        });
-    }
-    next(data) {
-        data.key = 'next';
-        data.tag = this.tag;
-        this.ws.send(JSON.stringify(data));
-    }
-    end(data) {
-        data.key = 'end';
-        data.tag = this.tag;
-        this.ws.send(JSON.stringify(data));
+    get_end(ws, tag) {
+        return data => {
+            data.key = 'end';
+            data.tag = tag;
+            ws.send(JSON.stringify(data));
+        };
     }
 };

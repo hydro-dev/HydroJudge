@@ -18,7 +18,7 @@ const
 
 async function readIniCases(folder) {
     let config = {
-        checker_type: 'builtin',
+        checker_type: 'default',
         count: 0,
         subtasks: []
     };
@@ -50,12 +50,13 @@ async function readIniCases(folder) {
 }
 async function readYamlCases(folder) {
     let config = {
-        checker_type: 'builtin',
+        checker_type: 'default',
         count: 0,
         subtasks: []
     };
+    let config_file;
     try {
-        let config_file = (await fsp.readFile(path.resolve(folder, 'config.yaml'))).toString();
+        config_file = (await fsp.readFile(path.resolve(folder, 'config.yaml'))).toString();
         config_file = yaml.safeLoad(config_file);
         if (config_file.checker) {
             config.checker = path.join(folder, restrict(config_file.checker));
@@ -103,11 +104,11 @@ async function readYamlCases(folder) {
     } catch (e) {
         throw new FormatError('Invalid file: config.yaml');
     }
-    return config;
+    return Object.assign(config_file, config);
 }
 async function readAutoCases(folder) {
     let config = {
-        checker_type: 'builtin',
+        checker_type: 'default',
         count: 0,
         subtasks: []
     };

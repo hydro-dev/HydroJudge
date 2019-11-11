@@ -7,6 +7,7 @@
  */
 const
     fs = require('fs'),
+    path = require('path'),
     fsp = fs.promises,
     { SystemError } = require('../error'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
@@ -14,10 +15,12 @@ const
     _compile = require('../compile');
 
 async function check(sandbox, config) {
-    let stdans = await sandbox.addFile(config.output);
-    let { code, stdout } = await sandbox.run({
-        params: [config.score, stdans]
-    });
+    await Promise.all([
+        sandbox.addFile(config.user_stdout, 'usrout'),
+        sandbox.addFile(config.output, 'stdout')
+    ]);
+    let stdout = path.resolve(sandbox.dir, 'home', 'cmp');
+    let { code } = await sandbox.run('/home/checker stdout usrout', {});
     let status;
     if (code) throw new SystemError('Checker returned a non-zero value', [code]);
     stdout = (await fsp.readFile(stdout)).toString();
@@ -30,7 +33,7 @@ async function check(sandbox, config) {
 }
 async function compile(sandbox, config) {
     let checker_code = await fsp.readFile(config.checker);
-    let { code, stdout, stderr } = await _compile(parseLang(config.checker), checker_code, sandbox);
+    let { code, stdout, stderr } = await _compile(parseLang(config.checker), checker_code, sandbox, 'checker');
     if (code) throw new SystemError('Cannot compile checker');
     return { code, stdout, stderr };
 }
