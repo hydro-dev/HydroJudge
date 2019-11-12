@@ -11,6 +11,7 @@ module.exports = class JudgeHandler {
     constructor(session, request, ws, pool) {
         this.session = session;
         this.request = request;
+        this.host = request.host;
         this.ws = ws;
         this.pool = pool;
     }
@@ -47,13 +48,13 @@ module.exports = class JudgeHandler {
     async update_problem_data() {
         let domain_id = this.request.domain_id;
         let pid = this.request.pid;
-        await cache.invalidate(domain_id, pid);
+        await cache.invalidate(this.host, domain_id, pid);
         log.debug('Invalidated %s/%s', domain_id, pid);
         await this.session.update_problem_data();
     }
     async do_submission() {
         log.info('Submission: %s/%s, %s', this.domain_id, this.pid, this.rid);
-        this.folder = await cache.open(this.session, this.domain_id, this.pid);
+        this.folder = await cache.open(this.host, this.session, this.domain_id, this.pid);
         this.config = await readCases(this.folder);
         await judger[this.config.type || 'default'].judge(this);
     }
@@ -66,6 +67,7 @@ module.exports = class JudgeHandler {
     }
     get_next(ws, tag) {
         return data => {
+            if (data.judge_text) if (!this.session.config.detail) data.judge_text = '';
             data.key = 'next';
             data.tag = tag;
             ws.send(JSON.stringify(data));
@@ -73,6 +75,7 @@ module.exports = class JudgeHandler {
     }
     get_end(ws, tag) {
         return data => {
+            if (data.judge_text) if (!this.session.config.detail) data.judge_text = '';
             data.key = 'end';
             data.tag = tag;
             ws.send(JSON.stringify(data));

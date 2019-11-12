@@ -63,7 +63,7 @@ async function readYamlCases(folder) {
             if (config_file.checker_type) config.checker_type = config_file.checker_type;
         }
         if (!fs.existsSync(config.checker)) throw new FormatError('Checker not found.', [config_file.checker]);
-        if (config_file.cases) { //Legacy format
+        if (config_file.cases)
             for (let c of config_file.cases) {
                 config.count++;
                 let cfg = {
@@ -75,12 +75,12 @@ async function readYamlCases(folder) {
                 if (!fs.existsSync(cfg.output)) throw new FormatError('Output file not found', [c.output]);
                 config.subtasks.push({
                     score: parseInt(c.score),
-                    time_limit_ms: parseTimeMS(c.time),
-                    memory_limit_mb: parseMemoryMB(c.memory),
+                    time_limit_ms: parseTimeMS(c.time || config_file.time),
+                    memory_limit_mb: parseMemoryMB(c.memory || config_file.memory),
                     cases: [cfg]
                 });
             }
-        } else if (config_file.subtasks) { //New format
+        else if (config_file.subtasks)
             for (let subtask of config_file.subtasks) {
                 let cases = [];
                 for (let c of subtask) {
@@ -96,11 +96,10 @@ async function readYamlCases(folder) {
                 }
                 config.subtasks.push({
                     score: parseInt(subtask.score), cases,
-                    time_limit_ms: parseTimeMS(subtask.time),
-                    memory_limit_mb: parseMemoryMB(subtask.memory)
+                    time_limit_ms: parseTimeMS(subtask.time || config_file.time),
+                    memory_limit_mb: parseMemoryMB(subtask.memory || config_file.time)
                 });
             }
-        }
     } catch (e) {
         throw new FormatError('Invalid file: config.yaml');
     }

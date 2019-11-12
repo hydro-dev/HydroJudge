@@ -1,0 +1,50 @@
+# Problem type, allow [default, submit_answer]
+type: default
+
+# Checker type, allow [default, ccr, cena, hustoj, qduoj, syzoj, testlib, vj4]
+# When you are not using the default checker, please notice the `checker` option below.
+checker_type: default
+
+# Checker file (path in the zipfile) 
+checker: chk.cpp 
+
+# Time and memory limit.
+# Can be overwrite by the following option:
+# cases->time cases->memory subtasks->time subtasks->memory
+time: 1s
+memory: 128m
+
+# The `cases` option will overwrite the `subtasks` option!
+cases:
+  - input: 0.in
+    output: 0.out
+    score: 30
+    time: 1s
+    memory: 64m
+  - input: 1.in
+    output: 1.out
+    score: 30
+    # Time and memory can be ignored here to use default option on L14 & L15
+  - input: 1.in
+    output: 1.out
+    score: 40
+    time: 2s
+    memory: 256m
+
+subtasks:
+  - score: 30
+    time: 1s
+    memory: 64m
+    cases:
+      - input: a.in
+        output: a.out
+      - input: b.in
+        output: b.out
+  - score: 70
+    time: 0.5s
+    memory: 32m
+    cases:
+      - input: c.in
+        output: c.out
+      - input: d.in
+        output: d.out

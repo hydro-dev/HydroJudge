@@ -3,45 +3,32 @@ const
     fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
-    yaml = require('js-yaml'),
     WebSocket = require('ws'),
     AdmZip = require('adm-zip'),
     log = require('./log'),
-    { download, Queue } = require('./utils'),
+    { download } = require('./utils'),
     cache = require('./cache'),
-    { CONFIG_DIR, CACHE_DIR } = require('./config'),
-    _CONFIG_FILE = path.resolve(CONFIG_DIR, 'config.yaml'),
-    _COOKIES_FILE = path.resolve(CONFIG_DIR, 'cookies');
+    { CACHE_DIR } = require('./config');
 
 module.exports = class AxiosInstance {
-    constructor() { }
+    constructor(config) {
+        this.config = config;
+    }
     async init() {
-        let config = await fsp.readFile(_CONFIG_FILE).catch(() => {
-            log.error(`Config file not found at ${_CONFIG_FILE}`);
-            process.exit(1);
-        });
-        try {
-            this.config = yaml.safeLoad(config.toString());
-        } catch (e) {
-            log.error('Invalid config file.');
-            process.exit(1);
-        }
-        let cookie = (await fsp.readFile(_COOKIES_FILE).catch(() => { })) || '';
-        await this.setCookie(cookie.toString());
+        if (typeof this.config.detail == 'undefined') this.config.detail = true;
+        await this.setCookie(this.config.cookie || '');
         await this.ensureLogin();
-        global.onDestory.push(() => this.save_config());
     }
     async setCookie(cookie) {
         log.log(`Setting cookie: ${cookie}`);
-        this.cookie = cookie;
-        await fsp.writeFile(_COOKIES_FILE, cookie);
+        this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
-            timeout: 1000,
+            timeout: 10000,
             headers: {
                 'accept': 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'cookie': this.cookie
+                'cookie': this.config.cookie
             },
             transformRequest: [
                 function (data) {
@@ -58,7 +45,7 @@ module.exports = class AxiosInstance {
         await this.setCookie(res.headers['set-cookie'][0].split(';')[0]);
     }
     async ensureLogin() {
-        log.log('Updating session');
+        log.log(`[${this.config.host}] Updating session`);
         try {
             await this.axios.get('judge/noop');
         } catch (e) {
@@ -66,8 +53,8 @@ module.exports = class AxiosInstance {
         }
     }
     async problem_data(domain_id, pid, save_path) {
-        log.info('Getting problem data: %s, %s', domain_id, pid);
-        let tmp_file_path = path.resolve(CACHE_DIR, `download_${domain_id}_${pid}`);
+        log.info('Getting problem data: %s/%s/%s', this.config.host, domain_id, pid);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${domain_id}_${pid}`);
         await download(this.axios, `d/${domain_id}/p/${pid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
         await new Promise((resolve, reject) => {
@@ -80,8 +67,8 @@ module.exports = class AxiosInstance {
         return save_path;
     }
     async record_pretest_data(rid, save_path) {
-        log.info('Getting pretest data: %s', rid);
-        let tmp_file_path = path.resolve(CACHE_DIR, `download_${rid}`);
+        log.info('Getting pretest data: %s/%s', this.config.host, rid);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${rid}`);
         await download(this.axios, `records/${rid}/data`, tmp_file_path);
         let zipfile = new AdmZip(tmp_file_path);
         await new Promise((resolve, reject) => {
@@ -98,41 +85,32 @@ module.exports = class AxiosInstance {
         return res.data;
     }
     async updateProblemData() {
-        log.info('Update problem data');
+        log.info(`[${this.config.host}] Update problem data`);
         let result = await this.judge_datalist(this.config.last_update_at || 0);
         for (let pid of result.pids) {
-            await cache.invalidate(pid.domain_id, pid.pid);
-            log.debug('Invalidated %s/%s', pid.domain_id, pid.pid);
+            await cache.invalidate(this.host, pid.domain_id, pid.pid);
+            log.debug('Invalidated %s/%s/%s', this.config.host, pid.domain_id, pid.pid);
         }
         this.config.last_update_at = result.time;
-        await this.save_config();
     }
-    async judgeConsume(handler, pool) {
+    async consume(queue) {
         log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
-        this.ws = new WebSocket(this.config.server_url.replace(/https?:\/\//i, 'ws://') + 'judge/consume-conn/websocket?t=' + res.entropy, {
-            headers: { cookie: this.cookie }
+        this.ws = new WebSocket(this.config.server_url.replace(/^http/i, 'ws') + 'judge/consume-conn/websocket?t=' + res.data.entropy, {
+            headers: { cookie: this.config.cookie }
         });
-        let queue = new Queue();
         this.ws.on('message', data => {
-            queue.push(JSON.parse(data));
+            queue.push(Object.assign(JSON.parse(data), { host: this.host }));
         });
         this.ws.on('close', (data, reason) => {
-            log.log('websocket closed:', data, reason);
+            log.log(`[${this.config.host}] Websocket closed:`, data, reason);
         });
-        this.ws.on('error', data => {
-            log.log('websocket error', data);
+        this.ws.on('error', e => {
+            log.log(`[${this.config.host}] Websocket error:`, e);
         });
         await new Promise(resolve => {
             this.ws.once('open', () => { resolve(); });
         });
-        log.info('Connected');
-        while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
-            let request = await queue.get();
-            await new handler(this, request, this.ws, pool).handle();
-        }
-    }
-    async save_config() {
-        await fsp.writeFile(_CONFIG_FILE, yaml.safeDump(this.config));
+        log.info(`[${this.config.host}] Connected`);
     }
 };

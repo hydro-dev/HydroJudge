@@ -13,11 +13,15 @@
        ~                   */
 const
     VJ4Session = require('./api'),
-    { sleep } = require('./utils'),
+    { sleep, Queue } = require('./utils'),
     JudgeHandler = require('./judge'),
     log = require('./log'),
+    fsp = require('fs').promises,
     Pool = require('./pool'),
-    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT } = require('./config');
+    path = require('path'),
+    yaml = require('js-yaml'),
+    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT, CONFIG_DIR } = require('./config'),
+    _CONFIG_FILE = path.resolve(CONFIG_DIR, 'config.yaml');
 
 global.onDestory = [];
 process.on('SIGINT', async () => {
@@ -38,15 +42,41 @@ process.on('SIGINT', async () => {
 });
 
 async function daemon() {
-    let session = new VJ4Session();
+    let config = await fsp.readFile(_CONFIG_FILE).catch(() => {
+        log.error(`Config file not found at ${_CONFIG_FILE}`);
+        process.exit(1);
+    });
+    let hosts = {};
+    try {
+        config = yaml.safeLoad(config.toString());
+    } catch (e) {
+        log.error('Invalid config file.');
+        process.exit(1);
+    }
+    let queue = new Queue();
+    for (let i in config.hosts) {
+        hosts[i] = new VJ4Session(Object.assign({ host: i }, config.hosts[i]));
+        await hosts[i].init();
+        setInterval(() => { hosts[i].axios.get('judge/noop'); }, 30000000);
+    }
+    global.onDestory.push(async () => {
+        for (let i in hosts)
+            config.hosts[i] = hosts[i].config;
+        await fsp.writeFile(_CONFIG_FILE, yaml.safeDump(config));
+    });
     let pool = new Pool();
-    await Promise.all([session.init(), pool.create(SANDBOX_POOL_COUNT || 2)]);
-    setInterval(() => { session.axios.get('judge/noop'); }, 30000000);
+    await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
-            await session.ensureLogin();
-            await session.updateProblemData();
-            await session.judgeConsume(JudgeHandler, pool);
+            for (let i in hosts) {
+                await hosts[i].ensureLogin();
+                await hosts[i].updateProblemData();
+                await hosts[i].consume(queue);
+            }
+            while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
+                let request = await queue.get();
+                await new JudgeHandler(this, request, this.ws, pool).handle();
+            }
         } catch (e) {
             log.error(e);
             log.info('Retrying after %d seconds', RETRY_DELAY_SEC);
