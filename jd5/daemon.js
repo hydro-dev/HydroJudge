@@ -11,6 +11,7 @@
      `-.__          听取人生经验。  __.-'
           ````- - -.......- - -'''    ~
        ~                   */
+require('./i18n');
 const
     VJ4Session = require('./api'),
     { sleep, Queue } = require('./utils'),
@@ -75,7 +76,7 @@ async function daemon() {
             }
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let request = await queue.get();
-                await new JudgeHandler(this, request, this.ws, pool).handle();
+                await new JudgeHandler(hosts[request.host], request, request.ws, pool).handle();
             }
         } catch (e) {
             log.error(e);

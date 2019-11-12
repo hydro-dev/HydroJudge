@@ -1,0 +1,7 @@
+Read {1} at {0} but expect {2}: 在{0}读取到{1}，但期望得到{2}。
+User output shorter than standard output.: 选手输出比标准输出长。
+User output longer than standard output.: 标准输出比选手输出长。
+Checker {0} not found.: 自定义比较器文件{0}没有找到。
+Input file {0} not found.: 标准输入文件{0}没有找到。
+Output file {0} not found.: 标准输出文件{0}没有找到。
+No cases found.: 没有找到测试数据。

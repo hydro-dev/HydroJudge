@@ -20,7 +20,7 @@ module.exports = class AxiosInstance {
         await this.ensureLogin();
     }
     async setCookie(cookie) {
-        log.log(`Setting cookie: ${cookie}`);
+        log.log(`[${this.config.host}] Setting cookie: ${cookie}`);
         this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
@@ -100,7 +100,7 @@ module.exports = class AxiosInstance {
             headers: { cookie: this.config.cookie }
         });
         this.ws.on('message', data => {
-            queue.push(Object.assign(JSON.parse(data), { host: this.host }));
+            queue.push(Object.assign(JSON.parse(data), { host: this.config.host, ws: this.ws }));
         });
         this.ws.on('close', (data, reason) => {
             log.log(`[${this.config.host}] Websocket closed:`, data, reason);

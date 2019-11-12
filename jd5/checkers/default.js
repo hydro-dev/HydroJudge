@@ -17,9 +17,26 @@ async function check(sandbox, config) {
     if (opt) {
         status = STATUS_WRONG_ANSWER;
         opt = opt.split('---');
-        let t = opt[0].split('\n');
-        let q = opt[1].split('\n');
-        message = [t[0], t[1], q[1]].join('\n');
+        let u = opt[0].split('\n');
+        let pos = u[0];
+        let usr = u[1].substring(2, u[1].length - 1).trim().split(' ');
+        let t = opt[1].split('\n')[1];
+        let std = t.substring(2, t.length - 1).trim().split(' ');
+        if (usr.length < std.length)
+            message = 'User output shorter than standard output.'.translate(config.language || 'zh-CN');
+        else if (usr.length > std.length)
+            message = 'User output longer than standard output.'.translate(config.language || 'zh-CN');
+        else {
+            for (let i in usr)
+                if (usr[i] != std[i]) {
+                    usr = usr[i];
+                    std = std[i];
+                    break;
+                }
+            if (usr.length > 20) usr = usr.substring(0, 16) + '...';
+            if (std.length > 20) std = std.substring(0, 16) + '...';
+            message = 'Read {1} at {0} but expect {2}'.translate(config.language || 'zh-CN').format(pos, usr, std);
+        }
     } else status = STATUS_ACCEPTED;
     return {
         code: 0, score: status == STATUS_ACCEPTED ? config.score : 0,
