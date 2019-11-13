@@ -1,12 +1,15 @@
 /*
- * argv[1]：输入
- * argv[2]：标准输出
- * argv[3]：选手输出
- * exit code：返回判断结果
- */
+argv[1]：输入文件
+argv[2]：选手输出文件
+argv[3]：标准输出文件
+argv[4]：单个测试点分值
+argv[5]：输出最终得分的文件
+argv[6]：输出错误报告的文件
+*/
+
 const
-    fs = require('fs'),
-    fsp = fs.promises,
+    fsp = require('fs').promises,
+    path = require('path'),
     { SystemError } = require('../error'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     { parseLang } = require('../utils'),
@@ -18,12 +21,16 @@ async function check(sandbox, config) {
         sandbox.addFile(config.output, 'stdout'),
         sandbox.addFile(config.input, 'input')
     ]);
-    let { code, stdout } = await sandbox.run(
-        '/home/checker input stdout usrout', {}
+    console.log(config);
+    let { code } = await sandbox.run(
+        `/home/checker input usrout stdout ${config.score} score message`, {}
     );
-    let status = (code == 0) ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
-    let message = (await fsp.readFile(stdout)).toString();
-    return { code, status, score: (status == STATUS_ACCEPTED) ? config.score : 0, message };
+    let message = (await fsp.readFile(path.resolve(sandbox.dir, 'home', 'message'))).toString();
+    let score = (await fsp.readFile(path.resolve(sandbox.dir, 'home', 'score'))).toString();
+    return {
+        code, score, message,
+        status: score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER
+    };
 }
 async function compile(sandbox, checker) {
     let checker_code = await fsp.readFile(checker);

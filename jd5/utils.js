@@ -29,7 +29,7 @@ function sleep(timeout) {
         }, timeout);
     });
 }
-function rmdir(path, recursive = false) {
+function rmdir(path, recursive = true) {
     if (recursive) {
         if (fs.existsSync(path))
             fs.readdirSync(path).forEach(file => {

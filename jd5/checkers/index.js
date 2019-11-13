@@ -3,7 +3,8 @@ module.exports = {
     ccr: require('./ccr'),
     cena: require('./cena'),
     hustoj: require('./hustoj'),
-    syzoj: require('./syzoj'),
+    lemon: require('./lemon'),
     qduoj: require('./qduoj'),
+    syzoj: require('./syzoj'),
     testlib: require('./testlib')
 };

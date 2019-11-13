@@ -6,6 +6,7 @@ const
     { FormatError, SystemError } = require('./error'),
     { parseTimeMS, parseMemoryMB } = require('./utils'),
     restrict = p => {
+        if (!p) return '/';
         if (p[0] == '/') p = '';
         return p.replace(/\.\./i, '');
     },
@@ -14,53 +15,58 @@ const
         [/^([a-zA-Z]*)([0-9]+).in$/, a => a[1] + a[2] + '.ans', a => parseInt(a[2])],
         [/^([a-zA-Z0-9]*)\.in([0-9]+)$/, a => a[1] + '.ou' + a[2], a => parseInt(a[2])],
         [/^(input)([0-9]+).txt$/, a => 'output' + a[2] + '.txt', a => parseInt(a[2])],
-    ];
+    ],
+    chkFile = folder => (file, message) => {
+        let f = path.join(folder, restrict(file));
+        if (!fs.existsSync(f)) throw new FormatError(message, [file]);
+        let stat = fs.statSync(f);
+        if (!stat.isFile()) throw new FormatError(message, [file]);
+        return f;
+    };
 
 async function readIniCases(folder) {
-    let config = {
-        checker_type: 'default',
-        count: 0,
-        subtasks: [],
-        judge_extra_files: [],
-        user_extra_files: []
-    };
-    let config_file = (await fsp.readFile(path.resolve(folder, 'Config.ini'))).toString();
+    let
+        config = {
+            checker_type: 'default',
+            count: 0,
+            subtasks: [],
+            judge_extra_files: [],
+            user_extra_files: []
+        },
+        checkFile = chkFile(folder),
+        config_file = (await fsp.readFile(path.resolve(folder, 'Config.ini'))).toString();
     config_file = config_file.split('\n');
     let count = parseInt(config_file[0]);
     for (let i = 1; i <= count; i++) {
         let line = config_file[i].split('|');
         config.count++;
-        let cfg = {
-            input: path.join(folder, 'Input', restrict(line[0])),
-            output: path.join(folder, 'Output', restrict(line[1])),
-            id: config.count
-        };
-        if (!fs.existsSync(cfg.input)) throw new FormatError('Input file not found:', [line[0]]);
-        if (!fs.existsSync(cfg.output)) throw new FormatError('Output file not found', [line[1]]);
         config.subtasks.push({
             score: parseInt(line[3]),
             time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
             memory_limit_mb: parseInt(line[4]) / 1024 || 256,
-            cases: [cfg]
+            cases: [{
+                input: checkFile('Input/' + line[0], 'Input file {0} not found.'),
+                output: checkFile('Output/' + line[1], 'Output file {0} not found.'),
+                id: config.count
+            }]
         });
     }
     return config;
 }
-async function readYamlCases(folder) {
-    let config = {
-        checker_type: 'default',
-        count: 0,
-        subtasks: [],
-        judge_extra_files: [],
-        user_extra_files: []
-    };
-    let checkFile = (file, message) => {
-        let f = path.join(folder, restrict(file));
-        if (!fs.existsSync(f)) throw new FormatError(message, [file]);
-        return f;
-    };
-    let config_file = (await fsp.readFile(path.resolve(folder, 'config.yaml'))).toString();
+async function readYamlCases(folder, name) {
+    let
+        config = {
+            checker_type: 'default',
+            count: 0,
+            subtasks: [],
+            judge_extra_files: [],
+            user_extra_files: []
+        },
+        checkFile = chkFile(folder),
+        config_file = (await fsp.readFile(path.resolve(folder, name))).toString();
+
     config_file = yaml.safeLoad(config_file);
+    config.checker_type = config_file.checker_type || 'default';
     if (config_file.checker) config.checker = checkFile(config_file.checker, 'Checker {0} not found.');
     if (config_file.judge_extra_files) {
         if (typeof config_file.judge_extra_files == 'string')
@@ -78,36 +84,32 @@ async function readYamlCases(folder) {
                 config.user_extra_files.push(checkFile(file, 'User extra file {0} not found.'));
         } else throw new FormatError('Cannot parse option `user_extra_files`');
     }
-    if (config_file.cases)
+    if (config_file.cases) {
         for (let c of config_file.cases) {
             config.count++;
-            let cfg = {
-                input: path.join(folder, restrict(c.input)),
-                output: path.join(folder, restrict(c.output)),
-                id: config.count
-            };
-            if (!fs.existsSync(cfg.input)) throw new FormatError('Input file {0} not found.', [c.input]);
-            if (!fs.existsSync(cfg.output)) throw new FormatError('Output file {0} not found.', [c.output]);
             config.subtasks.push({
                 score: parseInt(c.score),
                 time_limit_ms: parseTimeMS(c.time || config_file.time),
                 memory_limit_mb: parseMemoryMB(c.memory || config_file.memory),
-                cases: [cfg]
+                cases: [{
+                    input: checkFile(c.input, 'Input file {0} not found.'),
+                    output: checkFile(c.output, 'Output file {0} not found.'),
+                    id: config.count
+                }]
             });
         }
-    else if (config_file.subtasks)
+        for (let c of config.subtasks)
+            if (!c.score) c.score = Math.floor(100 / config.count);
+    } else if (config_file.subtasks)
         for (let subtask of config_file.subtasks) {
             let cases = [];
             for (let c of subtask) {
                 config.count++;
-                let cfg = {
-                    input: path.join(folder, restrict(c.input)),
-                    output: path.join(folder, restrict(c.output)),
+                cases.push({
+                    input: checkFile(c.input, 'Input file {0} not found.'),
+                    output: checkFile(c.output, 'Output file {0} not found.'),
                     id: config.count
-                };
-                if (!fs.existsSync(cfg.input)) throw new FormatError('Input file {0} not found.', [c.input]);
-                if (!fs.existsSync(cfg.output)) throw new FormatError('Output file {0} not found.', [c.output]);
-                cases.push(cfg);
+                });
             }
             config.subtasks.push({
                 score: parseInt(subtask.score), cases,
@@ -115,6 +117,7 @@ async function readYamlCases(folder) {
                 memory_limit_mb: parseMemoryMB(subtask.memory || config_file.time)
             });
         }
+    else config.subtasks = (await readAutoCases(folder)).subtasks;
     return Object.assign(config_file, config);
 }
 async function readAutoCases(folder) {
@@ -161,7 +164,8 @@ async function readAutoCases(folder) {
 }
 async function readCases(folder) {
     if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return readIniCases(folder);
-    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder);
+    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder, 'config.yaml');
+    else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return readYamlCases(folder, 'Config.yaml');
     else return readAutoCases(folder);
 }
 module.exports = readCases;

@@ -28,9 +28,9 @@ async function check(sandbox, config) {
     else status = STATUS_WRONG_ANSWER;
     return { code, status, score, message };
 }
-async function compile(sandbox, config) {
-    let checker_code = await fsp.readFile(config.checker);
-    let { code, stdout, stderr } = await _compile(parseLang(config.checker), checker_code, sandbox);
+async function compile(sandbox, checker) {
+    let checker_code = await fsp.readFile(checker);
+    let { code, stdout, stderr } = await _compile(parseLang(checker), checker_code, sandbox);
     if (code) throw new SystemError('Cannot compile checker');
     return { code, stdout, stderr };
 }

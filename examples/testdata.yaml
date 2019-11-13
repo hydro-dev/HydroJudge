@@ -4,8 +4,8 @@ type: default
 
 # When Problem type is 'default', The following options are allowed:   -------------+
 # 当问题类型为 'default' 时，下面的设置可用:                                             #
-# Checker type, allow [default, ccr, cena, hustoj, qduoj, syzoj, testlib]           #
-# 比较器类型，支持的值有 [default, ccr, cena, hustoj, qduoj, syzoj, testlib]            #
+# Checker type, allow [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]           #
+# 比较器类型，支持的值有 [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]            #
 # Attention: When using testlib, DO NOT INCLUDE testlib.h in your file.             #
 # 注意：使用Testlib时，不要在文件中包含testlib.h。                                       #
 checker_type: default                                                               #
