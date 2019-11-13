@@ -1,20 +1,32 @@
 # Problem type, allow [default, submit_answer]
+# 问题类型，允许的值有'default'（标准）和'submit_answer'（提交答案）
 type: default
 
-# Checker type, allow [default, ccr, cena, hustoj, qduoj, syzoj, testlib, vj4]
-# When you are not using the default checker, please notice the `checker` option below.
-checker_type: default
+# When Problem type is 'default', The following options are allowed:   -------------+
+# 当问题类型为 'default' 时，下面的设置可用:                                             #
+# Checker type, allow [default, ccr, cena, hustoj, qduoj, syzoj, testlib]           #
+# 比较器类型，支持的值有 [default, ccr, cena, hustoj, qduoj, syzoj, testlib]            #
+# Attention: When using testlib, DO NOT INCLUDE testlib.h in your file.             #
+# 注意：使用Testlib时，不要在文件中包含testlib.h。                                       #
+checker_type: default                                                               #
+# When CHECKER_TYPE isn't 'default', The following options are allowed:   -----+    #
+# 当比较器类型不为 'default' 时，您应该提供自定义比较器文件。                          #    #
+# Checker file (path in the zipfile)    文件路径（位于压缩包中的路径）              #    #
+checker: chk.cpp                                                               #    #
+# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）                #
+# Can be overwrite by the following option:                                         #
+# cases->time cases->memory subtasks->time subtasks->memory                         #
+time: 1s                                                                            #
+memory: 128m                                                                        #
+# Extra files 额外文件                                                               #
+# These files will be copied to the working directory 这些文件将被复制到工作目录。       #
+user_extra_files:                                                                   #
+  - extra_input.txt                                                                 #
+judge_extra_files:                                                                  #
+  - testlib.h                                                                       #
 
-# Checker file (path in the zipfile) 
-checker: chk.cpp 
-
-# Time and memory limit.
-# Can be overwrite by the following option:
-# cases->time cases->memory subtasks->time subtasks->memory
-time: 1s
-memory: 128m
-
-# The `cases` option will overwrite the `subtasks` option!
+# The CASES option has higher priority than the SUBTASKS option!
+# 在有 CASES 设置项时，不会读取 SUBTASKS 设置项！
 cases:
   - input: 0.in
     output: 0.out
@@ -24,7 +36,8 @@ cases:
   - input: 1.in
     output: 1.out
     score: 30
-    # Time and memory can be ignored here to use default option on L14 & L15
+    # Time and memory can be ignored here to use default option on L17 & L18
+    # 不填写时间内存限制表示沿用 L17 和 L18 的默认设置
   - input: 1.in
     output: 1.out
     score: 40

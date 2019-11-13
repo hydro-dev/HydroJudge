@@ -13,19 +13,25 @@ async function build(next, sandbox, lang, scode) {
     if (code) throw new CompileError({ stdout, stderr });
     stdout = (await fsp.readFile(stdout)).toString();
     stderr = (await fsp.readFile(stderr)).toString();
-    next({ compiler_text: [stdout, stderr].join('\n') });
+    next({ compiler_text: [stdout, stderr, '自豪的采用jd5进行评测'].join('\n') });
     return execute;
 }
 
 exports.judge = async function ({ folder, next, end, config, pool, lang, code }) {
     let [usr_sandbox, judge_sandbox] = await Promise.all([pool.get(), pool.get()]);
     try {
+        for (let i in config.judge_extra_files)
+            config.judge_extra_files[i] = judge_sandbox.addFile(config.judge_extra_files[i]);
+        await Promise.all(config.judge_extra_files);
+        for (let i in config.user_extra_files)
+            config.user_extra_files[i] = usr_sandbox.addFile(config.user_extra_files[i]);
+        await Promise.all(config.user_extra_files);
         next({ status: STATUS_COMPILING });
         let [execute, [exit_code, message]] = await Promise.all([
             build(next, usr_sandbox, lang, code),
             compile_checker(judge_sandbox, config.checker_type || 'default', config.checker)
         ]);
-        if (exit_code) throw new CompileError({ stdout: 'Checker compile failed: ', stderr: message });
+        if (exit_code) throw new CompileError({ stdout: 'Checker compile failed:', stderr: message });
         next({ status: STATUS_JUDGING, progress: 0 });
         let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
         for (let subtask of config.subtasks) {
@@ -56,7 +62,7 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
                     let status, message = '', score = 0;
                     if (code) {
                         status = STATUS_RUNTIME_ERROR;
-                        message = `Your program exited with code ${code}.`;
+                        message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(code);
                     } else[status, score, message] = await check(judge_sandbox, {
                         stdin: c.input,
                         stdout: c.output,
