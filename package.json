@@ -13,6 +13,7 @@
     "randomstring": "^1.1.5",
     "shell-quote": "^1.7.2",
     "simple-sandbox": "^0.3.5",
+    "syspipe": "^0.1.5",
     "vijos-sandbox": "https://github.com/vijos/sandbox.git",
     "ws": "^7.1.2"
   },

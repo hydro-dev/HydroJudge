@@ -1,14 +1,24 @@
 const
     { STATUS_ACCEPTED, STATUS_JUDGING, STATUS_COMPILING,
-        STATUS_RUNTIME_ERROR, STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED,
-        STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+        STATUS_RUNTIME_ERROR, STATUS_SYSTEM_ERROR, STATUS_WRONG_ANSWER,
+        STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { CompileError } = require('../error'),
     { max } = require('../utils'),
     path = require('path'),
     compile = require('../compile'),
-    { check, compile_checker } = require('../check'),
+    syspipe = require('syspipe'),
     fs = require('fs'),
-    fsp = fs.promises;
+    fsp = fs.promises,
+    closePipe = async pipe => {
+        if (pipe) await Promise.all([
+            new Promise(resolve => {
+                fs.close(pipe.read, resolve);
+            }),
+            new Promise(resolve => {
+                fs.close(pipe.write, resolve);
+            })
+        ]);
+    };
 
 async function build(next, sandbox, lang, scode) {
     let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'code');
@@ -19,8 +29,15 @@ async function build(next, sandbox, lang, scode) {
     return execute;
 }
 
+async function build_checker(sandbox, lang, scode) {
+    let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'interactor');
+    if (code) throw new CompileError({ stdout, stderr });
+    return execute;
+}
+
 exports.judge = async function ({ folder, next, end, config, pool, lang, code }) {
     let [usr_sandbox, judge_sandbox] = await Promise.all([pool.get(), pool.get()]);
+    let pipe1 = null, pipe2 = null;
     try {
         for (let i in config.judge_extra_files)
             config.judge_extra_files[i] = judge_sandbox.addFile(config.judge_extra_files[i]);
@@ -29,11 +46,10 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
             config.user_extra_files[i] = usr_sandbox.addFile(config.user_extra_files[i]);
         await Promise.all(config.user_extra_files);
         next({ status: STATUS_COMPILING });
-        let [execute, [exit_code, message]] = await Promise.all([
+        let [execute_user, execute_checker] = await Promise.all([
             build(next, usr_sandbox, lang, code),
-            compile_checker(judge_sandbox, config.checker_type || 'default', config.checker)
+            build_checker(judge_sandbox, config.checker_type || 'default', config.checker)
         ]);
-        if (exit_code) throw new CompileError({ stdout: 'Checker compile failed:', stderr: message });
         next({ status: STATUS_JUDGING, progress: 0 });
         let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
         for (let subtask of config.subtasks) {
@@ -51,37 +67,48 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
                     progress: Math.floor(c.id * 100 / config.count)
                 });
                 else {
-                    let stdout = path.resolve(usr_sandbox.dir, 'stdout');
-                    let stderr = path.resolve(usr_sandbox.dir, 'stderr');
-                    let { code, time_usage_ms, memory_usage_kb } = await usr_sandbox.run(
-                        execute.replace('%filename%', 'code'),
-                        {
-                            stdin: c.input, stdout, stderr,
-                            time_limit_ms: subtask.time_limit_ms,
-                            memory_limit_mb: subtask.memory_limit_mb
-                        }
-                    );
+                    let interactor_stderr = path.resolve(judge_sandbox.dir, 'stderr');
+                    let user_stderr = path.resolve(usr_sandbox.dir, 'stderr');
+                    pipe1 = syspipe.pipe();
+                    pipe2 = syspipe.pipe();
+                    let [{ code: usr_code, time_usage_ms, memory_usage_kb }, { code: interactor_code }] = await Promise.all([
+                        usr_sandbox.run(
+                            execute_user.replace('%filename%', 'code'),
+                            {
+                                stdin: pipe1.read, stdout: pipe2.write, stderr: user_stderr,
+                                time_limit_ms: subtask.time_limit_ms,
+                                memory_limit_mb: subtask.memory_limit_mb
+                            }
+                        ),
+                        judge_sandbox.run(
+                            execute_checker.replace('%filename%', 'interactor'),
+                            {
+                                stdin: pipe2.read, stdout: pipe1.write, stderr: interactor_stderr,
+                                time_limit_ms: subtask.time_limit_ms,
+                                memory_limit_mb: subtask.memory_limit_mb
+                            }
+                        )
+                    ]);
                     let status, message = '';
-                    if (code) {
+                    if (interactor_code) {
+                        status = STATUS_SYSTEM_ERROR;
+                        message = 'Interactor exited with code {0}'.translate(config.language || 'zh-CN').format(interactor_code);
+                    } else if (usr_code) {
                         status = STATUS_RUNTIME_ERROR;
-                        message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(code);
+                        message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(usr_code);
                     } else if (time_usage_ms > subtask.time_limit_ms)
                         status = STATUS_TIME_LIMIT_EXCEEDED;
                     else if (memory_usage_kb * 1024 > subtask.memory_limit_mb)
-                        status = STATUS_MEMORY_LIMIT_EXCEEDED;
-                    else[status, , message] = await check(judge_sandbox, {
-                        stdin: c.input,
-                        stdout: c.output,
-                        user_stdout: stdout,
-                        user_stderr: stderr,
-                        checker: config.checker,
-                        checker_type: config.checker_type,
-                        score: subtask.score
-                    });
+                        status = STATUS_MEMORY_LIMIT_EXCEEDED; else {
+                        let st = (await fs.readFile(path.resolve(judge_sandbox.dir, 'stderr'))).toString;
+                        if (st == 'ok') status = STATUS_ACCEPTED;
+                        else status = STATUS_WRONG_ANSWER;
+                    }
                     total_status = max(total_status, status);
                     total_time_usage_ms += time_usage_ms;
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
+                    await Promise.all([closePipe(pipe1), closePipe(pipe2)]);
                     next({
                         status: total_status,
                         case: {
