@@ -6,6 +6,7 @@ const
     { max } = require('../utils'),
     path = require('path'),
     compile = require('../compile'),
+    signals = require('../signals'),
     { check, compile_checker } = require('../check'),
     fs = require('fs'),
     fsp = fs.promises;
@@ -19,7 +20,7 @@ async function build(next, sandbox, lang, scode) {
     return execute;
 }
 
-exports.judge = async function ({ folder, next, end, config, pool, lang, code }) {
+exports.judge = async function ({ next, end, config, pool, lang, code }) {
     let [usr_sandbox, judge_sandbox] = await Promise.all([pool.get(), pool.get()]);
     try {
         for (let i in config.judge_extra_files)
@@ -62,14 +63,15 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
                         }
                     );
                     let status, message = '';
-                    if (code) {
-                        status = STATUS_RUNTIME_ERROR;
-                        message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(code);
-                    } else if (time_usage_ms > subtask.time_limit_ms)
+                    if (time_usage_ms > subtask.time_limit_ms)
                         status = STATUS_TIME_LIMIT_EXCEEDED;
-                    else if (memory_usage_kb * 1024 > subtask.memory_limit_mb)
+                    else if (memory_usage_kb > subtask.memory_limit_mb * 1024)
                         status = STATUS_MEMORY_LIMIT_EXCEEDED;
-                    else[status, , message] = await check(judge_sandbox, {
+                    else if (code) {
+                        status = STATUS_RUNTIME_ERROR;
+                        if (code < 32) message = signals[code].translate(config.language || 'zh-CN');
+                        else message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(code);
+                    } else[status, , message] = await check(judge_sandbox, {
                         stdin: c.input,
                         stdout: c.output,
                         user_stdout: stdout,
@@ -83,7 +85,7 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
                     total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
                     if (status != STATUS_ACCEPTED) failed = true;
                     next({
-                        status: total_status,
+                        status: STATUS_JUDGING,
                         case: {
                             status,
                             score: 0,

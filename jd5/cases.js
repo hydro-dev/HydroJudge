@@ -147,12 +147,10 @@ async function readAutoCases(folder) {
                     break;
                 }
         cases.sort((a, b) => { return a.sort - b.sort; });
-        let basic = Math.floor(100 / cases.length);
-        let extra = 100 % cases.length;
         for (let i in cases) {
             config.count++;
             config.subtasks.push({
-                score: i > extra ? (basic + 1) : basic,
+                score: Math.floor(100 / cases.length),
                 time_limit_ms: 1000,
                 memory_limit_mb: 256,
                 cases: [{

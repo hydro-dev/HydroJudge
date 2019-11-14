@@ -1,7 +1,15 @@
+Bad system call: 错误的系统调用
+Checker {0} not found.: 自定义比较器文件{0}没有找到。
+CPU time limit exceeded: CPU时间超限
+File size limit exceeded: 文件大小超限
+Floating point exception: 浮点运算出错（被0除？）
+Input file {0} not found.: 标准输入文件{0}没有找到。
+Interactor exited with code {0}.: 交互器返回了{0}。
+No cases found.: 没有找到测试数据。
+Output file {0} not found.: 标准输出文件{0}没有找到。
 Read {1} at {0} but expect {2}: 在{0}读取到{1}，但期望得到{2}。
+Segmentation fault: 段错误
+Stack fault: 栈溢出
 User output shorter than standard output.: 选手输出比标准输出长。
 User output longer than standard output.: 标准输出比选手输出长。
-Checker {0} not found.: 自定义比较器文件{0}没有找到。
-Input file {0} not found.: 标准输入文件{0}没有找到。
-Output file {0} not found.: 标准输出文件{0}没有找到。
-No cases found.: 没有找到测试数据。
+Your program exited with code {0}.: 你的程序返回了{0}。

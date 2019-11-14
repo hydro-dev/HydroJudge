@@ -10,7 +10,6 @@ argv[6]：输出错误报告的文件
 const
     fsp = require('fs').promises,
     path = require('path'),
-    { SystemError } = require('../error'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     { parseLang } = require('../utils'),
     _compile = require('../compile');
@@ -31,11 +30,5 @@ async function check(sandbox, config) {
         status: score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER
     };
 }
-async function compile(sandbox, checker) {
-    let checker_code = await fsp.readFile(checker);
-    let { code, stdout, stderr } = await _compile(parseLang(checker), checker_code, sandbox, 'checker');
-    if (code) throw new SystemError('Cannot compile checker');
-    return { code, stdout, stderr };
-}
 
-module.exports = { check, compile };
+module.exports = { check, compile: (sandbox, checker) => _compile(parseLang(checker), checker, sandbox, 'checker') };

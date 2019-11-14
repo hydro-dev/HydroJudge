@@ -5,6 +5,7 @@ const
     { CompileError } = require('../error'),
     { max } = require('../utils'),
     path = require('path'),
+    signals = require('../signals'),
     compile = require('../compile'),
     syspipe = require('syspipe'),
     fs = require('fs'),
@@ -35,7 +36,7 @@ async function build_checker(sandbox, lang, scode) {
     return execute;
 }
 
-exports.judge = async function ({ folder, next, end, config, pool, lang, code }) {
+exports.judge = async function ({ next, end, config, pool, lang, code }) {
     let [usr_sandbox, judge_sandbox] = await Promise.all([pool.get(), pool.get()]);
     let pipe1 = null, pipe2 = null;
     try {
@@ -92,14 +93,17 @@ exports.judge = async function ({ folder, next, end, config, pool, lang, code })
                     let status, message = '';
                     if (interactor_code) {
                         status = STATUS_SYSTEM_ERROR;
-                        message = 'Interactor exited with code {0}'.translate(config.language || 'zh-CN').format(interactor_code);
-                    } else if (usr_code) {
-                        status = STATUS_RUNTIME_ERROR;
-                        message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(usr_code);
+                        if (interactor_code < 32) message = signals[interactor_code].translate(config.language || 'zh-CN');
+                        else message = 'Interactor exited with code {0}.'.translate(config.language || 'zh-CN').format(interactor_code);
                     } else if (time_usage_ms > subtask.time_limit_ms)
                         status = STATUS_TIME_LIMIT_EXCEEDED;
-                    else if (memory_usage_kb * 1024 > subtask.memory_limit_mb)
-                        status = STATUS_MEMORY_LIMIT_EXCEEDED; else {
+                    else if (memory_usage_kb > subtask.memory_limit_mb * 1024)
+                        status = STATUS_MEMORY_LIMIT_EXCEEDED;
+                    else if (usr_code) {
+                        status = STATUS_RUNTIME_ERROR;
+                        if (usr_code < 32) message = signals[usr_code].translate(config.language || 'zh-CN');
+                        else message = 'Your program exited with code {0}.'.translate(config.language || 'zh-CN').format(usr_code);
+                    } else {
                         let st = (await fs.readFile(path.resolve(judge_sandbox.dir, 'stderr'))).toString;
                         if (st == 'ok') status = STATUS_ACCEPTED;
                         else status = STATUS_WRONG_ANSWER;
