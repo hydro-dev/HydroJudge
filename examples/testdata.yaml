@@ -3,39 +3,39 @@
 type: default
 
 # When Problem type is 'default', The following options are allowed:   -------------+
-# 当问题类型为 'default' 时，下面的设置可用:                                            #
+# 当问题类型为 'default' 时，下面的设置可用:                                         #
 # Checker type, allow [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]    #
-# 比较器类型，支持的值有 [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]    #
+# 比较器类型，支持的值有 [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]  #
 # Attention: When using testlib, DO NOT INCLUDE testlib.h in your file.             #
-# 注意：使用Testlib时，不要在文件中包含testlib.h。                                       #
+# 注意：使用Testlib时，不要在文件中包含testlib.h。                                   #
 checker_type: default                                                               #
 # When CHECKER_TYPE isn't 'default', The following options are allowed:   -----+    #
-# 当比较器类型不为 'default' 时，您应该提供自定义比较器文件。                         #    #
-# Checker file (path in the zipfile)    文件路径（位于压缩包中的路径）              #   #
+# 当比较器类型不为 'default' 时，您应该提供自定义比较器文件。                    #    #
+# Checker file (path in the zipfile)    文件路径（位于压缩包中的路径）          #   #
 checker: chk.cpp                                                               #    #
-# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）               #
+# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）         #
 # Can be overwrite by the following option:                                         #
 # cases->time cases->memory subtasks->time subtasks->memory                         #
 time: 1s                                                                            #
 memory: 128m                                                                        #
 # Extra files 额外文件                                                               #
-# These files will be copied to the working directory 这些文件将被复制到工作目录。      #
+# These files will be copied to the working directory 这些文件将被复制到工作目录。   #
 user_extra_files:                                                                   #
   - extra_input.txt                                                                 #
 judge_extra_files:                                                                  #
   - extra_file.txt                                                                  #
 
 # When Problem type is 'interactive', The following options are allowed:   ---------+
-# 当问题类型为 'interactive' 时，下面的设置可用:                                         #
-# Interactor file (path in the zipfile)    交互器路径（位于压缩包中的路径）              #
+# 当问题类型为 'interactive' 时，下面的设置可用:                                     #
+# Interactor file (path in the zipfile)    交互器路径（位于压缩包中的路径）          #
 checker: interactor.cpp                                                             #
-# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）               #
+# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）          #
 # Can be overwrite by the following option:                                         #
 # cases->time cases->memory subtasks->time subtasks->memory                         #
 time: 1s                                                                            #
 memory: 128m                                                                        #
-# Extra files 额外文件                                                               #
-# These files will be copied to the working directory 这些文件将被复制到工作目录。      #
+# Extra files 额外文件                                                              #
+# These files will be copied to the working directory 这些文件将被复制到工作目录。   #
 user_extra_files:                                                                   #
   - extra_input.txt                                                                 #
 judge_extra_files:                                                                  #
