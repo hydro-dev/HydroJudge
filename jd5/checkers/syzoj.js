@@ -18,9 +18,9 @@ const
 async function check(sandbox, config) {
     await Promise.all([
         sandbox.addFile(config.input, 'in'),
-        sandbox.addFile(config.user_output, 'user_out'),
+        sandbox.addFile(config.user_stdout, 'user_out'),
         sandbox.addFile(config.output, 'answer'),
-        sandbox.writeFile(config.code, 'code')
+        sandbox.writeFile('code', config.code)
     ]);
     let stdout = path.resolve(sandbox.dir, 'home', 'stdout');
     let stderr = path.resolve(sandbox.dir, 'home', 'stderr');

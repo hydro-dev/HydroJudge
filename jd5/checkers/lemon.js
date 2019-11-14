@@ -21,7 +21,6 @@ async function check(sandbox, config) {
         sandbox.addFile(config.output, 'stdout'),
         sandbox.addFile(config.input, 'input')
     ]);
-    console.log(config);
     let { code } = await sandbox.run(
         `/home/checker input usrout stdout ${config.score} score message`, {}
     );

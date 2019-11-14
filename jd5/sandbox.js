@@ -65,8 +65,8 @@ module.exports = class SandBox extends EventEmitter {
             await fsp.copyFile(src, path.join(this.dir, 'home', target));
         } else throw new SystemError('Error while parsing target');
     }
-    writeFile(target, file) {
-        return fsp.writeFile(path.resolve(this.dir, 'home', target), file);
+    writeFile(file, content) {
+        return fsp.writeFile(path.resolve(this.dir, 'home', file), content);
     }
     async saveFile(src) {
         await fsp.copyFile(path.resolve(this.dir, 'home', src), path.resolve(this.dir, 'cache', src));

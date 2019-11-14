@@ -117,22 +117,28 @@ async function readYamlCases(folder, name) {
                 memory_limit_mb: parseMemoryMB(subtask.memory || config_file.time)
             });
         }
-    else config.subtasks = (await readAutoCases(folder)).subtasks;
+    else {
+        let c = await readAutoCases(folder);
+        config.subtasks = c.subtasks;
+        config.count = c.count;
+    }
     return Object.assign(config_file, config);
 }
 async function readAutoCases(folder) {
-    let config = {
-        checker_type: 'default',
-        count: 0,
-        subtasks: [],
-        judge_extra_files: [],
-        user_extra_files: []
-    };
+    let
+        config = {
+            checker_type: 'default',
+            count: 0,
+            subtasks: [],
+            judge_extra_files: [],
+            user_extra_files: []
+        },
+        checkFile = chkFile(folder);
     try {
         let files = await fsp.readdir(folder);
         let cases = [];
         for (let file of files)
-            for (let REG in CASES)
+            for (let REG of CASES)
                 if (REG[0].test(file)) {
                     let data = REG[0].exec(file);
                     let c = { input: file, output: REG[1](data), sort: REG[2](data) };
@@ -151,13 +157,13 @@ async function readAutoCases(folder) {
                 memory_limit_mb: 256,
                 cases: [{
                     id: config.count,
-                    input: cases[i].input,
-                    output: cases[i].output
+                    input: checkFile(cases[i].input),
+                    output: checkFile(cases[i].output)
                 }]
             });
         }
     } catch (e) {
-        throw new SystemError('Failed to read cases.');
+        throw new SystemError('Failed to read cases.', [e]);
     }
     if (!config.count) throw new FormatError('No cases found.');
     return config;
