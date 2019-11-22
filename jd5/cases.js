@@ -24,7 +24,7 @@ const
         return f;
     };
 
-async function readIniCases(folder, file) {
+async function readIniCases(folder) {
     let
         config = {
             checker_type: 'default',
@@ -33,8 +33,15 @@ async function readIniCases(folder, file) {
             judge_extra_files: [],
             user_extra_files: []
         },
-        checkFile = chkFile(folder),
-        config_file = (await fsp.readFile(path.resolve(folder, file))).toString();
+        checkFile = chkFile(folder);
+    let dir = await fsp.readdir(folder), file, input, output;
+    for (let i of dir){
+        if (i.toLowerCase() == 'config.ini') file = i;
+        else if (i.toLowerCase() == 'input') input = i;
+        else if (i.toLowerCase() == 'output') output = i;
+    }
+console.log(input);
+    config_file = (await fsp.readFile(path.resolve(folder, file))).toString();
     config_file = config_file.split('\n');
     let count = parseInt(config_file[0]);
     for (let i = 1; i <= count; i++) {
@@ -45,8 +52,8 @@ async function readIniCases(folder, file) {
             time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
             memory_limit_mb: parseInt(line[4]) / 1024 || 256,
             cases: [{
-                input: checkFile('Input/' + line[0], 'Input file {0} not found.'),
-                output: checkFile('Output/' + line[1], 'Output file {0} not found.'),
+                input: checkFile(`${input}/${line[0]}`, 'Input file {0} not found.'),
+                output: checkFile(`${output}/${line[1]}`, 'Output file {0} not found.'),
                 id: config.count
             }]
         });
@@ -167,7 +174,8 @@ async function readAutoCases(folder) {
     return config;
 }
 async function readCases(folder) {
-    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return readIniCases(folder, 'Config.ini');
+    if (fs.existsSync(folder + '/Config.ini') || fs.existsSync(folder + '/config.ini'))
+         return readIniCases(folder);
     else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder, 'config.yaml');
     else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return readYamlCases(folder, 'Config.yaml');
     else return readAutoCases(folder);
