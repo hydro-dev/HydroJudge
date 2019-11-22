@@ -24,7 +24,7 @@ const
         return f;
     };
 
-async function readIniCases(folder) {
+async function readIniCases(folder, file) {
     let
         config = {
             checker_type: 'default',
@@ -34,7 +34,7 @@ async function readIniCases(folder) {
             user_extra_files: []
         },
         checkFile = chkFile(folder),
-        config_file = (await fsp.readFile(path.resolve(folder, 'Config.ini'))).toString();
+        config_file = (await fsp.readFile(path.resolve(folder, file))).toString();
     config_file = config_file.split('\n');
     let count = parseInt(config_file[0]);
     for (let i = 1; i <= count; i++) {
@@ -167,7 +167,7 @@ async function readAutoCases(folder) {
     return config;
 }
 async function readCases(folder) {
-    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return readIniCases(folder);
+    if (fs.existsSync(path.resolve(folder, 'Config.ini'))) return readIniCases(folder, 'Config.ini');
     else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder, 'config.yaml');
     else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return readYamlCases(folder, 'Config.yaml');
     else return readAutoCases(folder);

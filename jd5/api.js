@@ -64,7 +64,15 @@ module.exports = class AxiosInstance {
             });
         });
         await fsp.unlink(tmp_file_path);
+        await this.process_data(save_path);
         return save_path;
+    }
+    async process_data(folder){
+        if (fs.existsSync(folder + '/config.ini')){
+            await fsp.rename(folder + '/config.ini', folder + '/Config.ini');
+            await fsp.rename(folder + '/input', folder + '/Input');
+            await fsp.rename(folder + '/output', folder + '/Output');
+        }
     }
     async record_pretest_data(rid, save_path) {
         log.info('Getting pretest data: %s/%s', this.config.host, rid);

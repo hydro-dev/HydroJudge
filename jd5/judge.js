@@ -1,5 +1,6 @@
 const
     cache = require('./cache'),
+    { CACHE_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError, FormatError } = require('./error'),
     readCases = require('./cases'),
@@ -42,7 +43,7 @@ module.exports = class JudgeHandler {
                 this.next({ compiler_text: e.message });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
-                this.next({ judge_text: e.message.translate(this.language).format(e.params) });
+                this.next({ judge_text: e.message.translate(this.language) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else {
                 log.error(e);
@@ -66,7 +67,7 @@ module.exports = class JudgeHandler {
     }
     async do_pretest() {
         log.info('Pretest: %s/%s/%s, %s', this.host, this.domain_id, this.pid, this.rid);
-        this.folder = path.join(`_/${this.rid}`);
+        this.folder = path.resolve(CACHE_DIR, `_/${this.rid}`);
         await this.session.record_pretest_data(this.rid, this.folder);
         this.config = await readCases(this.folder);
         await judger.default.judge(this);
