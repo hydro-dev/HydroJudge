@@ -10,7 +10,8 @@ exports.judge = async function ({ next, end, config, pool, code }) {
             stdout: config.answer,
             user_stdout: code,
             checker_type: 'default',
-            score: 100
+            score: 100,
+            detail: config.detail
         });
         next({
             status, progress: 100,

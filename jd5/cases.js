@@ -34,14 +34,7 @@ async function readIniCases(folder) {
             user_extra_files: []
         },
         checkFile = chkFile(folder);
-    let dir = await fsp.readdir(folder), file, input, output;
-    for (let i of dir){
-        if (i.toLowerCase() == 'config.ini') file = i;
-        else if (i.toLowerCase() == 'input') input = i;
-        else if (i.toLowerCase() == 'output') output = i;
-    }
-console.log(input);
-    config_file = (await fsp.readFile(path.resolve(folder, file))).toString();
+    let config_file = (await fsp.readFile(path.resolve(folder, 'config.ini'))).toString();
     config_file = config_file.split('\n');
     let count = parseInt(config_file[0]);
     for (let i = 1; i <= count; i++) {
@@ -52,8 +45,8 @@ console.log(input);
             time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
             memory_limit_mb: parseInt(line[4]) / 1024 || 256,
             cases: [{
-                input: checkFile(`${input}/${line[0]}`, 'Input file {0} not found.'),
-                output: checkFile(`${output}/${line[1]}`, 'Output file {0} not found.'),
+                input: checkFile(`input/${line[0].toLowerCase()}`, 'Input file {0} not found.'),
+                output: checkFile(`output/${line[1].toLowerCase()}`, 'Output file {0} not found.'),
                 id: config.count
             }]
         });
@@ -173,11 +166,12 @@ async function readAutoCases(folder) {
     if (!config.count) throw new FormatError('No cases found.');
     return config;
 }
-async function readCases(folder) {
-    if (fs.existsSync(folder + '/Config.ini') || fs.existsSync(folder + '/config.ini'))
-         return readIniCases(folder);
-    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) return readYamlCases(folder, 'config.yaml');
-    else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) return readYamlCases(folder, 'Config.yaml');
-    else return readAutoCases(folder);
+async function readCases(folder, extra_config = {}) {
+    let config;
+    if (fs.existsSync(folder + '/config.ini')) config = await readIniCases(folder);
+    else if (fs.existsSync(path.resolve(folder, 'config.yaml'))) config = await readYamlCases(folder, 'config.yaml');
+    else if (fs.existsSync(path.resolve(folder, 'Config.yaml'))) config = await readYamlCases(folder, 'Config.yaml');
+    else config = await readAutoCases(folder);
+    return Object.assign(extra_config, config);
 }
 module.exports = readCases;

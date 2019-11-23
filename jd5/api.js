@@ -6,13 +6,16 @@ const
     WebSocket = require('ws'),
     AdmZip = require('adm-zip'),
     log = require('./log'),
-    { download } = require('./utils'),
+    { download, mkdirp } = require('./utils'),
     cache = require('./cache'),
+    child = require('child_process'),
     { CACHE_DIR } = require('./config');
 
 module.exports = class AxiosInstance {
     constructor(config) {
         this.config = config;
+        this.host = this.config.host;
+        if (typeof this.config.detail == 'undefined') this.config.detail = true;
     }
     async init() {
         if (typeof this.config.detail == 'undefined') this.config.detail = true;
@@ -55,24 +58,51 @@ module.exports = class AxiosInstance {
     async problem_data(domain_id, pid, save_path, retry = 3) {
         log.info('Getting problem data: %s/%s/%s', this.config.host, domain_id, pid);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${domain_id}_${pid}`);
-        try{
-            await download(this.axios, `d/${domain_id}/p/${pid}/data`, tmp_file_path);
-            let zipfile = new AdmZip(tmp_file_path);
+        try {
             await new Promise((resolve, reject) => {
-                zipfile.extractAllToAsync(save_path, true, err => {
-                    if (err) reject(err);
+                child.exec(`wget "${this.config.server_url}d/${domain_id}/p/${pid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
+                    if (e) reject(e);
+                    else resolve();
+                });
+            });
+            await mkdirp(path.dirname(save_path));
+            await new Promise((resolve, reject) => {
+                child.exec(`unzip ${tmp_file_path} -d ${save_path}`, e => {
+                    if (e) reject(e);
                     else resolve();
                 });
             });
             await fsp.unlink(tmp_file_path);
             await this.process_data(save_path);
-        }catch(e){
+        } catch (e) {
             if (retry) await this.problem_data(domain_id, pid, save_path, retry - 1);
-            else throw e;
+            else {
+                throw e;
+            }
         }
         return save_path;
     }
-    async process_data(folder){
+    async process_data(folder) {
+        let files = await fsp.readdir(folder), ini = false;
+        for (let i of files)
+            if (i.toLowerCase() == 'config.ini') {
+                ini = true;
+                await fsp.rename(`${folder}/${i}`, folder + '/config.ini');
+                break;
+            }
+        if (ini) {
+            for (let i of files)
+                if (i.toLowerCase() == 'input')
+                    await fsp.rename(`${folder}/${i}`, folder + '/input');
+                else if (i.toLowerCase() == 'output')
+                    await fsp.rename(`${folder}/${i}`, folder + '/output');
+            files = await fsp.readdir(folder + '/input');
+            for (let i of files)
+                await fsp.rename(`${folder}/input/${i}`, `${folder}/input/${i.toLowerCase()}`);
+            files = await fsp.readdir(folder + '/output');
+            for (let i of files)
+                await fsp.rename(`${folder}/output/${i}`, `${folder}/output/${i.toLowerCase()}`);
+        }
     }
     async record_pretest_data(rid, save_path) {
         log.info('Getting pretest data: %s/%s', this.config.host, rid);

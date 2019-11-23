@@ -78,7 +78,8 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                         user_stderr: stderr,
                         checker: config.checker,
                         checker_type: config.checker_type,
-                        score: subtask.score
+                        score: subtask.score,
+                        detail: config.detail
                     });
                     total_status = max(total_status, status);
                     total_time_usage_ms += time_usage_ms;

@@ -4,17 +4,13 @@
   "main": "jd5/daemon.js",
   "author": "masnn",
   "dependencies": {
-    "adm-zip": "^0.4.13",
     "axios": "^0.19.0",
-    "bindings": "^1.5.0",
     "js-yaml": "^3.13.1",
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
-    "randomstring": "^1.1.5",
     "shell-quote": "^1.7.2",
     "simple-sandbox": "^0.3.5",
     "syspipe": "^0.1.5",
-    "vijos-sandbox": "https://github.com/vijos/sandbox.git",
     "ws": "^7.1.2"
   },
   "devDependencies": {

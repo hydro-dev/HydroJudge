@@ -7,8 +7,11 @@ const
     _compile = require('../compile');
 
 async function compile(sandbox, checker) {
-    await sandbox.addFile(path.resolve(__dirname, '../files/testlib.h'));
-    return await _compile(parseLang(checker), checker, sandbox, 'checker');
+    let [file] = await Promise.all([
+        fsp.readFile(checker),
+        sandbox.addFile(path.resolve(__dirname, '../files/testlib.h'))
+    ]);
+    return await _compile(parseLang(checker), file, sandbox, 'checker');
 }
 async function check(sandbox, config) {
     await Promise.all([

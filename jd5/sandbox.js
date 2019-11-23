@@ -35,6 +35,7 @@ module.exports = class SandBox extends EventEmitter {
             await new Promise(resolve => {
                 mkdirp(`${this.dir}/tmp`, resolve());
             });
+        
         if (!fs.existsSync(`${this.dir}/jd5.lock`))
             fs.writeFileSync(`${this.dir}/jd5.lock`, process.pid);
         else {

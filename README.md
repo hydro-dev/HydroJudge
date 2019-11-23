@@ -1,5 +1,7 @@
 # Judge Daemon
 
+[中文文档](docs/zh-CN.md)
+
 ## Introduction
 
 jd5 is a judging daemon for programming contests like OI and ACM. It is called
@@ -35,18 +37,11 @@ in `$HOME/.config/jd5`. `config.yaml` includes the server address, user and
 password and `langs.yaml` includes the compiler options. Examples can be found
 under the `examples` directory.
 
-We recommend to use the following commands to initialize the config:
-
-```sh
-mkdir -p ~/.config/jd5
-cp examples/config.yaml ~/.config/jd5/
-ln -sr examples/langs.yaml ~/.config/jd5/
-```
 
 Use the following command to run the daemon:
 
 ```sh
-node ./jd5/daemon.js
+node jd5/daemon.js
 ```
 
 Note that this requires a `sudo` to create cgroups on first execution.

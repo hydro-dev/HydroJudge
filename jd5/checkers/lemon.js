@@ -30,5 +30,9 @@ async function check(sandbox, config) {
         status: score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER
     };
 }
+async function compile(sandbox, checker) {
+    let file = await fsp.readFile(checker);
+    return _compile(parseLang(checker), file, sandbox, 'checker')
+}
 
-module.exports = { check, compile: (sandbox, checker) => _compile(parseLang(checker), checker, sandbox, 'checker') };
+module.exports = { check, compile };

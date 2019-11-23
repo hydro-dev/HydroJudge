@@ -33,19 +33,13 @@ async function compile(lang, code, sandbox, target) {
     let stdout = path.resolve(sandbox.dir, 'stdout');
     let stderr = path.resolve(sandbox.dir, 'stderr');
     if (info.type == 'compiler') {
-        if (code[0] == '/')
-            await sandbox.addFile(code, info.code_file);
-        else
-            await sandbox.writeFile(info.code_file, code);
+        await sandbox.writeFile(info.code_file, code);
         ({ code: exit_code } = await sandbox.run(info.compile.replace('%filename%', target), {
             stdout, stderr
         }));
         if (exit_code) throw new CompileError({ stdout, stderr });
     } else if (info.type == 'interpreter') {
-        if (code[0] == '/')
-            await sandbox.addFile(code, target);
-        else
-            await sandbox.writeFile(target, code);
+        await sandbox.writeFile(target, code);
     }
     return { code: 0, stdout, stderr, execute: info.execute };
 }

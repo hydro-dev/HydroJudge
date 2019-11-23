@@ -24,5 +24,9 @@ async function check(sandbox, config) {
     let message = (await fsp.readFile(stdout)).toString();
     return { code, status, score: (status == STATUS_ACCEPTED) ? config.score : 0, message };
 }
+async function compile(sandbox, checker) {
+    let file = await fsp.readFile(checker);
+    return _compile(parseLang(checker), file, sandbox, 'checker')
+}
 
-module.exports = { check, compile: (sandbox, checker) => _compile(parseLang(checker), checker, sandbox, 'checker') };
+module.exports = { check, compile };
