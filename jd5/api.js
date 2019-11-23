@@ -4,7 +4,6 @@ const
     fsp = fs.promises,
     path = require('path'),
     WebSocket = require('ws'),
-    AdmZip = require('adm-zip'),
     log = require('./log'),
     { download, mkdirp } = require('./utils'),
     cache = require('./cache'),

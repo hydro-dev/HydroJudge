@@ -10,7 +10,7 @@ cc:
     execute: /home/%filename%
 pas:
     type: compiler
-    compile: /usr/bin/fpc -O2 -o %filename% foo.pas
+    compile: /usr/bin/fpc -O2 -o/home/%filename% foo.pas
     code_file: foo.pas
     execute: /home/%filename%
 java:
@@ -57,6 +57,6 @@ rb:
     execute: /usr/bin/ruby foo.rb
 cs:
     type: compiler
-    compile: /usr/bin/csc -optimize+ -out:/home/%filename% /home/foo.cs
+    compile: /usr/bin/mcs -optimize+ -out:/home/%filename% /home/foo.cs
     code_file: foo.cs
     execute: /usr/bin/mono %filename%
