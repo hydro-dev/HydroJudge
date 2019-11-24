@@ -3,12 +3,19 @@ const fs = require('fs');
 class CompileError extends Error {
     constructor({ stdout, stderr } = {}) {
         let out = '', err = '';
-        if (stdout) out = fs.readFileSync(stdout).toString();
-        if (stderr) err = fs.readFileSync(stderr).toString();
-        super([out, err].join('\n'));
+        let len = fs.statSync(stdout).size() + fs.statSync(stderr).size();
+        if (len <= 4096) {
+            if (stdout) out = fs.readFileSync(stdout).toString();
+            if (stderr) err = fs.readFileSync(stderr).toString();
+            super([out, err].join('\n'));
+            this.stdout = out;
+            this.stderr = err;
+        } else {
+            super('Compiler output limit exceeded.');
+            this.stdout = '/dev/null';
+            this.stderr = '/dev/null';
+        }
         this.type = 'CompileError';
-        this.stdout = out;
-        this.stderr = err;
     }
 }
 class FormatError extends Error {

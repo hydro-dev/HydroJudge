@@ -24,9 +24,12 @@ const
 async function build(next, sandbox, lang, scode) {
     let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'code');
     if (code) throw new CompileError({ stdout, stderr });
-    stdout = (await fsp.readFile(stdout)).toString();
-    stderr = (await fsp.readFile(stderr)).toString();
-    next({ compiler_text: [stdout, stderr, '自豪地采用[jd5](https://github.com/masnn/jd5)进行评测'].join('\n') });
+    let len = fs.statSync(stdout).size() + fs.statSync(stderr).size();
+    if (len <= 4096) {
+        stdout = (await fsp.readFile(stdout)).toString();
+        stderr = (await fsp.readFile(stderr)).toString();
+        next({ compiler_text: [stdout, stderr, '自豪地采用[jd5](https://github.com/masnn/jd5)进行评测'].join('\n') });
+    } else next({ compiler_text: 'Compiler output limit exceeded.' });
     return execute;
 }
 
