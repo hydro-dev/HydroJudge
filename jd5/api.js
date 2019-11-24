@@ -5,7 +5,7 @@ const
     path = require('path'),
     WebSocket = require('ws'),
     log = require('./log'),
-    { download, mkdirp } = require('./utils'),
+    { mkdirp } = require('./utils'),
     cache = require('./cache'),
     child = require('child_process'),
     { CACHE_DIR } = require('./config');

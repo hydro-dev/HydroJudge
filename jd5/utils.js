@@ -48,16 +48,6 @@ function mkdirp(p) {
         });
     });
 }
-async function download(axios, url, filepath) {
-    let res = await axios.get(url, { responseType: 'stream' });
-    await mkdirp(path.dirname(filepath));
-    await new Promise((resolve, reject) => {
-        let file = fs.createWriteStream(filepath);
-        res.data.pipe(file);
-        file.on('finish', () => { resolve(); });
-        file.on('error', err => { reject(err); });
-    });
-}
 function parseLang(filename) {
     let t = filename.split('.');
     let ext = t[t.length - 1];
@@ -93,6 +83,6 @@ class Queue extends EventEmitter {
     }
 }
 module.exports = {
-    download, Queue, mkdirp, max, rmdir, sleep,
+    Queue, mkdirp, max, rmdir, sleep,
     parseMemoryMB, parseTimeMS, parseLang, parseFilename, cmd: parse
 };
