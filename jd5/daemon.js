@@ -72,12 +72,12 @@ async function daemon() {
             for (let i in hosts) {
                 await hosts[i].ensureLogin();
                 await hosts[i].updateProblemData();
-                for (let j in SANDBOX_POOL_COUNT / hosts.length)
+                await hosts[i].consume(queue);
+                for (let j = 2; j <= (SANDBOX_POOL_COUNT || 2) / hosts.length / 2; j++)
                     await hosts[i].consume(queue);
             }
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let request = await queue.get();
-
                 new JudgeHandler(hosts[request.host], request, request.ws, pool).handle();
             }
         } catch (e) {

@@ -67,9 +67,12 @@ class Queue extends EventEmitter {
     }
     async get() {
         if (this.empty())
-            await new Promise(resolve => {
-                this.once('new', () => { resolve(); });
-            });
+            while (this.empty())
+                await new Promise(resolve => {
+                    this.once('new', () => {
+                        resolve();
+                    });
+                });
         let top = this.queue[0];
         this.queue = _.drop(this.queue, 1);
         return top;
