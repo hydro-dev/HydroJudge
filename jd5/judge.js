@@ -67,7 +67,7 @@ module.exports = class JudgeHandler {
     }
     async do_pretest() {
         log.info('Pretest: %s/%s/%s, %s', this.host, this.domain_id, this.pid, this.rid);
-        this.folder = path.resolve(CACHE_DIR, `_/${this.rid}`);
+        this.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
         await this.session.record_pretest_data(this.rid, this.folder);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
         await judger.default.judge(this);

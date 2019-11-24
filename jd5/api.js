@@ -106,15 +106,21 @@ module.exports = class AxiosInstance {
     async record_pretest_data(rid, save_path) {
         log.info('Getting pretest data: %s/%s', this.config.host, rid);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${rid}`);
-        await download(this.axios, `records/${rid}/data`, tmp_file_path);
-        let zipfile = new AdmZip(tmp_file_path);
         await new Promise((resolve, reject) => {
-            zipfile.extractAllToAsync(save_path, true, err => {
-                if (err) reject(err);
+            child.exec(`wget "${this.config.server_url}records/${rid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
+                if (e) reject(e);
+                else resolve();
+            });
+        });
+        await mkdirp(path.dirname(save_path));
+        await new Promise((resolve, reject) => {
+            child.exec(`unzip ${tmp_file_path} -d ${save_path}`, e => {
+                if (e) reject(e);
                 else resolve();
             });
         });
         await fsp.unlink(tmp_file_path);
+        await this.process_data(save_path);
         return save_path;
     }
     async judge_datalist(last) {

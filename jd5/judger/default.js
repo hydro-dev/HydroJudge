@@ -52,16 +52,37 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                     progress: Math.floor(c.id * 100 / config.count)
                 });
                 else {
+                    let code, time_usage_ms, memory_usage_kb;
                     let stdout = path.resolve(usr_sandbox.dir, 'stdout');
                     let stderr = path.resolve(usr_sandbox.dir, 'stderr');
-                    let { code, time_usage_ms, memory_usage_kb } = await usr_sandbox.run(
-                        execute.replace('%filename%', 'code'),
-                        {
-                            stdin: c.input, stdout, stderr,
-                            time_limit_ms: subtask.time_limit_ms,
-                            memory_limit_mb: subtask.memory_limit_mb
-                        }
-                    );
+                    if (config.filename) {
+                        await usr_sandbox.addFile(c.input, config.filename + '.in');
+                        let res = await usr_sandbox.run(
+                            execute.replace('%filename%', 'code'),
+                            {
+                                stdin: '/dev/null', stdout: '/dev/null', stderr,
+                                time_limit_ms: subtask.time_limit_ms,
+                                memory_limit_mb: subtask.memory_limit_mb
+                            }
+                        );
+                        code = res.code;
+                        time_usage_ms = res.time_usage_ms;
+                        memory_usage_kb = res.memory_usage_kb;
+                        stdout = path.resolve(usr_sandbox.dir, 'home', config.filename + '.out');
+                        if (!fs.existsSync(stdout)) fs.writeFileSync(stdout, '');
+                    } else {
+                        let res = await usr_sandbox.run(
+                            execute.replace('%filename%', 'code'),
+                            {
+                                stdin: c.input, stdout, stderr,
+                                time_limit_ms: subtask.time_limit_ms,
+                                memory_limit_mb: subtask.memory_limit_mb
+                            }
+                        );
+                        code = res.code;
+                        time_usage_ms = res.time_usage_ms;
+                        memory_usage_kb = res.memory_usage_kb;
+                    }
                     let status, message = '';
                     if (time_usage_ms > subtask.time_limit_ms)
                         status = STATUS_TIME_LIMIT_EXCEEDED;

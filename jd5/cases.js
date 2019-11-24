@@ -67,6 +67,7 @@ async function readYamlCases(folder, name) {
 
     config_file = yaml.safeLoad(config_file);
     config.checker_type = config_file.checker_type || 'default';
+    if (config_file.filename) config.filename = config_file.filename;
     if (config_file.checker) config.checker = checkFile(config_file.checker, 'Checker {0} not found.');
     if (config_file.judge_extra_files) {
         if (typeof config_file.judge_extra_files == 'string')
