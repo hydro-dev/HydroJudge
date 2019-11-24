@@ -24,7 +24,7 @@ const
 async function build(next, sandbox, lang, scode) {
     let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'code');
     if (code) throw new CompileError({ stdout, stderr });
-    let len = fs.statSync(stdout).size() + fs.statSync(stderr).size();
+    let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
     if (len <= 4096) {
         stdout = (await fsp.readFile(stdout)).toString();
         stderr = (await fsp.readFile(stderr)).toString();

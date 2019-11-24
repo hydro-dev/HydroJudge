@@ -3,7 +3,7 @@ const fs = require('fs');
 class CompileError extends Error {
     constructor({ stdout, stderr } = {}) {
         let out = '', err = '';
-        let len = fs.statSync(stdout).size() + fs.statSync(stderr).size();
+        let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
         if (len <= 4096) {
             if (stdout) out = fs.readFileSync(stdout).toString();
             if (stderr) err = fs.readFileSync(stderr).toString();
