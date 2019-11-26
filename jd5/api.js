@@ -13,16 +13,12 @@ const
 module.exports = class AxiosInstance {
     constructor(config) {
         this.config = config;
-        this.host = this.config.host;
-        if (typeof this.config.detail == 'undefined') this.config.detail = true;
     }
     async init() {
-        if (typeof this.config.detail == 'undefined') this.config.detail = true;
         await this.setCookie(this.config.cookie || '');
         await this.ensureLogin();
     }
     async setCookie(cookie) {
-        log.log(`[${this.config.host}] Setting cookie: ${cookie}`);
         this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
@@ -56,7 +52,7 @@ module.exports = class AxiosInstance {
     }
     async problem_data(domain_id, pid, save_path, retry = 3) {
         log.info('Getting problem data: %s/%s/%s', this.config.host, domain_id, pid);
-        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${domain_id}_${pid}`);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${domain_id}_${pid}`);
         try {
             await new Promise((resolve, reject) => {
                 child.exec(`wget "${this.config.server_url}d/${domain_id}/p/${pid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
@@ -105,7 +101,7 @@ module.exports = class AxiosInstance {
     }
     async record_pretest_data(rid, save_path) {
         log.info('Getting pretest data: %s/%s', this.config.host, rid);
-        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.host}_${rid}`);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${rid}`);
         await new Promise((resolve, reject) => {
             child.exec(`wget "${this.config.server_url}records/${rid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
                 if (e) reject(e);
@@ -131,7 +127,7 @@ module.exports = class AxiosInstance {
         log.info(`[${this.config.host}] Update problem data`);
         let result = await this.judge_datalist(this.config.last_update_at || 0);
         for (let pid of result.pids) {
-            await cache.invalidate(this.host, pid.domain_id, pid.pid);
+            await cache.invalidate(this.config.host, pid.domain_id, pid.pid);
             log.debug('Invalidated %s/%s/%s', this.config.host, pid.domain_id, pid.pid);
         }
         this.config.last_update_at = result.time;
@@ -143,10 +139,13 @@ module.exports = class AxiosInstance {
             headers: { cookie: this.config.cookie }
         });
         this.ws.on('message', data => {
-            queue.push(Object.assign(JSON.parse(data), { host: this.config.host, ws: this.ws }));
+            queue.push(Object.assign(JSON.parse(data), { id: this.config.id, host: this.config.host, ws: this.ws }));
         });
         this.ws.on('close', (data, reason) => {
             log.log(`[${this.config.host}] Websocket closed:`, data, reason);
+            setTimeout(() => {
+                this.consume(queue);
+            }, 30000);
         });
         this.ws.on('error', e => {
             log.log(`[${this.config.host}] Websocket error:`, e);

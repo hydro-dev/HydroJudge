@@ -20,22 +20,13 @@ module.exports = class SandBox extends EventEmitter {
     async init() {
         log.log(`Sandbox init: ${this.dir}`);
         if (!fs.existsSync(`${this.dir}`))
-            await new Promise(resolve => {
-                mkdirp(`${this.dir}`, resolve());
-            });
+            await mkdirp(`${this.dir}`);
         if (!fs.existsSync(`${this.dir}/home`))
-            await new Promise(resolve => {
-                mkdirp(`${this.dir}/home`, resolve());
-            });
+            await mkdirp(`${this.dir}/home`);
         if (!fs.existsSync(`${this.dir}/cache`))
-            await new Promise(resolve => {
-                mkdirp(`${this.dir}/cache`, resolve());
-            });
+            await mkdirp(`${this.dir}/cache`);
         if (!fs.existsSync(`${this.dir}/tmp`))
-            await new Promise(resolve => {
-                mkdirp(`${this.dir}/tmp`, resolve());
-            });
-        
+            await mkdirp(`${this.dir}/tmp`);
         if (!fs.existsSync(`${this.dir}/jd5.lock`))
             fs.writeFileSync(`${this.dir}/jd5.lock`, process.pid);
         else {

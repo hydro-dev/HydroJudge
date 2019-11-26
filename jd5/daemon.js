@@ -47,38 +47,62 @@ async function daemon() {
         log.error(`Config file not found at ${_CONFIG_FILE}`);
         process.exit(1);
     });
-    let hosts = {};
     try {
         config = yaml.safeLoad(config.toString());
     } catch (e) {
         log.error('Invalid config file.');
         process.exit(1);
     }
+    let hosts = {};
     let queue = new Queue();
+    let pool = new Pool();
     for (let i in config.hosts) {
-        hosts[i] = new VJ4Session(Object.assign({ host: i }, config.hosts[i]));
-        await hosts[i].init();
-        setInterval(() => { hosts[i].axios.get('judge/noop'); }, 30000000);
+        config.hosts[i].count = config.hosts[i].count || 1;
+        config.hosts[i].cookie = config.hosts[i].cookie || [];
+        hosts[i] = [];
+        for (let j = 0; j < config.hosts[i].count; j++) {
+            hosts[i][j] = new VJ4Session({
+                host: i, id: j,
+                cookie: config.hosts[i].cookie[j] || '',
+                uname: config.hosts[i].uname,
+                password: config.hosts[i].password,
+                last_update_at: config.hosts[i].last_update_at || 0,
+                server_url: config.hosts[i].server_url,
+                detail: config.hosts[i].detail || true
+            });
+            await hosts[i][j].init();
+            setInterval(() => { hosts[i][j].axios.get('judge/noop'); }, 30000000);
+        }
     }
     global.onDestory.push(async () => {
-        for (let i in hosts)
-            config.hosts[i] = hosts[i].config;
+        let config = { hosts: {} };
+        for (let i in hosts) {
+            config.hosts[i] = {
+                host: i,
+                cookie: [],
+                uname: hosts[i][0].config.uname,
+                password: hosts[i][0].config.password,
+                last_update_at: hosts[i][0].config.last_update_at,
+                server_url: hosts[i][0].config.server_url,
+                detail: hosts[i][0].config.detail
+            };
+            for (let j in hosts[i])
+                config.hosts[i].cookie.push(hosts[i][j].config.cookie);
+        }
         await fsp.writeFile(_CONFIG_FILE, yaml.safeDump(config));
     });
-    let pool = new Pool();
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
-            for (let i in hosts) {
-                await hosts[i].ensureLogin();
-                await hosts[i].updateProblemData();
-                await hosts[i].consume(queue);
-                for (let j = 2; j <= (SANDBOX_POOL_COUNT || 2) / hosts.length / 2; j++)
-                    await hosts[i].consume(queue);
-            }
+            for (let i in hosts)
+                for (let j in hosts[i]) {
+                    await hosts[i][j].ensureLogin();
+                    await hosts[i][j].updateProblemData();
+                    await hosts[i][j].consume(queue);
+                }
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let request = await queue.get();
-                new JudgeHandler(hosts[request.host], request, request.ws, pool).handle();
+                new JudgeHandler(hosts[request.host][request.id], request, request.ws, pool).handle();
             }
         } catch (e) {
             log.error(e);
