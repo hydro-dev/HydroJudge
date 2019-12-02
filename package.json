@@ -9,7 +9,6 @@
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
     "shell-quote": "^1.7.2",
-    "simple-sandbox": "^0.3.5",
     "syspipe": "^0.1.5",
     "ws": "^7.1.2"
   },

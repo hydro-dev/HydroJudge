@@ -19,24 +19,10 @@ module.exports = class SandBox extends EventEmitter {
     }
     async init() {
         log.log(`Sandbox init: ${this.dir}`);
-        if (!fs.existsSync(`${this.dir}`))
-            await mkdirp(`${this.dir}`);
-        if (!fs.existsSync(`${this.dir}/home`))
-            await mkdirp(`${this.dir}/home`);
-        if (!fs.existsSync(`${this.dir}/cache`))
-            await mkdirp(`${this.dir}/cache`);
-        if (!fs.existsSync(`${this.dir}/tmp`))
-            await mkdirp(`${this.dir}/tmp`);
-        if (!fs.existsSync(`${this.dir}/jd5.lock`))
-            fs.writeFileSync(`${this.dir}/jd5.lock`, process.pid);
-        else {
-            //TODO(masnn) check if the pid exited.
-            throw new Error('Sandbox dir locked!');
-        }
-        global.onDestory.push(() => this.close());
-    }
-    async close() {
-        await fsp.unlink(path.resolve(this.dir, 'jd5.lock'));
+        if (!fs.existsSync(`${this.dir}`)) await mkdirp(`${this.dir}`);
+        if (!fs.existsSync(`${this.dir}/home`)) await mkdirp(`${this.dir}/home`);
+        if (!fs.existsSync(`${this.dir}/cache`)) await mkdirp(`${this.dir}/cache`);
+        if (!fs.existsSync(`${this.dir}/tmp`)) await mkdirp(`${this.dir}/tmp`);
     }
     async reset() {
         await this.clean();
@@ -50,12 +36,7 @@ module.exports = class SandBox extends EventEmitter {
     async addFile(src, target) {
         if (!src) throw new SystemError('Error while parsing source');
         if (!target) target = parseFilename(src);
-        if (typeof target == 'number') {
-            //file descriptor
-        } else if (typeof target == 'string') {
-            //path in sandbox
-            await fsp.copyFile(src, path.join(this.dir, 'home', target));
-        } else throw new SystemError('Error while parsing target');
+        await fsp.copyFile(src, path.join(this.dir, 'home', target));
     }
     writeFile(file, content) {
         return fsp.writeFile(path.resolve(this.dir, 'home', file), content);

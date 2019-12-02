@@ -1,7 +1,7 @@
 const
     { SystemError } = require('../error.js'),
     os = require('os'),
-    sandbox = require('../../simple-sandbox');
+    sandbox = require('simple-sandbox');
 
 module.exports = class SIMPLE_SANDBOX {
     constructor(name) {
