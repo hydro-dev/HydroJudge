@@ -1,0 +1,7 @@
+.vscode
+.github
+.eslintrc.json
+.gitignore
+docs
+README.md
+node_modules
