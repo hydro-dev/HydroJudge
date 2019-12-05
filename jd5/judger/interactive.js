@@ -7,7 +7,7 @@ const
     path = require('path'),
     signals = require('../signals'),
     compile = require('../compile'),
-    syspipe = require('syspipe'),
+    pipe = require('./../../build/Release/pipe'),
     fs = require('fs'),
     fsp = fs.promises,
     closePipe = async pipe => {
@@ -73,8 +73,8 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                 else {
                     let interactor_stderr = path.resolve(judge_sandbox.dir, 'stderr');
                     let user_stderr = path.resolve(usr_sandbox.dir, 'stderr');
-                    pipe1 = syspipe.pipe();
-                    pipe2 = syspipe.pipe();
+                    pipe1 = pipe();
+                    pipe2 = pipe();
                     let [{ code: usr_code, time_usage_ms, memory_usage_kb }, { code: interactor_code }] = await Promise.all([
                         usr_sandbox.run(
                             execute_user.replace('%filename%', 'code'),
