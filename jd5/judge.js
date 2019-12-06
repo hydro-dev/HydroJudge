@@ -60,10 +60,12 @@ module.exports = class JudgeHandler {
         await this.session.updateProblemData();
     }
     async do_submission() {
-        log.info('Submission: %s/%s/%s, %s', this.host, this.domain_id, this.pid, this.rid);
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
         this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
         await judger[this.config.type || 'default'].judge(this);
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
     }
     async do_pretest() {
         log.info('Pretest: %s/%s/%s, %s', this.host, this.domain_id, this.pid, this.rid);

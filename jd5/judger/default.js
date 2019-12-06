@@ -7,6 +7,7 @@ const
     path = require('path'),
     compile = require('../compile'),
     signals = require('../signals'),
+    log = require('../log'),
     { check, compile_checker } = require('../check'),
     fs = require('fs'),
     fsp = fs.promises;
@@ -23,7 +24,7 @@ async function build(next, sandbox, lang, scode) {
     return execute;
 }
 
-exports.judge = async function ({ next, end, config, pool, lang, code }) {
+exports.judge = async function ({ next, end, config, pool, lang, code, domain_id, pid, rid, host }) {
     let [usr_sandbox, judge_sandbox] = await Promise.all([pool.get(), pool.get()]);
     try {
         for (let i in config.judge_extra_files)
@@ -120,6 +121,7 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                         },
                         progress: Math.floor(c.id * 100 / config.count)
                     });
+                    log.submission(`${host}/${domain_id}/${rid}`, log.ACTION_UPDATE, { progress: c.id + 1 });
                 }
             } //End: for(case)
             if (!failed) total_score += subtask.score;
