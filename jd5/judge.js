@@ -1,4 +1,5 @@
 const
+    Listr = require('listr'),
     cache = require('./cache'),
     { CACHE_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
@@ -59,20 +60,56 @@ module.exports = class JudgeHandler {
         log.debug('Invalidated %s/%s', domain_id, pid);
         await this.session.updateProblemData();
     }
-    async do_submission() {
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
-        this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
-        this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
-        await judger[this.config.type || 'default'].judge(this);
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
+    do_submission() {
+        return (new Listr([{
+            title: `Submission ${this.host}/${this.domain_id}/${this.pid}/${this.rid}`,
+            task: () => new Listr([{
+                title: 'Fetch problem data',
+                task: async ctx => {
+                    ctx.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
+                    ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
+                }
+            },
+            {
+                title: 'Judging',
+                task: ctx => {
+                    ctx.lang = this.lang;
+                    ctx.code = this.code;
+                    ctx.next = this.next;
+                    ctx.end = this.end;
+                    ctx.pool = this.pool;
+                    let judge = judger[ctx.config.type || 'default'].judge(this);
+                    if (judge instanceof Promise) return judge;
+                    return new Listr(judge);
+                }
+            }])
+        }]).run());
     }
     async do_pretest() {
-        log.info('Pretest: %s/%s/%s, %s', this.host, this.domain_id, this.pid, this.rid);
-        this.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
-        await this.session.record_pretest_data(this.rid, this.folder);
-        this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        await judger.default.judge(this);
+        return (new Listr([{
+            title: `Pretest ${this.host}/${this.domain_id}/${this.rid}`,
+            task: () => new Listr([{
+                title: 'Fetch problem data',
+                task: async ctx => {
+                    ctx.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
+                    await this.session.record_pretest_data(this.rid, this.folder);
+                    ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
+                }
+            },
+            {
+                title: 'Judging',
+                task: ctx => {
+                    ctx.lang = this.lang;
+                    ctx.code = this.code;
+                    ctx.next = this.next;
+                    ctx.end = this.end;
+                    ctx.pool = this.pool;
+                    let judge = judger[ctx.config.type || 'default'].judge(this);
+                    if (judge instanceof Promise) return judge;
+                    return new Listr(judge);
+                }
+            }])
+        }]).run());
     }
     get_next(ws, tag) {
         return data => {

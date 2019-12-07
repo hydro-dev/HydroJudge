@@ -2,6 +2,7 @@
 .github
 .eslintrc.json
 .gitignore
+*.log
 docs
 README.md
 node_modules

@@ -29,8 +29,9 @@
             "warn",
             "always"
         ],
-        "no-unused-vars":[
+        "no-unused-vars": [
             "warn"
-        ]
+        ],
+        "require-atomic-updates": "warn"
     }
 }
