@@ -1,12 +1,12 @@
 const
     Listr = require('listr'),
-    cache = require('./cache'),
     { CACHE_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError, FormatError } = require('./error'),
     readCases = require('./cases'),
     judger = require('./judger'),
     path = require('path'),
+    cache = require('./cache'),
     log = require('./log');
 
 const DEFAULT_LANGUAGE = require('./config').DEFAULT_LANGUAGE || 'zh-CN';
@@ -21,7 +21,6 @@ module.exports = class JudgeHandler {
     }
     async handle() {
         if (!this.request.event) await this.do_record();
-        else if (this.request.event == 'problem_data_change') await this.update_problem_data();
         else log.warn('Unknown event: %s', this.request.event);
     }
     async do_record() {
@@ -52,13 +51,6 @@ module.exports = class JudgeHandler {
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
-    }
-    async update_problem_data() {
-        let domain_id = this.request.domain_id;
-        let pid = this.request.pid;
-        await cache.invalidate(this.host, domain_id, pid);
-        log.debug('Invalidated %s/%s', domain_id, pid);
-        await this.session.updateProblemData();
     }
     do_submission() {
         return (new Listr([{

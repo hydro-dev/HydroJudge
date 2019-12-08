@@ -4,11 +4,10 @@ const
     fsp = fs.promises,
     path = require('path'),
     WebSocket = require('ws'),
-    log = require('./log'),
-    { mkdirp } = require('./utils'),
-    cache = require('./cache'),
+    log = require('../log'),
+    { mkdirp } = require('../utils'),
     child = require('child_process'),
-    { CACHE_DIR } = require('./config');
+    { CACHE_DIR } = require('../config');
 
 module.exports = class AxiosInstance {
     constructor(config) {
@@ -48,6 +47,20 @@ module.exports = class AxiosInstance {
             await this.axios.get('judge/noop');
         } catch (e) {
             await this.login();
+        }
+    }
+    async problem_data_version(domain_id, pid) {
+        try {
+            await this.axios.get(`d/${domain_id}/p/${pid}/data`, { maxRedirects: 0 });
+        } catch (res) {
+            let location = res.response.headers.location;
+            if (location.startsWith('/fs/')) return location.split('/')[2];
+            else try {
+                await this.axios.get(location, { maxRedirects: 0 });
+            } catch (res) {
+                let location = res.response.headers.location;
+                return location.split('/')[2];
+            }
         }
     }
     async problem_data(domain_id, pid, save_path, retry = 3) {
@@ -118,19 +131,6 @@ module.exports = class AxiosInstance {
         await fsp.unlink(tmp_file_path);
         await this.process_data(save_path);
         return save_path;
-    }
-    async judge_datalist(last) {
-        let res = await this.axios.get('judge/datalist', { params: { last } });
-        return res.data;
-    }
-    async updateProblemData() {
-        log.info(`[${this.config.host}] Update problem data`);
-        let result = await this.judge_datalist(this.config.last_update_at || 0);
-        for (let pid of result.pids) {
-            await cache.invalidate(this.config.host, pid.domain_id, pid.pid);
-            log.debug('Invalidated %s/%s/%s', this.config.host, pid.domain_id, pid.pid);
-        }
-        this.config.last_update_at = result.time;
     }
     async consume(queue) {
         log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
