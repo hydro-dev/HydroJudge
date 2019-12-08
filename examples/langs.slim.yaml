@@ -1,0 +1,15 @@
+c:
+    type: compiler
+    compile: /usr/bin/gcc -O2 -Wall -std=c99 -o %filename% foo.c -lm
+    code_file: foo.c
+    execute: /home/%filename%
+cc:
+    type: compiler
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    code_file: foo.cc
+    execute: /home/%filename%
+pas:
+    type: compiler
+    compile: /usr/bin/fpc -O2 -o/home/%filename% foo.pas
+    code_file: foo.pas
+    execute: /home/%filename%
