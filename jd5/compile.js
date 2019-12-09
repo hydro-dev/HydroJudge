@@ -5,27 +5,15 @@ const
     os = require('os'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
-    { CONFIG_DIR } = require('./config'),
-    _LANGS_FILE = path.join(CONFIG_DIR, 'langs.yaml');
+    { LANGS_FILE } = require('./config');
 
 let _langs = {};
 try {
-    _langs = yaml.safeLoad(fs.readFileSync(_LANGS_FILE));
+    _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE));
 } catch (e) {
-    if (e.code == 'ENOENT') {
-        log.error('Language file %s not found, using default.', _LANGS_FILE);
-        if (!fs.existsSync(os.homedir() + '/.config/jd5')) {
-            if (!fs.existsSync(os.homedir() + '/.config'))
-                fs.mkdirSync(os.homedir() + '/.config');
-            fs.mkdirSync(os.homedir() + '/.config/jd5');
-        }
-        fs.copyFileSync(path.resolve(__dirname, '../examples/langs.yaml'), _LANGS_FILE);
-        _langs = yaml.safeLoad(fs.readFileSync(_LANGS_FILE));
-    } else {
-        log.error('Invalidate Language file %s', _LANGS_FILE);
-        log.error(e);
-        process.exit(1);
-    }
+    log.error('Invalidate Language file %s', LANGS_FILE);
+    log.error(e);
+    process.exit(1);
 }
 async function compile(lang, code, sandbox, target) {
     if (!_langs[lang]) throw new SystemError('Language not supported');

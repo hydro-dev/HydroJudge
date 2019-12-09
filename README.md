@@ -15,7 +15,17 @@ Prerequisites:
 - Linux 4.4+
 - Docker
 
-We are sorry that docker images haven't been build yet.
+Create `config.yaml`:
+
+```yaml
+hosts:
+  localhost:
+    server_url: e.g. https://vijos.org
+    uname: Judge account username
+    password: Judge account password
+```
+
+Then use `docker run -d -v ./config.yaml:/root/.config/jd5/config.yaml -v ./cache /root/.cache/jd5 masnn/jd5` to start.
 
 ## Development
 

@@ -19,10 +19,8 @@ const
     log = require('./log'),
     fsp = require('fs').promises,
     Pool = require('./pool'),
-    path = require('path'),
     yaml = require('js-yaml'),
-    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT, CONFIG_DIR } = require('./config'),
-    _CONFIG_FILE = path.resolve(CONFIG_DIR, 'config.yaml');
+    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT, CONFIG_FILE } = require('./config');
 
 global.onDestory = [];
 process.on('SIGINT', async () => {
@@ -43,10 +41,7 @@ process.on('SIGINT', async () => {
 });
 
 async function daemon() {
-    let config = await fsp.readFile(_CONFIG_FILE).catch(() => {
-        log.error(`Config file not found at ${_CONFIG_FILE}`);
-        process.exit(1);
-    });
+    let config = await fsp.readFile(CONFIG_FILE);
     try {
         config = yaml.safeLoad(config.toString());
     } catch (e) {
@@ -82,7 +77,7 @@ async function daemon() {
                 server_url: hosts[i].config.server_url,
                 detail: hosts[i].config.detail
             };
-        await fsp.writeFile(_CONFIG_FILE, yaml.safeDump(config));
+        await fsp.writeFile(CONFIG_FILE, yaml.safeDump(config));
     });
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
