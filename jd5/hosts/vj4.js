@@ -12,6 +12,7 @@ const
 module.exports = class AxiosInstance {
     constructor(config) {
         this.config = config;
+        if (!this.config.server_url.startsWith('http')) this.config.server_url = 'http://' + this.config.server_url;
     }
     async init() {
         await this.setCookie(this.config.cookie || '');
