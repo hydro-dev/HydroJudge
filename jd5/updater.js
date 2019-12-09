@@ -13,7 +13,7 @@ const
             if (hasUpgrade == 0) hasUpgrade = -1;
         });
         let rversion = response.data.version;
-        if (rversion) rversion = JSON.parse(response.data).version;
+        if (!rversion) rversion = JSON.parse(response.data).version;
         if (rversion != version) {
             hasUpgrade = 1;
             break;
