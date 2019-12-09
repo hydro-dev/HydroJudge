@@ -145,15 +145,25 @@ module.exports = class AxiosInstance {
         this.ws.on('close', (data, reason) => {
             log.log(`[${this.config.host}] Websocket closed:`, data, reason);
             setTimeout(() => {
-                this.consume(queue);
+                this.retry(queue);
             }, 30000);
         });
         this.ws.on('error', e => {
             log.log(`[${this.config.host}] Websocket error:`, e);
+            setTimeout(() => {
+                this.retry(queue);
+            }, 30000);
         });
         await new Promise(resolve => {
             this.ws.once('open', () => { resolve(); });
         });
         log.info(`[${this.config.host}] Connected`);
+    }
+    async retry(queue){
+        this.consume(queue).catch(e => {
+            setTimeout(() => {
+                this.retry(queue);
+            }, 30000);
+        })
     }
 };
