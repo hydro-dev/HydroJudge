@@ -12,6 +12,7 @@
           ````- - -.......- - -'''    ~
        ~                   */
 require('./i18n');
+require('./updater');
 const
     Session = require('./hosts/index'),
     { sleep, Queue } = require('./utils'),
