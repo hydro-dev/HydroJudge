@@ -12,7 +12,8 @@ const
         let response = await axios.get(url).catch(() => {
             if (hasUpgrade == 0) hasUpgrade = -1;
         });
-        let rversion = JSON.parse(response.data).version;
+        let rversion = response.data.version;
+        if (rversion) rversion = JSON.parse(response.data).version;
         if (rversion != version) {
             hasUpgrade = 1;
             break;
@@ -23,4 +24,6 @@ const
     } else if (hasUpgrade == -1) {
         console.warn('Cannot connect to upgrade manager, please check your internet connection.');
     }
-})();
+})().catch(e => {
+    console.error('Cannot check update:', e);
+});

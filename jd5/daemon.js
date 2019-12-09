@@ -31,18 +31,19 @@ process.on('SIGINT', async () => {
             let r = f();
             if (r instanceof Promise) await r;
         }
+        process.exit(0);
     } catch (e) {
-        if (global.SI) process.exit(0);
+        if (global.SI) process.exit(1);
         log.error(e);
         log.error('An error occured when destorying the sandbox.');
         log.error('Press Ctrl-C again for force exit.');
         global.SI = true;
     }
-    process.exit(0);
 });
 
-async function daemon() {
-    let config = await fsp.readFile(CONFIG_FILE);
+async function daemon(_CONFIG_FILE) {
+    let FILE = _CONFIG_FILE || CONFIG_FILE;
+    let config = await fsp.readFile(FILE);
     try {
         config = yaml.safeLoad(config.toString());
     } catch (e) {
@@ -78,7 +79,7 @@ async function daemon() {
                 server_url: hosts[i].config.server_url,
                 detail: hosts[i].config.detail
             };
-        await fsp.writeFile(CONFIG_FILE, yaml.safeDump(config));
+        await fsp.writeFile(FILE, yaml.safeDump(config));
     });
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
@@ -98,7 +99,7 @@ async function daemon() {
         }
     }
 }
-daemon();
+if (!module.parent) daemon();
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', async input => {
     try {
@@ -109,3 +110,4 @@ process.stdin.on('data', async input => {
         console.warn(e);
     }
 });
+module.exports = daemon;
