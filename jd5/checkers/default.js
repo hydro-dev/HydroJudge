@@ -10,7 +10,7 @@ async function check(sandbox, config) {
     ]);
     let stdout = path.resolve(sandbox.dir, 'home', 'message');
     await sandbox.run('/usr/bin/diff -BZ usrout stdout', {
-        time_limit_ms: 1000, stdout
+        time_limit_ms: 1000, stdout, stdin: '/dev/null', stderr: '/dev/null'
     });
     let status, message = '';
     let opt = fs.readFileSync(stdout).toString();

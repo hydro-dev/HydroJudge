@@ -24,14 +24,14 @@ const
     { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT, CONFIG_FILE } = require('./config');
 
 global.onDestory = [];
-process.on('SIGINT', async () => {
+const terminate = async () => {
     log.log('Saving data');
     try {
         for (let f of global.onDestory) {
             let r = f();
             if (r instanceof Promise) await r;
         }
-        process.exit(0);
+        process.exit(1);
     } catch (e) {
         if (global.SI) process.exit(1);
         log.error(e);
@@ -39,7 +39,9 @@ process.on('SIGINT', async () => {
         log.error('Press Ctrl-C again for force exit.');
         global.SI = true;
     }
-});
+};
+process.on('SIGINT', terminate);
+process.on('SIGTERM', terminate);
 
 async function daemon(_CONFIG_FILE) {
     let FILE = _CONFIG_FILE || CONFIG_FILE;

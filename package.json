@@ -13,7 +13,7 @@
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
     "shell-quote": "^1.7.2",
-    "simple-sandbox2": "^0.0.4",
+    "simple-sandbox2": "^0.0.5",
     "ws": "^7.1.2"
   },
   "devDependencies": {
