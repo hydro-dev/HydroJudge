@@ -950,10 +950,10 @@ signal-exit@^3.0.2:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
   integrity sha1-tf3AjxKH6hF4Yo5BXiUTK3NkbG0=
 
-simple-sandbox2@^0.0.4:
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/simple-sandbox2/-/simple-sandbox2-0.0.4.tgz#af2a5b995bfb3784f9078735237bfb31b69a9394"
-  integrity sha512-HnlD165Z/LGC31KC/h3eckkbfMS5lXiv5/eHNU9IBW+VC3zqQ4lTqpOd2/DAz3YmVZNo8JfUaS297RqVyY+POg==
+simple-sandbox2@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/simple-sandbox2/-/simple-sandbox2-0.0.5.tgz#dd42ab56f6881267342be8a461055a27d945fde9"
+  integrity sha512-5XAPQXeoF+ZVHkomDKy3ug375UhdKRtNDQL4HjZbDRg76T9671n0ZgOR3fwKDxBijPPR/MRmt+LVlMVUt4kQrw==
   dependencies:
     nan "^2.6.2"
     randomstring "^1.1.5"
