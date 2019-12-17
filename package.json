@@ -1,6 +1,6 @@
 {
   "name": "jd5",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "jd5/daemon.js",
   "author": "masnn",
   "os": [
@@ -13,7 +13,7 @@
     "lodash": "^4.17.15",
     "mkdirp": "^0.5.1",
     "shell-quote": "^1.7.2",
-    "simple-sandbox2": "^0.0.6",
+    "simple-sandbox2": "^0.0.7",
     "ws": "^7.1.2"
   },
   "devDependencies": {
