@@ -11,10 +11,36 @@ const
         return p.replace(/\.\./i, '');
     },
     CASES = [
-        [/^([a-zA-Z]*)([0-9]+).in$/, a => a[1] + a[2] + '.out', a => parseInt(a[2])],
-        [/^([a-zA-Z]*)([0-9]+).in$/, a => a[1] + a[2] + '.ans', a => parseInt(a[2])],
-        [/^([a-zA-Z0-9]*)\.in([0-9]+)$/, a => a[1] + '.ou' + a[2], a => parseInt(a[2])],
-        [/^(input)([0-9]+).txt$/, a => 'output' + a[2] + '.txt', a => parseInt(a[2])],
+        {
+            reg: /^([a-zA-Z]*)([0-9]+).in$/,
+            output: a => a[1] + a[2] + '.out',
+            subtask: a => parseInt(a[2]),
+            id: a => 0
+        },
+        {
+            reg: /^([a-zA-Z]*)([0-9]+).in$/,
+            output: a => a[1] + a[2] + '.ans',
+            subtask: a => parseInt(a[2]),
+            id: a => 0
+        },
+        {
+            reg: /^([a-zA-Z0-9]*)\.in([0-9]+)$/,
+            output: a => a[1] + '.ou' + a[2],
+            subtask: a => parseInt(a[2]),
+            id: a => 0
+        },
+        {
+            reg: /^(input)([0-9]+).txt$/,
+            output: a => 'output' + a[2] + '.txt',
+            subtask: a => parseInt(a[2]),
+            id: a => 0
+        },
+        {
+            reg: /^([a-zA-Z]*)([0-9]+)-([0-9]+).in$/,
+            output: a => a[1] + a[2] + '-' + a[3] + '.out',
+            subtask: a => parseInt(a[2]),
+            id: a => parseInt(a[3])
+        }
     ],
     chkFile = folder => (file, message) => {
         let f = path.join(folder, restrict(file));
@@ -140,14 +166,14 @@ async function readAutoCases(folder) {
         let cases = [];
         for (let file of files)
             for (let REG of CASES)
-                if (REG[0].test(file)) {
-                    let data = REG[0].exec(file);
-                    let c = { input: file, output: REG[1](data), sort: REG[2](data) };
+                if (REG.reg.test(file)) {
+                    let data = REG.reg.exec(file);
+                    let c = { input: file, output: REG.output(data), subtask: REG.subtask(data) };
                     if (!fs.existsSync(path.resolve(folder, c.output))) continue;
                     cases.push(c);
                     break;
                 }
-        cases.sort((a, b) => { return a.sort - b.sort; });
+        cases.sort((a, b) => { return a.subtask - b.subtask; });
         let extra = cases.length - 100 % cases.length;
         for (let i in cases) {
             config.count++;

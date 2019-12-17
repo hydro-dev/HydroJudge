@@ -101,11 +101,6 @@ argparse@^1.0.7:
   dependencies:
     sprintf-js "~1.0.2"
 
-array-uniq@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/array-uniq/-/array-uniq-1.0.2.tgz#5fcc373920775723cfd64d65c64bef53bf9eba6d"
-  integrity sha1-X8w3OSB3VyPP1k1lxkvvU7+eum0=
-
 astral-regex@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-1.0.0.tgz#6c8c3fb827dd43ee3918f27b82782ab7658a6fd9"
@@ -859,13 +854,6 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-randomstring@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/randomstring/-/randomstring-1.1.5.tgz#6df0628f75cbd5932930d9fe3ab4e956a18518c3"
-  integrity sha1-bfBij3XL1ZMpMNn+OrTpVqGFGMM=
-  dependencies:
-    array-uniq "1.0.2"
-
 regexpp@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-2.0.1.tgz#8d19d31cf632482b589049f8281f93dbcba4d07f"
@@ -950,13 +938,12 @@ signal-exit@^3.0.2:
   resolved "https://registry.yarnpkg.com/signal-exit/-/signal-exit-3.0.2.tgz#b5fdc08f1287ea1178628e415e25132b73646c6d"
   integrity sha1-tf3AjxKH6hF4Yo5BXiUTK3NkbG0=
 
-simple-sandbox2@^0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/simple-sandbox2/-/simple-sandbox2-0.0.5.tgz#dd42ab56f6881267342be8a461055a27d945fde9"
-  integrity sha512-5XAPQXeoF+ZVHkomDKy3ug375UhdKRtNDQL4HjZbDRg76T9671n0ZgOR3fwKDxBijPPR/MRmt+LVlMVUt4kQrw==
+simple-sandbox2@^0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/simple-sandbox2/-/simple-sandbox2-0.0.6.tgz#31a6534a08dfadad134e1ca43c049d88f4abfabd"
+  integrity sha512-5+NVEdKwKArZATiNNrIC6bMrxyDEwu3vkWGCyfhya9Bts5BNrGtyhru3RXGjmi9PS3RAeR1ycydwz6YOZUQb1A==
   dependencies:
     nan "^2.6.2"
-    randomstring "^1.1.5"
 
 slice-ansi@0.0.4:
   version "0.0.4"

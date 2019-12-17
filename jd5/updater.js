@@ -9,14 +9,16 @@ const
 (async () => {
     let hasUpgrade = 0;
     for (let url of remote) {
-        let response = await axios.get(url).catch(() => {
+        let response = await axios.get(url).catch((e) => {
             if (hasUpgrade == 0) hasUpgrade = -1;
         });
-        let rversion = response.data.version;
-        if (!rversion) rversion = JSON.parse(response.data).version;
-        if (rversion != version) {
-            hasUpgrade = 1;
-            break;
+        if (response) {
+            let rversion = response.data.version;
+            if (!rversion) rversion = JSON.parse(response.data).version;
+            if (rversion != version) {
+                hasUpgrade = 1;
+                break;
+            }
         }
     }
     if (hasUpgrade == 1) {

@@ -10,8 +10,9 @@ COPY . /jd5
 WORKDIR /jd5
 RUN mkdir -p /root/.config/jd5 && \
     apt-get update && \
-    apt-get install -y unzip wget python3 python3-dev build-essential libboost-all-dev && \
+    apt-get install -y unzip python make g++ && \
     yarn && \
+    apt-get remove -y g++ python make && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
     cp /jd5/examples/langs.slim.yaml /root/.config/jd5/langs.yaml

@@ -4,7 +4,9 @@ COPY . /jd5
 WORKDIR /jd5
 RUN mkdir -p /root/.config/jd5 && \
     apt-get update && \
-    apt-get install -y unzip wget python3 python3-dev build-essential libboost-all-dev && \
+    apt-get install -y unzip python g++ make && \
     yarn && \
-    apt-get autoremove -y 
+    apt-get -y remove python g++ make && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
 CMD bash -c "cd /jd5 && node jd5/daemon.js"
