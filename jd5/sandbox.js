@@ -30,7 +30,6 @@ const removeCgroup = (ctrl, cgroup) => {
     let folder = path.resolve(cgroupPath, ctrl, cgroup);
     if (!fs.existsSync(folder)) throw new SystemError('Cgroup doesn\'t exist');
     let tasks = fs.readFileSync(path.resolve(folder, 'tasks')).toString().split(' ');
-    console.log(tasks);
     for (let task of tasks)
         if (Number(task))
             process.kill(Number(task), 'SIGKILL');
@@ -135,7 +134,6 @@ module.exports = class SANDBOX extends EventEmitter {
             mountProc: true,
         };
         let result = await new Promise((res, rej) => {
-            console.log(actualParameter.cgroup);
             sandbox.StartChild(actualParameter, (err, result) => {
                 if (err) rej(err);
                 else res(result);
