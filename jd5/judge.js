@@ -1,5 +1,5 @@
 const
-    Listr = require('listr'),
+    List = require('./list'),
     { CACHE_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError, FormatError } = require('./error'),
@@ -53,9 +53,9 @@ module.exports = class JudgeHandler {
         }
     }
     do_submission() {
-        return (new Listr([{
+        return (new List([{
             title: `Submission ${this.host}/${this.domain_id}/${this.pid}/${this.rid}`,
-            task: () => new Listr([{
+            task: () => new List([{
                 title: 'Fetch problem data',
                 task: async ctx => {
                     ctx.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
@@ -72,15 +72,15 @@ module.exports = class JudgeHandler {
                     ctx.pool = this.pool;
                     let judge = judger[ctx.config.type || 'default'].judge(this);
                     if (judge instanceof Promise) return judge;
-                    return new Listr(judge);
+                    return new List(judge);
                 }
             }])
         }]).run());
     }
     async do_pretest() {
-        return (new Listr([{
+        return (new List([{
             title: `Pretest ${this.host}/${this.domain_id}/${this.rid}`,
-            task: () => new Listr([{
+            task: () => new List([{
                 title: 'Fetch problem data',
                 task: async ctx => {
                     ctx.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
@@ -98,7 +98,7 @@ module.exports = class JudgeHandler {
                     ctx.pool = this.pool;
                     let judge = judger[ctx.config.type || 'default'].judge(this);
                     if (judge instanceof Promise) return judge;
-                    return new Listr(judge);
+                    return new List(judge);
                 }
             }])
         }]).run());

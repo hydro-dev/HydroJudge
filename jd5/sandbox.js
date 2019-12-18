@@ -57,6 +57,9 @@ module.exports = class SANDBOX extends EventEmitter {
         ];
         this.name = name;
         this.dir = `${os.tmpdir()}/jd5/${name}`;
+        createCgroup('memory', `jd5/${this.name}`);
+        createCgroup('cpuacct', `jd5/${this.name}`);
+        createCgroup('pids', `jd5/${this.name}`);
     }
     async run(execute, {
         time_limit_ms = SYSTEM_TIME_LIMIT_MS,
@@ -111,9 +114,6 @@ module.exports = class SANDBOX extends EventEmitter {
         this.run(command, { stdout: '/tmp/stdout', stderr: '/tmp/stderr' });
     }
     async execute(config) {
-        createCgroup('memory', `jd5/${this.name}`);
-        createCgroup('cpuacct', `jd5/${this.name}`);
-        createCgroup('pids', `jd5/${this.name}`);
         if (this.pid) throw new SystemError('Already running a process!');
         const actualParameter = {
             time: config.time,
@@ -154,14 +154,13 @@ module.exports = class SANDBOX extends EventEmitter {
                 spent * 1000 * 1000 * 0.4
             );
             this.actualCpuTime = val;
-            if (this.countedCpuTime > config.time * 1000 * 1000 * 1.2) this.stop();
+            if (this.countedCpuTime > config.time * 1000 * 1000 * 1.1) this.stop();
         };
         this.cancellationToken = setInterval(checkIfTimedOut, checkInterval);
         result = await new Promise((res, rej) => {
             sandbox.WaitForProcess(this.pid, (err, runResult) => {
-                if (err) {
-                    rej(err);
-                } else {
+                if (err) rej(err);
+                else {
                     const memUsageWithCache = Number(GetCgroupProperty('memory', `jd5/${this.name}`, 'memory.max_usage_in_bytes'));
                     const cache = Number(GetCgroupProperty2('memory', `jd5/${this.name}`, 'memory.stat', 'cache'));
                     const memUsage = memUsageWithCache - cache;
@@ -175,6 +174,7 @@ module.exports = class SANDBOX extends EventEmitter {
                 }
             });
         });
+        this.pid = null;
         await this.stop();
         result.time_usage_ms = Math.floor(result.time / 1000000);
         result.memory_usage_kb = result.memory / 1024;
@@ -186,7 +186,10 @@ module.exports = class SANDBOX extends EventEmitter {
             clearInterval(this.cancellationToken);
             this.cancellationToken = null;
         }
+        if (Number(this.pid)) process.kill(Number(this.pid), 'SIGKILL');
         this.pid = null;
+    }
+    destory() {
         removeCgroup('memory', `jd5/${this.name}`);
         removeCgroup('cpuacct', `jd5/${this.name}`);
         removeCgroup('pids', `jd5/${this.name}`);

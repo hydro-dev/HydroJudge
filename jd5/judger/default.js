@@ -1,8 +1,7 @@
 const
-    Listr = require('listr'),
-    { STATUS_ACCEPTED, STATUS_JUDGING, STATUS_COMPILING,
-        STATUS_RUNTIME_ERROR, STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED,
-        STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+    List = require('../list'),
+    { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
+        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { CompileError } = require('../error'),
     { max } = require('../utils'),
     path = require('path'),
@@ -26,84 +25,71 @@ async function build(next, sandbox, lang, scode) {
 
 function judgeCase(c) {
     return async ctx => {
-        if (ctx.failed) ctx.next({
-            status: ctx.total_status,
+        let code, time_usage_ms, memory_usage_kb;
+        let stdout = path.resolve(ctx.usr_sandbox.dir, 'stdout');
+        let stderr = path.resolve(ctx.usr_sandbox.dir, 'stderr');
+        if (ctx.config.filename) {
+            await ctx.usr_sandbox.addFile(c.input, ctx.config.filename + '.in');
+            let res = await ctx.usr_sandbox.run(
+                ctx.execute.replace('%filename%', 'code'),
+                {
+                    stdin: '/dev/null', stdout: '/dev/null', stderr,
+                    time_limit_ms: ctx.subtask.time_limit_ms,
+                    memory_limit_mb: ctx.subtask.memory_limit_mb
+                }
+            );
+            code = res.code;
+            time_usage_ms = res.time_usage_ms;
+            memory_usage_kb = res.memory_usage_kb;
+            stdout = path.resolve(ctx.usr_sandbox.dir, 'home', ctx.config.filename + '.out');
+            if (!fs.existsSync(stdout)) fs.writeFileSync(stdout, '');
+        } else {
+            let res = await ctx.usr_sandbox.run(
+                ctx.execute.replace('%filename%', 'code'),
+                {
+                    stdin: c.input, stdout, stderr,
+                    time_limit_ms: ctx.subtask.time_limit_ms,
+                    memory_limit_mb: ctx.subtask.memory_limit_mb
+                }
+            );
+            code = res.code;
+            time_usage_ms = res.time_usage_ms;
+            memory_usage_kb = res.memory_usage_kb;
+        }
+        let status, message = '', score;
+        if (time_usage_ms > ctx.subtask.time_limit_ms)
+            status = STATUS_TIME_LIMIT_EXCEEDED;
+        else if (memory_usage_kb > ctx.subtask.memory_limit_mb * 1024)
+            status = STATUS_MEMORY_LIMIT_EXCEEDED;
+        else if (code) {
+            status = STATUS_RUNTIME_ERROR;
+            if (code < 32) message = signals[code].translate(ctx.config.language || 'zh-CN');
+            else message = 'Your program exited with code {0}.'.translate(ctx.config.language || 'zh-CN').format(code);
+        } else[status, score, message] = await check(ctx.judge_sandbox, {
+            stdin: c.input,
+            stdout: c.output,
+            user_stdout: stdout,
+            user_stderr: stderr,
+            checker: ctx.config.checker,
+            checker_type: ctx.config.checker_type,
+            score: ctx.subtask.score,
+            detail: ctx.config.detail
+        });
+        ctx.subtask_score = Math[ctx.subtask.type](ctx.subtask_score, score);
+        ctx.total_status = max(ctx.total_status, status);
+        ctx.total_time_usage_ms += time_usage_ms;
+        ctx.total_memory_usage_kb = max(ctx.total_memory_usage_kb, memory_usage_kb);
+        ctx.next({
+            status: STATUS_JUDGING,
             case: {
-                status: STATUS_IGNORED,
+                status,
                 score: 0,
-                time_ms: 0,
-                memory_kb: 0,
-                judge_text: ''
+                time_ms: time_usage_ms,
+                memory_kb: memory_usage_kb,
+                judge_text: message
             },
             progress: Math.floor(c.id * 100 / ctx.config.count)
         });
-        else {
-            let code, time_usage_ms, memory_usage_kb;
-            let stdout = path.resolve(ctx.usr_sandbox.dir, 'stdout');
-            let stderr = path.resolve(ctx.usr_sandbox.dir, 'stderr');
-            if (ctx.config.filename) {
-                await ctx.usr_sandbox.addFile(c.input, ctx.config.filename + '.in');
-                let res = await ctx.usr_sandbox.run(
-                    ctx.execute.replace('%filename%', 'code'),
-                    {
-                        stdin: '/dev/null', stdout: '/dev/null', stderr,
-                        time_limit_ms: ctx.subtask.time_limit_ms,
-                        memory_limit_mb: ctx.subtask.memory_limit_mb
-                    }
-                );
-                code = res.code;
-                time_usage_ms = res.time_usage_ms;
-                memory_usage_kb = res.memory_usage_kb;
-                stdout = path.resolve(ctx.usr_sandbox.dir, 'home', ctx.config.filename + '.out');
-                if (!fs.existsSync(stdout)) fs.writeFileSync(stdout, '');
-            } else {
-                let res = await ctx.usr_sandbox.run(
-                    ctx.execute.replace('%filename%', 'code'),
-                    {
-                        stdin: c.input, stdout, stderr,
-                        time_limit_ms: ctx.subtask.time_limit_ms,
-                        memory_limit_mb: ctx.subtask.memory_limit_mb
-                    }
-                );
-                code = res.code;
-                time_usage_ms = res.time_usage_ms;
-                memory_usage_kb = res.memory_usage_kb;
-            }
-            let status, message = '';
-            if (time_usage_ms > ctx.subtask.time_limit_ms)
-                status = STATUS_TIME_LIMIT_EXCEEDED;
-            else if (memory_usage_kb > ctx.subtask.memory_limit_mb * 1024)
-                status = STATUS_MEMORY_LIMIT_EXCEEDED;
-            else if (code) {
-                status = STATUS_RUNTIME_ERROR;
-                if (code < 32) message = signals[code].translate(ctx.config.language || 'zh-CN');
-                else message = 'Your program exited with code {0}.'.translate(ctx.config.language || 'zh-CN').format(code);
-            } else[status, , message] = await check(ctx.judge_sandbox, {
-                stdin: c.input,
-                stdout: c.output,
-                user_stdout: stdout,
-                user_stderr: stderr,
-                checker: ctx.config.checker,
-                checker_type: ctx.config.checker_type,
-                score: ctx.subtask.score,
-                detail: ctx.config.detail
-            });
-            ctx.total_status = max(ctx.total_status, status);
-            ctx.total_time_usage_ms += time_usage_ms;
-            ctx.total_memory_usage_kb = max(ctx.total_memory_usage_kb, memory_usage_kb);
-            if (status != STATUS_ACCEPTED) ctx.failed = true;
-            ctx.next({
-                status: STATUS_JUDGING,
-                case: {
-                    status,
-                    score: 0,
-                    time_ms: time_usage_ms,
-                    memory_kb: memory_usage_kb,
-                    judge_text: message
-                },
-                progress: Math.floor(c.id * 100 / ctx.config.count)
-            });
-        }
     };
 }
 
@@ -112,8 +98,9 @@ function judgeSubtask(subtask) {
         let tasks = [{
             title: 'Prepare',
             task: ctx => {
-                ctx.failed = false;
                 ctx.subtask = subtask;
+                ctx.subtask.type = ctx.subtask.type || 'min';
+                ctx.subtask_score = 0;
             }
         }];
         for (let cid in subtask.cases)
@@ -124,10 +111,10 @@ function judgeSubtask(subtask) {
         tasks.push({
             title: 'Caculating score',
             task: () => {
-                if (!ctx.failed) ctx.total_score += ctx.subtask.score;
+                ctx.total_score += ctx.subtask.score;
             }
         });
-        return new Listr(tasks);
+        return new List(tasks);
     };
 }
 
@@ -166,7 +153,7 @@ exports.judge = () => [{
                 title: `Subtask ${sid}`,
                 task: judgeSubtask(ctx.config.subtasks[sid])
             });
-        return new Listr(tasks);
+        return new List(tasks);
     }
 },
 {
