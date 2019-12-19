@@ -75,4 +75,4 @@ executions per second on our development machine.
 
 Copyright (c) 2019 Vijos Dev Team.  All rights reserved.
 
-We havent decided which license to use :)
+License: GPL-3.0-only

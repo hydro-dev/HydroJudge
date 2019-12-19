@@ -7,6 +7,7 @@ const
     path = require('path'),
     compile = require('../compile'),
     signals = require('../signals'),
+    log = require('../log'),
     { check, compile_checker } = require('../check'),
     fs = require('fs'),
     fsp = fs.promises;
@@ -79,6 +80,7 @@ function judgeCase(c) {
         ctx.total_status = max(ctx.total_status, status);
         ctx.total_time_usage_ms += time_usage_ms;
         ctx.total_memory_usage_kb = max(ctx.total_memory_usage_kb, memory_usage_kb);
+        log.submission(`${ctx.host}/${ctx.domain_id}/${ctx.rid}`, log.ACTION_UPDATE, { progress: c.id + 1 });
         ctx.next({
             status: STATUS_JUDGING,
             case: {

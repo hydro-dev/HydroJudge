@@ -143,13 +143,13 @@ module.exports = class AxiosInstance {
             queue.push(Object.assign(JSON.parse(data), { id: this.config.id, host: this.config.host, ws: this.ws }));
         });
         this.ws.on('close', (data, reason) => {
-            log.log(`[${this.config.host}] Websocket closed:`, data, reason);
+            log.warn(`[${this.config.host}] Websocket closed:`, data, reason);
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
         });
         this.ws.on('error', e => {
-            log.log(`[${this.config.host}] Websocket error:`, e);
+            log.error(`[${this.config.host}] Websocket error:`, e);
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
@@ -159,11 +159,11 @@ module.exports = class AxiosInstance {
         });
         log.info(`[${this.config.host}] Connected`);
     }
-    async retry(queue){
+    async retry(queue) {
         this.consume(queue).catch(e => {
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
-        })
+        });
     }
 };

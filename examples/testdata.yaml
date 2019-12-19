@@ -29,11 +29,6 @@ judge_extra_files:                                                              
 # 当问题类型为 'interactive' 时，下面的设置可用:                                     #
 # Interactor file (path in the zipfile)    交互器路径（位于压缩包中的路径）          #
 checker: interactor.cpp                                                             #
-# Time and memory limit.  时间与内存限制（此处的限制优先级低于测试点的限制）          #
-# Can be overwrite by the following option:                                         #
-# cases->time cases->memory subtasks->time subtasks->memory                         #
-time: 1s                                                                            #
-memory: 128m                                                                        #
 # Extra files 额外文件                                                              #
 # These files will be copied to the working directory 这些文件将被复制到工作目录。   #
 user_extra_files:                                                                   #
@@ -55,20 +50,16 @@ judge_extra_files:                                                              
 #
 # The CASES option has higher priority than the SUBTASKS option!
 # 在有 CASES 设置项时，不会读取 SUBTASKS 设置项！
+score: 50     # 单个测试点分数
+time: 1s      # 时间限制
+memory: 256m  # 内存限制
 cases:
-  - input: 0.in
-    output: 0.out
-    score: 30
-    time: 1s
-    memory: 64m
-  - input: 1.in
-    output: 1.out
-    score: 30
-  - input: 1.in
-    output: 1.out
-    score: 40
-    time: 2s
-    memory: 256m
+  - input: abc.in
+    output: def.out
+  - input: ghi.in
+    output: jkl.out
+
+# 使用Subtask项：
 
 subtasks:
   - score: 30

@@ -52,56 +52,46 @@ module.exports = class JudgeHandler {
             }
         }
     }
-    do_submission() {
-        return (new List([{
-            title: `Submission ${this.host}/${this.domain_id}/${this.pid}/${this.rid}`,
-            task: () => new List([{
-                title: 'Fetch problem data',
-                task: async ctx => {
-                    ctx.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
-                    ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
-                }
-            },
-            {
-                title: 'Judging',
-                task: ctx => {
-                    ctx.lang = this.lang;
-                    ctx.code = this.code;
-                    ctx.next = this.next;
-                    ctx.end = this.end;
-                    ctx.pool = this.pool;
-                    let judge = judger[ctx.config.type || 'default'].judge(this);
-                    if (judge instanceof Promise) return judge;
-                    return new List(judge);
-                }
-            }])
-        }]).run());
+    async do_submission() {
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
+        let ctx = {};
+        ctx.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
+        ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: ctx.config.count });
+        ctx.lang = this.lang;
+        ctx.code = this.code;
+        ctx.next = this.next;
+        ctx.end = this.end;
+        ctx.pool = this.pool;
+        ctx.host = this.host;
+        ctx.domain_id = this.domain_id;
+        ctx.rid = this.rid;
+        ctx.pid = this.pid;
+        let judge = judger[ctx.config.type || 'default'].judge(this);
+        if (judge instanceof Promise) await judge;
+        await (new List(judge)).run(ctx);
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
     }
     async do_pretest() {
-        return (new List([{
-            title: `Pretest ${this.host}/${this.domain_id}/${this.rid}`,
-            task: () => new List([{
-                title: 'Fetch problem data',
-                task: async ctx => {
-                    ctx.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
-                    await this.session.record_pretest_data(this.rid, this.folder);
-                    ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
-                }
-            },
-            {
-                title: 'Judging',
-                task: ctx => {
-                    ctx.lang = this.lang;
-                    ctx.code = this.code;
-                    ctx.next = this.next;
-                    ctx.end = this.end;
-                    ctx.pool = this.pool;
-                    let judge = judger[ctx.config.type || 'default'].judge(this);
-                    if (judge instanceof Promise) return judge;
-                    return new List(judge);
-                }
-            }])
-        }]).run());
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
+        let ctx = {};
+        ctx.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
+        await this.session.record_pretest_data(this.rid, this.folder);
+        ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: ctx.config.count });
+        ctx.lang = this.lang;
+        ctx.code = this.code;
+        ctx.next = this.next;
+        ctx.end = this.end;
+        ctx.pool = this.pool;
+        ctx.host = this.host;
+        ctx.domain_id = this.domain_id;
+        ctx.rid = this.rid;
+        ctx.pid = this.pid;
+        let judge = judger[ctx.config.type || 'default'].judge(this);
+        if (judge instanceof Promise) await judge;
+        await (new List(judge)).run();
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
     }
     get_next(ws, tag) {
         return data => {

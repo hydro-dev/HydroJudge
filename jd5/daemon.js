@@ -102,14 +102,4 @@ async function daemon(_CONFIG_FILE) {
     }
 }
 if (!module.parent) daemon();
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', async input => {
-    try {
-        let t = eval(input.toString().trim());
-        if (t instanceof Promise) console.log(await t);
-        else console.log(t);
-    } catch (e) {
-        console.warn(e);
-    }
-});
 module.exports = daemon;

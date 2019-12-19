@@ -2,7 +2,6 @@ const
     path = require('path'),
     yaml = require('js-yaml'),
     fs = require('fs'),
-    os = require('os'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
     { LANGS_FILE } = require('./config');

@@ -30,7 +30,7 @@ async function check(sandbox, config) {
 }
 async function compile(sandbox, checker) {
     let file = await fsp.readFile(checker);
-    return _compile(parseLang(checker), file, sandbox, 'checker')
+    return _compile(parseLang(checker), file, sandbox, 'checker');
 }
 
 module.exports = { check, compile };
