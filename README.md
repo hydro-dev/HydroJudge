@@ -25,7 +25,7 @@ hosts:
     password: Judge account password
 ```
 
-Then use `docker run -d -v ./config.yaml:/root/.config/jd5/config.yaml -v ./cache /root/.cache/jd5 masnn/jd5` to start.
+Then use `docker run --privileged -d -v ./config.yaml:/root/.config/jd5/config.yaml masnn/jd5` to start.
 
 ## Development
 
@@ -54,7 +54,7 @@ Use the following command to run the daemon:
 node jd5/daemon.js
 ```
 
-Note that this requires a `sudo` to create cgroups on first execution.
+Note that this requires a `sudo` to create cgroups.
 
 ## FAQ
 

@@ -1,11 +1,12 @@
 const
-    List = require('./list'),
-    { CACHE_DIR } = require('./config'),
+    { CACHE_DIR, TEMP_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError, FormatError } = require('./error'),
+    { rmdir } = require('./utils'),
     readCases = require('./cases'),
     judger = require('./judger'),
     path = require('path'),
+    fs = require('fs'),
     cache = require('./cache'),
     log = require('./log');
 
@@ -34,6 +35,9 @@ module.exports = class JudgeHandler {
         this.language = this.request.language || DEFAULT_LANGUAGE;
         this.next = this.get_next(this.ws, this.tag);
         this.end = this.get_end(this.ws, this.tag);
+        this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
+        fs.mkdirSync(this.tmpdir, { recursive: true });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
@@ -51,47 +55,21 @@ module.exports = class JudgeHandler {
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH, this.log);
+        await rmdir(path.resolve(TEMP_DIR, this.host, this.rid));
     }
     async do_submission() {
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
-        let ctx = {};
-        ctx.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
-        ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: ctx.config.count });
-        ctx.lang = this.lang;
-        ctx.code = this.code;
-        ctx.next = this.next;
-        ctx.end = this.end;
-        ctx.pool = this.pool;
-        ctx.host = this.host;
-        ctx.domain_id = this.domain_id;
-        ctx.rid = this.rid;
-        ctx.pid = this.pid;
-        let judge = judger[ctx.config.type || 'default'].judge(this);
-        if (judge instanceof Promise) await judge;
-        await (new List(judge)).run(ctx);
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
+        this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
+        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, {count:this.config.count});
+        await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
-        let ctx = {};
-        ctx.folder = path.resolve(CACHE_DIR, this.host, `_/${this.rid}`);
+        this.folder = path.resolve(this.tmpdir, 'data');
         await this.session.record_pretest_data(this.rid, this.folder);
-        ctx.config = await readCases(ctx.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: ctx.config.count });
-        ctx.lang = this.lang;
-        ctx.code = this.code;
-        ctx.next = this.next;
-        ctx.end = this.end;
-        ctx.pool = this.pool;
-        ctx.host = this.host;
-        ctx.domain_id = this.domain_id;
-        ctx.rid = this.rid;
-        ctx.pid = this.pid;
-        let judge = judger[ctx.config.type || 'default'].judge(this);
-        if (judge instanceof Promise) await judge;
-        await (new List(judge)).run();
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH);
+        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
+        await judger[this.config.type || 'default'].judge(this);
     }
     get_next(ws, tag) {
         return data => {

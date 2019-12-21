@@ -1,5 +1,6 @@
 const
     fs = require('fs'),
+    fsp = fs.promises,
     path = require('path'),
     parse = require('shell-quote').parse,
     _ = require('lodash'),
@@ -12,6 +13,17 @@ const
     MEMORY_RE = /^([0-9]+(?:\.[0-9]*)?)([kmg])b?$/i,
     MEMORY_UNITS = { 'k': 0.1, 'm': 1, 'g': 1024 };
 
+async function copyFolder(src, dst) {
+    if (!fs.existsSync(dst)) fs.mkdirSync(dst);
+    if (!fs.existsSync(src)) return false;
+    var dirs = fs.readdirSync(src);
+    for (let item of dirs) {
+        var item_path = path.join(src, item);
+        var temp = fs.statSync(item_path);
+        if (temp.isFile()) fs.copyFileSync(item_path, path.join(dst, item));
+        else if (temp.isDirectory()) await copyFolder(item_path, path.join(dst, item));
+    }
+}
 function parseTimeMS(str) {
     let match = TIME_RE.exec(str);
     if (!match) throw new FormatError(str, 'error parsing time');
@@ -86,6 +98,6 @@ class Queue extends EventEmitter {
     }
 }
 module.exports = {
-    Queue, mkdirp, max, rmdir, sleep,
+    Queue, mkdirp, max, rmdir, sleep, copyFolder,
     parseMemoryMB, parseTimeMS, parseLang, parseFilename, cmd: parse
 };

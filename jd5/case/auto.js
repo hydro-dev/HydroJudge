@@ -79,7 +79,7 @@ async function read0(folder, files, checkFile) {
             output: checkFile(cases[i].output)
         });
     }
-    if (extra <= cases.length) {
+    if (extra < cases.length) {
         config.subtasks.push({
             time_limit_ms: 1000,
             memory_limit_mb: 256,
@@ -87,7 +87,7 @@ async function read0(folder, files, checkFile) {
             cases: [],
             score: Math.floor(100 / cases.length) + 1
         });
-        for (let i = extra; i <= cases.length; i++) {
+        for (let i = extra; i < cases.length; i++) {
             config.count++;
             config.subtasks[1].cases.push({
                 id: config.count,
@@ -100,7 +100,8 @@ async function read0(folder, files, checkFile) {
 }
 
 async function read1(folder, files, checkFile) {
-
+    //TODO(masnn)
+    return {};
 }
 
 module.exports = async function readAutoCases(folder) {

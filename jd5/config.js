@@ -11,7 +11,8 @@ let config = {
     SYSTEM_PROCESS_LIMIT: 8,
     RETRY_DELAY_SEC: 15,
     SANDBOX_ROOT: '/tmp/jd5',
-    SANDBOX_POOL_COUNT: 2
+    SANDBOX_POOL_COUNT: 2,
+    TEMP_DIR: path.resolve(os.tmpdir(), 'jd5')
 };
 
 for (let i of config.CONFIG_DIR) {
