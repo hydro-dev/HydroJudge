@@ -77,17 +77,19 @@ class Queue extends EventEmitter {
         super();
         this.queue = [];
     }
-    async get() {
-        if (this.empty())
-            while (this.empty())
+    async get(count = 1) {
+        if (this.empty() || this.queue.length < count)
+            while (this.empty() || this.queue.length < count)
                 await new Promise(resolve => {
                     this.once('new', () => {
                         resolve();
                     });
                 });
-        let top = this.queue[0];
-        this.queue = _.drop(this.queue, 1);
-        return top;
+        let items = [];
+        for (let i = 0; i < count; i++)
+            items.push(this.queue[i]);
+        this.queue = _.drop(this.queue, count);
+        return items;
     }
     empty() {
         return this.queue.length == 0;
@@ -97,7 +99,15 @@ class Queue extends EventEmitter {
         this.emit('new');
     }
 }
+function outputLimit(stdout, stderr, length = 4096) {
+    let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
+    if (len <= length) {
+        stdout = fs.readFileSync(stdout).toString();
+        stderr = fs.readFileSync(stderr).toString();
+        return [stdout, stderr].join(' ');
+    } else return 'Compiler output limit exceeded.';
+}
 module.exports = {
-    Queue, mkdirp, max, rmdir, sleep, copyFolder,
+    Queue, mkdirp, max, rmdir, sleep, copyFolder, outputLimit,
     parseMemoryMB, parseTimeMS, parseLang, parseFilename, cmd: parse
 };

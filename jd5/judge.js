@@ -2,7 +2,7 @@ const
     { CACHE_DIR, TEMP_DIR } = require('./config'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./status'),
     { CompileError, SystemError, FormatError } = require('./error'),
-    { rmdir } = require('./utils'),
+    { rmdir, outputLimit } = require('./utils'),
     readCases = require('./cases'),
     judger = require('./judger'),
     path = require('path'),
@@ -44,7 +44,7 @@ module.exports = class JudgeHandler {
             else throw new SystemError('Unsupported type: {0}'.translate(this.language).format(this.type));
         } catch (e) {
             if (e instanceof CompileError) {
-                this.next({ compiler_text: e.message });
+                this.next({ compiler_text: outputLimit(e.stdout, e.stderr) });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
                 this.next({ judge_text: e.message.translate(this.language).format(e.params) });
@@ -61,7 +61,7 @@ module.exports = class JudgeHandler {
     async do_submission() {
         this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, {count:this.config.count});
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { count: this.config.count });
         await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {

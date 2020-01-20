@@ -3,7 +3,7 @@ const
     { check } = require('../check');
 
 exports.judge = async function ({ next, end, config, pool, code }) {
-    let judge_sandbox = await pool.get();
+    let [judge_sandbox] = await pool.get();
     try {
         next({ status: STATUS_JUDGING, progress: 0 });
         let [status, score, message] = await check(judge_sandbox, {
