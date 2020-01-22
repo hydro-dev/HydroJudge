@@ -91,7 +91,7 @@ async function daemon(_CONFIG_FILE) {
                 await hosts[i].consume(queue);
             }
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
-                let request = await queue.get();
+                let [request] = await queue.get();
                 new JudgeHandler(hosts[request.host], request, request.ws, pool).handle();
             }
         } catch (e) {

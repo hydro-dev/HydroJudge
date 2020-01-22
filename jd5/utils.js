@@ -76,15 +76,13 @@ class Queue extends EventEmitter {
     constructor() {
         super();
         this.queue = [];
+        this.waiting = [];
     }
-    async get(count = 1) {
+    get(count = 1) {
         if (this.empty() || this.queue.length < count)
-            while (this.empty() || this.queue.length < count)
-                await new Promise(resolve => {
-                    this.once('new', () => {
-                        resolve();
-                    });
-                });
+            return new Promise(resolve => {
+                this.waiting.push({ count, resolve });
+            });
         let items = [];
         for (let i = 0; i < count; i++)
             items.push(this.queue[i]);
@@ -96,7 +94,14 @@ class Queue extends EventEmitter {
     }
     push(value) {
         this.queue.push(value);
-        this.emit('new');
+        if (this.waiting.length && this.waiting[0].count <= this.queue.length) {
+            let items = [];
+            for (let i = 0; i < this.waiting[0].count; i++)
+                items.push(this.queue[i]);
+            this.queue = _.drop(this.queue, this.waiting[0].count);
+            this.waiting[0].resolve(items);
+            this.waiting.shift();
+        }
     }
 }
 function outputLimit(stdout, stderr, length = 4096) {

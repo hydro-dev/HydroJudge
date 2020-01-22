@@ -61,7 +61,7 @@ module.exports = class JudgeHandler {
     async do_submission() {
         this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { count: this.config.count });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
         await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {

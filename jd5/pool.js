@@ -17,7 +17,7 @@ module.exports = class pool {
             this.pool.push(sandbox);
         }
     }
-    get() {
-        return this.free.get();
+    get(count) {
+        return this.free.get(count);
     }
 };

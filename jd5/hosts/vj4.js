@@ -140,7 +140,7 @@ module.exports = class AxiosInstance {
             headers: { cookie: this.config.cookie }
         });
         this.ws.on('message', data => {
-            queue.push(Object.assign(JSON.parse(data), { id: this.config.id, host: this.config.host, ws: this.ws }));
+            queue.push(Object.assign(JSON.parse(data), { host: this.config.host, ws: this.ws }));
         });
         this.ws.on('close', (data, reason) => {
             log.warn(`[${this.config.host}] Websocket closed:`, data, reason);

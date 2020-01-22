@@ -33,7 +33,7 @@ function judgeCase(c) {
                 files.push(sandbox.addFile(file));
             if (ctx.config.filename) files.push(sandbox.addFile(c.input, `${filename}.in`));
             await Promise.all(files);
-            let target_stdout = filename ? `${filename}.out` : path.resolve(sandbox.dir, 'stdout');
+            let target_stdout = filename ? path.resolve(sandbox.dir, 'home', `${filename}.out`) : path.resolve(sandbox.dir, 'stdout');
             let stderr = path.resolve(sandbox.dir, 'stderr');
             let stdin = filename ? '/dev/null' : c.input;
             let stdout = filename ? '/dev/null' : target_stdout;
