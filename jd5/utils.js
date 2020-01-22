@@ -106,6 +106,8 @@ class Queue extends EventEmitter {
     }
 }
 function outputLimit(stdout, stderr, length = 4096) {
+    if (!fs.existsSync(stdout)) fs.writeFileSync(stdout, '');
+    if (!fs.existsSync(stderr)) fs.writeFileSync(stderr, '');
     let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
     if (len <= length) {
         let ret = [];
