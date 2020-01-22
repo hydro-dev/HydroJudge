@@ -25,9 +25,9 @@ async function check(sandbox, config) {
                 let t = pt[1].split('\n')[1];
                 let std = t.substring(2, t.length - 1).trim().split(' ');
                 if (usr.length < std.length)
-                    message = 'User output shorter than standard output.'.translate(config.language || 'zh-CN');
+                    message = 'User output shorter than standard output.';
                 else if (usr.length > std.length)
-                    message = 'User output longer than standard output.'.translate(config.language || 'zh-CN');
+                    message = 'User output longer than standard output.';
                 else {
                     for (let i in usr)
                         if (usr[i] != std[i]) {
@@ -37,7 +37,7 @@ async function check(sandbox, config) {
                         }
                     if (usr.length > 20) usr = usr.substring(0, 16) + '...';
                     if (std.length > 20) std = std.substring(0, 16) + '...';
-                    message = 'Read {1} at {0} but expect {2}'.translate(config.language || 'zh-CN').format(pos, usr, std);
+                    message = `Read ${usr} at ${pos} but expect ${std}`;
                 }
             } catch (e) {
                 message = opt.substring(0, opt.length - 1 <= 30 ? opt.length - 1 : 30);

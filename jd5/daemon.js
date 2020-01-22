@@ -11,7 +11,6 @@
      `-.__          听取人生经验。  __.-'
           ````- - -.......- - -'''    ~
        ~                   */
-require('./i18n');
 require('./updater');
 const
     Session = require('./hosts/index'),

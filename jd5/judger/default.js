@@ -60,8 +60,8 @@ function judgeCase(c) {
                 status = STATUS_MEMORY_LIMIT_EXCEEDED;
             else if (code) {
                 status = STATUS_RUNTIME_ERROR;
-                if (code < 32) message = signals[code].translate(ctx.config.language || 'zh-CN');
-                else message = 'Your program exited with code {0}.'.translate(ctx.config.language || 'zh-CN').format(code);
+                if (code < 32) message = signals[code];
+                else message = `Your program exited with code ${code}.`;
             } else[status, score, message] = await check(sandbox, {
                 stdin: c.input,
                 stdout: c.output,

@@ -90,16 +90,16 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                     let status, message = '';
                     if (interactor_code) {
                         status = STATUS_SYSTEM_ERROR;
-                        if (interactor_code < 32) message = signals[interactor_code].translate(config.language);
-                        else message = 'Interactor exited with code {0}.'.translate(config.language).format(interactor_code);
+                        if (interactor_code < 32) message = signals[interactor_code];
+                        else message = `Interactor exited with code ${interactor_code}.`;
                     } else if (time_usage_ms > subtask.time_limit_ms)
                         status = STATUS_TIME_LIMIT_EXCEEDED;
                     else if (memory_usage_kb > subtask.memory_limit_mb * 1024)
                         status = STATUS_MEMORY_LIMIT_EXCEEDED;
                     else if (usr_code) {
                         status = STATUS_RUNTIME_ERROR;
-                        if (usr_code < 32) message = signals[usr_code].translate(config.language);
-                        else message = 'Your program exited with code {0}.'.translate(config.language).format(usr_code);
+                        if (usr_code < 32) message = signals[usr_code];
+                        else message = `Your program exited with code ${usr_code}.`;
                     } else {
                         let st = (await fs.readFile(path.resolve(judge_sandbox.dir, 'stderr'))).toString;
                         if (st == 'ok') status = STATUS_ACCEPTED;

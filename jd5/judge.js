@@ -41,13 +41,13 @@ module.exports = class JudgeHandler {
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
-            else throw new SystemError('Unsupported type: {0}'.translate(this.language).format(this.type));
+            else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
             if (e instanceof CompileError) {
                 this.next({ compiler_text: outputLimit(e.stdout, e.stderr) });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
-                this.next({ judge_text: e.message.translate(this.language).format(e.params) });
+                this.next({ judge_text: e.message + '\n' + JSON.stringify(e.params) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else {
                 log.error(e);
