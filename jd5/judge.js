@@ -37,7 +37,7 @@ module.exports = class JudgeHandler {
         this.end = this.get_end(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
         fs.mkdirSync(this.tmpdir, { recursive: true });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_CREATE, { pid: this.pid });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
         try {
             if (this.type == 0) await this.do_submission();
             else if (this.type == 1) await this.do_pretest();
@@ -55,20 +55,17 @@ module.exports = class JudgeHandler {
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_FINISH, this.log);
         await rmdir(path.resolve(TEMP_DIR, this.host, this.rid));
     }
     async do_submission() {
         this.folder = await cache.open(this.session, this.host, this.domain_id, this.pid);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
         await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {
         this.folder = path.resolve(this.tmpdir, 'data');
         await this.session.record_pretest_data(this.rid, this.folder);
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, log.ACTION_UPDATE, { total: this.config.count });
         await judger[this.config.type || 'default'].judge(this);
     }
     get_next(ws, tag) {

@@ -11,7 +11,8 @@ const
     TIME_RE = /^([0-9]+(?:\.[0-9]*)?)([mu]?)s?$/i,
     TIME_UNITS = { '': 1000, 'm': 1, 'u': 0.001 },
     MEMORY_RE = /^([0-9]+(?:\.[0-9]*)?)([kmg])b?$/i,
-    MEMORY_UNITS = { 'k': 0.1, 'm': 1, 'g': 1024 };
+    MEMORY_UNITS = { 'k': 0.1, 'm': 1, 'g': 1024 },
+    EMPTY_STR = /^[ \n\t]*$/i;
 
 async function copyFolder(src, dst) {
     if (!fs.existsSync(dst)) fs.mkdirSync(dst);
@@ -107,9 +108,13 @@ class Queue extends EventEmitter {
 function outputLimit(stdout, stderr, length = 4096) {
     let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
     if (len <= length) {
+        let ret = [];
         stdout = fs.readFileSync(stdout).toString();
         stderr = fs.readFileSync(stderr).toString();
-        return [stdout, stderr].join(' ');
+        if (!EMPTY_STR.test(stdout)) ret.push(stdout);
+        if (!EMPTY_STR.test(stderr)) ret.push(stderr);
+        ret.push('自豪的采用jd5进行评测(github.com/masnn/jd5)');
+        return ret.join('\n');
     } else return 'Compiler output limit exceeded.';
 }
 module.exports = {
