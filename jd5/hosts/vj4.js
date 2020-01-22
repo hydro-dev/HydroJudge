@@ -7,7 +7,8 @@ const
     log = require('../log'),
     { mkdirp } = require('../utils'),
     child = require('child_process'),
-    { CACHE_DIR } = require('../config');
+    { CACHE_DIR } = require('../config'),
+    { FormatError } = require('../error');
 
 module.exports = class AxiosInstance {
     constructor(config) {
@@ -55,6 +56,7 @@ module.exports = class AxiosInstance {
             await this.axios.get(`d/${domain_id}/p/${pid}/data`, { maxRedirects: 0 });
         } catch (res) {
             let location = res.response.headers.location;
+            if (!location) throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
             if (location.startsWith('/fs/')) return location.split('/')[2];
             else try {
                 await this.axios.get(location, { maxRedirects: 0 });
