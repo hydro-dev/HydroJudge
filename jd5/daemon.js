@@ -41,6 +41,11 @@ const terminate = async () => {
 };
 process.on('SIGINT', terminate);
 process.on('SIGTERM', terminate);
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', input => {
+    let i = input.toString().trim();
+    if (i == 'stop') terminate();
+});
 
 async function daemon(_CONFIG_FILE) {
     let FILE = _CONFIG_FILE || CONFIG_FILE;

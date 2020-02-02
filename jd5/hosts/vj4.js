@@ -61,8 +61,12 @@ module.exports = class AxiosInstance {
             else try {
                 await this.axios.get(location, { maxRedirects: 0 });
             } catch (res) {
-                let location = res.response.headers.location;
-                return location.split('/')[2];
+                if (res.code == 301 || res.code == 302) {
+                    let location = res.response.headers.location;
+                    return location.split('/')[2];
+                } else {
+                    throw new FormatError('Cannot fetch problem data');
+                }
             }
         }
     }
