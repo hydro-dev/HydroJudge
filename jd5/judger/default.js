@@ -1,6 +1,7 @@
 const
     { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
-        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED,
+        STATUS_ACCEPTED } = require('../status'),
     { CompileError } = require('../error'),
     { copyFolder, outputLimit } = require('../utils'),
     path = require('path'),
@@ -102,7 +103,7 @@ function judgeSubtask(subtask) {
         for (let cid in subtask.cases)
             cases.push(judgeCase(subtask.cases[cid])(ctx));
         await Promise.all(cases);
-        ctx.total_score += ctx.subtask.score;
+        if (ctx.total_status == STATUS_ACCEPTED) ctx.total_score += ctx.subtask.score;
     };
 }
 
