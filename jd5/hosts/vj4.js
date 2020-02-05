@@ -23,7 +23,7 @@ module.exports = class AxiosInstance {
         this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
-            timeout: 10000,
+            timeout: 3000,
             headers: {
                 'accept': 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -51,27 +51,42 @@ module.exports = class AxiosInstance {
             await this.login();
         }
     }
-    async problem_data_version(domain_id, pid) {
+    async problem_data_version(domain_id, pid, retry = 3) {
+        let location, err;
         try {
             await this.axios.get(`d/${domain_id}/p/${pid}/data`, { maxRedirects: 0 });
         } catch (res) {
-            let location = res.response.headers.location;
-            if (!location) throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
-            if (location.startsWith('/fs/')) return location.split('/')[2];
-            else try {
-                await this.axios.get(location, { maxRedirects: 0 });
-            } catch (res) {
-                if (res.code == 301 || res.code == 302) {
-                    let location = res.response.headers.location;
-                    return location.split('/')[2];
-                } else {
-                    throw new FormatError('Cannot fetch problem data');
-                }
+            if (res.response.status == 302) {
+                location = res.response.headers.location;
+                if (location.startsWith('/fs/')) return location.split('/')[2];
+            } else if (res.response.status == 404)
+                throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
+            else {
+                if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
+                res.config = res.request = null;
+                err = res;
+                console.log(err);
             }
         }
+        if (!location) return 'unknown';
+        try {
+            await this.axios.get(location, { maxRedirects: 0 });
+        } catch (res) {
+            if (res.response.status == 302)
+                return res.response.headers.location.split('/')[2];
+            else if (res.response.status == 404)
+                throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
+            else {
+                if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
+                res.config = res.request = null;
+                err = res;
+                console.log(err);
+            }
+        }
+        return 'unknown';
     }
     async problem_data(domain_id, pid, save_path, retry = 3) {
-        log.info('Getting problem data: %s/%s/%s', this.config.host, domain_id, pid);
+        log.info(`Getting problem data: ${this.config.host}/${domain_id}/${pid}`);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${domain_id}_${pid}`);
         try {
             await new Promise((resolve, reject) => {
@@ -120,7 +135,7 @@ module.exports = class AxiosInstance {
         }
     }
     async record_pretest_data(rid, save_path) {
-        log.info('Getting pretest data: %s/%s', this.config.host, rid);
+        log.info(`Getting pretest data: ${this.config.host}/${rid}`);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${rid}`);
         await new Promise((resolve, reject) => {
             child.exec(`wget "${this.config.server_url}records/${rid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
@@ -140,7 +155,7 @@ module.exports = class AxiosInstance {
         return save_path;
     }
     async consume(queue) {
-        log.log('Connecting: ', this.config.server_url + 'judge/consume-conn');
+        log.log('Connecting: ' + this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
         this.ws = new WebSocket(this.config.server_url.replace(/^http/i, 'ws') + 'judge/consume-conn/websocket?t=' + res.data.entropy, {
             headers: { cookie: this.config.cookie }
