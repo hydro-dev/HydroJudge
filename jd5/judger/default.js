@@ -25,7 +25,7 @@ async function build(next, sandbox, lang, scode) {
 }
 
 function judgeCase(c) {
-    return async ctx => {
+    return async (ctx, ctx_subtask) => {
         let sandbox, code, time_usage_ms, memory_usage_kb, filename = ctx.config.filename;
         try {
             [sandbox] = await ctx.pool.get();
@@ -42,22 +42,20 @@ function judgeCase(c) {
                 ctx.execute.replace('%filename%', 'code'),
                 {
                     stdin, stdout, stderr,
-                    time_limit_ms: ctx.subtask.time_limit_ms,
-                    memory_limit_mb: ctx.subtask.memory_limit_mb
+                    time_limit_ms: ctx_subtask.subtask.time_limit_ms,
+                    memory_limit_mb: ctx_subtask.subtask.memory_limit_mb
                 }
             );
-            code = res.code;
-            time_usage_ms = res.time_usage_ms;
-            memory_usage_kb = res.memory_usage_kb;
+            ({ code, time_usage_ms, memory_usage_kb } = res);
             if (!fs.existsSync(target_stdout)) fs.writeFileSync(target_stdout, '');
             files = [copyFolder(path.resolve(ctx.tmpdir, 'checker'), path.resolve(sandbox.dir, 'home'))];
             for (let file of ctx.config.judge_extra_files)
                 files.push(sandbox.addFile(file));
             await Promise.all(files);
             let status, message = '', score;
-            if (time_usage_ms > ctx.subtask.time_limit_ms)
+            if (time_usage_ms > ctx_subtask.subtask.time_limit_ms)
                 status = STATUS_TIME_LIMIT_EXCEEDED;
-            else if (memory_usage_kb > ctx.subtask.memory_limit_mb * 1024)
+            else if (memory_usage_kb > ctx_subtask.subtask.memory_limit_mb * 1024)
                 status = STATUS_MEMORY_LIMIT_EXCEEDED;
             else if (code) {
                 status = STATUS_RUNTIME_ERROR;
@@ -70,11 +68,11 @@ function judgeCase(c) {
                 user_stderr: stderr,
                 checker: ctx.config.checker,
                 checker_type: ctx.config.checker_type,
-                score: ctx.subtask.score,
+                score: ctx_subtask.subtask.score,
                 detail: ctx.config.detail
             });
-            ctx.subtask_score = Score[ctx.subtask.type](ctx.subtask_score, score);
-            ctx.total_status = Math.max(ctx.total_status, status);
+            ctx_subtask.score = Score[ctx_subtask.subtask.type](ctx_subtask.score, score);
+            ctx_subtask.status = Math.max(ctx_subtask.status, status);
             ctx.total_time_usage_ms += time_usage_ms;
             ctx.total_memory_usage_kb = Math.max(ctx.total_memory_usage_kb, memory_usage_kb);
             ctx.next({
@@ -96,14 +94,19 @@ function judgeCase(c) {
 
 function judgeSubtask(subtask) {
     return async ctx => {
-        ctx.subtask = subtask;
-        ctx.subtask.type = ctx.subtask.type || 'min';
-        ctx.subtask_score = 0;
+        subtask.type = subtask.type || 'min';
+        let ctx_subtask = {
+            subtask, status: 0,
+            score: subtask.type == 'min'
+                ? subtask.score
+                : 0
+        };
         let cases = [];
         for (let cid in subtask.cases)
-            cases.push(judgeCase(subtask.cases[cid])(ctx));
+            cases.push(judgeCase(subtask.cases[cid])(ctx, ctx_subtask));
         await Promise.all(cases);
-        if (ctx.total_status == STATUS_ACCEPTED) ctx.total_score += ctx.subtask.score;
+        ctx.total_status = Math.max(ctx.total_status, ctx_subtask.status);
+        if (ctx_subtask.status == STATUS_ACCEPTED) ctx.total_score += ctx_subtask.score;
     };
 }
 
@@ -132,7 +135,7 @@ exports.judge = async ctx => {
                 if (sandbox) sandbox.free();
             }
             return res;
-        })(),
+        })()
     ]);
     if (exit_code) throw new CompileError({ stdout: 'Checker compile failed:', stderr: message });
     ctx.next({ status: STATUS_JUDGING, progress: 0 });
