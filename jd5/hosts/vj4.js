@@ -40,7 +40,9 @@ module.exports = class AxiosInstance {
         });
     }
     async login() {
-        let res = await this.axios.post('login', { uname: this.config.uname, password: this.config.password });
+        let res = await this.axios.post('login', {
+            uname: this.config.uname, password: this.config.password, rememberme: 'on'
+        });
         await this.setCookie(res.headers['set-cookie'][0].split(';')[0]);
     }
     async ensureLogin() {
@@ -56,13 +58,17 @@ module.exports = class AxiosInstance {
         try {
             await this.axios.get(`d/${domain_id}/p/${pid}/data`, { maxRedirects: 0 });
         } catch (res) {
+            res.response = res.response || {};
             if (res.response.status == 302) {
                 location = res.response.headers.location;
                 if (location.startsWith('/fs/')) return location.split('/')[2];
             } else if (res.response.status == 404)
                 throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
             else {
-                if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
+                if (retry) {
+                    await this.ensureLogin();
+                    return await this.problem_data_version(domain_id, pid, retry - 1);
+                }
                 res.config = res.request = null;
                 err = res;
                 console.log(err);
@@ -72,6 +78,7 @@ module.exports = class AxiosInstance {
         try {
             await this.axios.get(location, { maxRedirects: 0 });
         } catch (res) {
+            res.response = res.response || {};
             if (res.response.status == 302)
                 return res.response.headers.location.split('/')[2];
             else if (res.response.status == 404)
@@ -137,6 +144,7 @@ module.exports = class AxiosInstance {
     async record_pretest_data(rid, save_path) {
         log.info(`Getting pretest data: ${this.config.host}/${rid}`);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${rid}`);
+        await this.ensureLogin();
         await new Promise((resolve, reject) => {
             child.exec(`wget "${this.config.server_url}records/${rid}/data" -O ${tmp_file_path} --header=cookie:${this.config.cookie}`, e => {
                 if (e) reject(e);
@@ -181,7 +189,7 @@ module.exports = class AxiosInstance {
         log.info(`[${this.config.host}] Connected`);
     }
     async retry(queue) {
-        this.consume(queue).catch(e => {
+        this.consume(queue).catch(() => {
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
