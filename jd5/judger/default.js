@@ -7,10 +7,8 @@ const
     path = require('path'),
     compile = require('../compile'),
     signals = require('../signals'),
-    log = require('../log'),
     { check, compile_checker } = require('../check'),
     fs = require('fs'),
-    fsp = fs.promises,
     Score = {
         sum: (a, b) => (a + b),
         max: Math.max,

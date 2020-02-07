@@ -100,7 +100,7 @@ async function daemon(_CONFIG_FILE) {
             }
         } catch (e) {
             log.error(e);
-            log.info('Retrying after %d seconds', RETRY_DELAY_SEC);
+            log.info(`Retrying after ${RETRY_DELAY_SEC} seconds`);
             await sleep(RETRY_DELAY_SEC * 1000);
         }
     }

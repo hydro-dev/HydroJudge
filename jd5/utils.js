@@ -1,6 +1,5 @@
 const
     fs = require('fs'),
-    fsp = fs.promises,
     path = require('path'),
     parse = require('shell-quote').parse,
     _ = require('lodash'),
