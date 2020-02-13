@@ -100,8 +100,41 @@ async function read0(folder, files, checkFile) {
 }
 
 async function read1(folder, files, checkFile) {
-    //TODO(masnn)
-    return {};
+    let subtask = {}, subtasks = [];
+    for (let file of files)
+        for (let REG of RE1)
+            if (REG.reg.test(file)) {
+                let data = REG.reg.exec(file);
+                let c = { input: file, output: REG.output(data), id: REG.id(data) };
+                if (!fs.existsSync(path.resolve(folder, c.output))) continue;
+                if (!subtask[REG.subtask(data)])
+                    subtask[REG.subtask(data)] = [{
+                        time_limit_ms: 1000,
+                        memory_limit_mb: 256,
+                        type: 'min',
+                        cases: [c],
+                    }];
+                else subtask[REG.subtask(data)].cases.push(c);
+                break;
+            }
+    for (let i in subtask) {
+        subtask[i].cases.sort((a, b) => (a.id - b.id));
+        subtasks.push(subtask[i]);
+    }
+    let base = Math.floor(100 / subtask.length);
+    let extra = subtasks.length - 100 % subtask.length;
+    let config = { count: 0, subtasks };
+    for (let i in subtask) {
+        if (extra < i) subtask[i].score = base;
+        else subtask[i].score = base + 1;
+        for (let j of subtask[i].cases) {
+            config.count++;
+            j.input = checkFile(j.input);
+            j.output = checkFile(j.output);
+            j.id = config.count;
+        }
+    }
+    return config;
 }
 
 module.exports = async function readAutoCases(folder) {
@@ -117,13 +150,8 @@ module.exports = async function readAutoCases(folder) {
     try {
         let files = await fsp.readdir(folder);
         let result = await read0(folder, files, checkFile);
-        if (result.count) Object.assign(config, result);
-        result = await read1(folder, files, checkFile);
-        if (result.count) {
-            for (let subtask of result.subtasks)
-                config.subtasks.push(subtask);
-            config.count += result.count;
-        }
+        if (!result.count) result = await read1(folder, files, checkFile);
+        Object.assign(config, result);
     } catch (e) {
         throw new SystemError('Failed to read cases.', [e]);
     }
