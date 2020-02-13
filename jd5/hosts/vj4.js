@@ -5,19 +5,26 @@ const
     path = require('path'),
     WebSocket = require('ws'),
     log = require('../log'),
-    { mkdirp } = require('../utils'),
+    { mkdirp, rmdir, outputLimit } = require('../utils'),
     child = require('child_process'),
-    { CACHE_DIR } = require('../config'),
-    { FormatError } = require('../error');
+    { CACHE_DIR, TEMP_DIR } = require('../config'),
+    { FormatError, CompileError, SystemError } = require('../error'),
+    { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status'),
+    readCases = require('../cases'),
+    judger = require('../judger');
 
 module.exports = class AxiosInstance {
     constructor(config) {
         this.config = config;
+        this.config.detail = this.config.detail || true;
+        this.config.cookie = this.config.cookie || '';
+        this.config.last_update_at = this.config.last_update_at || 0;
         if (!this.config.server_url.startsWith('http')) this.config.server_url = 'http://' + this.config.server_url;
     }
     async init() {
         await this.setCookie(this.config.cookie || '');
         await this.ensureLogin();
+        setInterval(() => { this.axios.get('judge/noop'); }, 30000000);
     }
     async problem_data_version(domain_id, pid, retry = 3) {
         let location, err;
@@ -79,9 +86,7 @@ module.exports = class AxiosInstance {
             await this.process_data(save_path);
         } catch (e) {
             if (retry) await this.problem_data(domain_id, pid, save_path, retry - 1);
-            else {
-                throw e;
-            }
+            else throw e;
         }
         return save_path;
     }
@@ -114,7 +119,9 @@ module.exports = class AxiosInstance {
             headers: { cookie: this.config.cookie }
         });
         this.ws.on('message', data => {
-            queue.push(Object.assign(JSON.parse(data), { host: this.config.host, ws: this.ws }));
+            let request = JSON.parse(data);
+            if (!request.event)
+                queue.push(new JudgeTask(this, request, this.ws));
         });
         this.ws.on('close', (data, reason) => {
             log.warn(`[${this.config.host}] Websocket closed:`, data, reason);
@@ -137,7 +144,7 @@ module.exports = class AxiosInstance {
         this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
-            timeout: 3000,
+            timeout: 30000,
             headers: {
                 'accept': 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -154,13 +161,13 @@ module.exports = class AxiosInstance {
         });
     }
     async login() {
+        log.log(`[${this.config.host}] Updating session`);
         let res = await this.axios.post('login', {
             uname: this.config.uname, password: this.config.password, rememberme: 'on'
         });
         await this.setCookie(res.headers['set-cookie'][0].split(';')[0]);
     }
     async ensureLogin() {
-        log.log(`[${this.config.host}] Updating session`);
         try {
             await this.axios.get('judge/noop');
         } catch (e) {
@@ -189,6 +196,23 @@ module.exports = class AxiosInstance {
                 await fsp.rename(`${folder}/output/${i}`, `${folder}/output/${i.toLowerCase()}`);
         }
     }
+    async cache_open(domain_id, pid) {
+        let domain_dir = path.join(CACHE_DIR, this.config.host, domain_id);
+        let file_path = path.join(domain_dir, pid);
+        let version = await this.problem_data_version(domain_id, pid);
+        if (fs.existsSync(file_path)) {
+            let ver;
+            try {
+                ver = fs.readFileSync(path.join(file_path, 'version')).toString();
+            } catch (e) { /* ignore */ }
+            if (version == ver) return file_path;
+            else rmdir(file_path);
+        }
+        mkdirp(domain_dir);
+        await this.problem_data(domain_id, pid, file_path);
+        fs.writeFileSync(path.join(file_path, 'version'), version);
+        return file_path;
+    }
     async retry(queue) {
         this.consume(queue).catch(() => {
             setTimeout(() => {
@@ -197,3 +221,70 @@ module.exports = class AxiosInstance {
         });
     }
 };
+
+class JudgeTask {
+    constructor(session, request, ws) {
+        this.session = session;
+        this.host = session.config.host;
+        this.request = request;
+        this.ws = ws;
+    }
+    async handle(pool) {
+        this.pool = pool;
+        this.tag = this.request.tag;
+        this.type = this.request.type;
+        this.domain_id = this.request.domain_id;
+        this.pid = this.request.pid;
+        this.rid = this.request.rid;
+        this.lang = this.request.lang;
+        this.code = this.request.code;
+        this.next = this.get_next(this.ws, this.tag);
+        this.end = this.get_end(this.ws, this.tag);
+        this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
+        fs.mkdirSync(this.tmpdir, { recursive: true });
+        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
+        try {
+            if (this.type == 0) await this.do_submission();
+            else if (this.type == 1) await this.do_pretest();
+            else throw new SystemError(`Unsupported type: ${this.type}`);
+        } catch (e) {
+            if (e instanceof CompileError) {
+                this.next({ compiler_text: outputLimit(e.stdout, e.stderr) });
+                this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
+            } else if (e instanceof FormatError) {
+                this.next({ judge_text: e.message + '\n' + JSON.stringify(e.params) });
+                this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
+            } else {
+                log.error(e);
+                this.next({ judge_text: e.message + '\n' + e.stack + '\n' + JSON.stringify(e.params) });
+                this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
+            }
+        }
+        await rmdir(path.resolve(TEMP_DIR, this.host, this.rid));
+    }
+    async do_submission() {
+        this.folder = await this.session.cache_open(this.domain_id, this.pid);
+        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        await judger[this.config.type || 'default'].judge(this);
+    }
+    async do_pretest() {
+        this.folder = path.resolve(this.tmpdir, 'data');
+        await this.session.record_pretest_data(this.rid, this.folder);
+        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        await judger[this.config.type || 'default'].judge(this);
+    }
+    get_next(ws, tag) {
+        return data => {
+            data.key = 'next';
+            data.tag = tag;
+            ws.send(JSON.stringify(data));
+        };
+    }
+    get_end(ws, tag) {
+        return data => {
+            data.key = 'end';
+            data.tag = tag;
+            ws.send(JSON.stringify(data));
+        };
+    }
+}

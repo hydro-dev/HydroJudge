@@ -15,7 +15,6 @@ require('./updater');
 const
     Session = require('./hosts/index'),
     { sleep, Queue } = require('./utils'),
-    JudgeHandler = require('./judge'),
     log = require('./log'),
     fsp = require('fs').promises,
     Pool = require('./pool'),
@@ -60,18 +59,9 @@ async function daemon(_CONFIG_FILE) {
     let queue = new Queue();
     let pool = new Pool();
     for (let i in config.hosts) {
-        config.hosts[i].cookie = config.hosts[i].cookie || '';
-        hosts[i] = new Session[config.hosts[i].type || 'vj4']({
-            host: i,
-            cookie: config.hosts[i].cookie || '',
-            uname: config.hosts[i].uname,
-            password: config.hosts[i].password,
-            last_update_at: config.hosts[i].last_update_at || 0,
-            server_url: config.hosts[i].server_url,
-            detail: config.hosts[i].detail || true
-        });
+        config.hosts[i].host = i;
+        hosts[i] = new Session[config.hosts[i].type || 'vj4'](config.hosts[i]);
         await hosts[i].init();
-        setInterval(() => { hosts[i].axios.get('judge/noop'); }, 30000000);
     }
     global.hosts = hosts;
     global.onDestory.push(async () => {
@@ -90,16 +80,13 @@ async function daemon(_CONFIG_FILE) {
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2') {  //eslint-disable-line no-constant-condition
         try {
-            for (let i in hosts) {
-                await hosts[i].ensureLogin();
-                await hosts[i].consume(queue);
-            }
+            for (let i in hosts) await hosts[i].consume(queue);
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
-                let [request] = await queue.get();
-                new JudgeHandler(hosts[request.host], request, request.ws, pool).handle();
+                let [task] = await queue.get();
+                await task.handle(pool);
             }
         } catch (e) {
-            log.error(e);
+            log.error(e, e.stack);
             log.info(`Retrying after ${RETRY_DELAY_SEC} seconds`);
             await sleep(RETRY_DELAY_SEC * 1000);
         }
