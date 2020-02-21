@@ -9,7 +9,6 @@ const
     compile = require('../compile'),
     pipe = require('./../../build/Release/pipe'),
     fs = require('fs'),
-    fsp = fs.promises,
     closePipe = async pipe => {
         if (pipe) await Promise.all([
             new Promise(resolve => {

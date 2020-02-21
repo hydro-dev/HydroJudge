@@ -78,7 +78,7 @@ async function daemon(_CONFIG_FILE) {
         await fsp.writeFile(FILE, yaml.safeDump(config));
     });
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
-    while ('Orz twd2') {  //eslint-disable-line no-constant-condition
+    while ('Orz twd2')  //eslint-disable-line no-constant-condition
         try {
             for (let i in hosts) await hosts[i].consume(queue);
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
@@ -90,7 +90,6 @@ async function daemon(_CONFIG_FILE) {
             log.info(`Retrying after ${RETRY_DELAY_SEC} seconds`);
             await sleep(RETRY_DELAY_SEC * 1000);
         }
-    }
 }
 if (!module.parent) daemon();
 module.exports = daemon;

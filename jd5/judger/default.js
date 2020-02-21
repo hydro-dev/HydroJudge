@@ -142,6 +142,8 @@ exports.judge = async ctx => {
     for (let sid in ctx.config.subtasks)
         tasks.push(judgeSubtask(ctx.config.subtasks[sid])(ctx));
     await Promise.all(tasks);
+    ctx.stat.done = new Date();
+    ctx.next({ judge_text: JSON.stringify(ctx.stat) });
     ctx.end({
         status: ctx.total_status,
         score: ctx.total_score,
