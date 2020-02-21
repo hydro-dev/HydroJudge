@@ -15,5 +15,6 @@ RUN mkdir -p /root/.config/jd5 && \
     apt-get remove -y g++ python make && \
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/* && \
-    cp /jd5/examples/langs.slim.yaml /root/.config/jd5/langs.yaml
+    cp /jd5/examples/langs.slim.yaml /root/.config/jd5/langs.yaml && \
+    touch /opt/sandbox/rootfs/dev/null
 CMD bash -c "cd /jd5 && node jd5/daemon.js"

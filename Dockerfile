@@ -8,5 +8,6 @@ RUN mkdir -p /root/.config/jd5 && \
     yarn && \
     apt-get -y remove python g++ make && \
     apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    touch /opt/sandbox/rootfs/dev/null
 CMD bash -c "cd /jd5 && node jd5/daemon.js"
