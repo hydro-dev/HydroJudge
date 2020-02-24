@@ -4,11 +4,10 @@ const
     readIniCases = require('./case/ini'),
     readYamlCases = require('./case/yaml'),
     readAutoCases = require('./case/auto'),
-    readConfCases = require('./cases/conf');
+    readConfCases = require('./case/conf');
 
 let map = [
     ['config.ini', readIniCases],
-    ['Config.ini', readIniCases],
     ['config.yaml', readYamlCases],
     ['Config.yaml', readYamlCases],
     ['config.yml', readYamlCases],
@@ -18,7 +17,7 @@ let map = [
 
 async function readCases(folder, extra_config = {}) {
     let config;
-    for (let [filename, handler] in map)
+    for (let [filename, handler] of map)
         if (fs.existsSync(path.resolve(folder, filename))) {
             config = await handler(folder, filename);
             break;
