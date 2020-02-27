@@ -224,12 +224,15 @@ module.exports = class AxiosInstance {
 
 class JudgeTask {
     constructor(session, request, ws) {
+        this.stat = {};
+        this.stat.receive = new Date();
         this.session = session;
         this.host = session.config.host;
         this.request = request;
         this.ws = ws;
     }
     async handle(pool) {
+        this.stat.handle = new Date();
         this.pool = pool;
         this.tag = this.request.tag;
         this.type = this.request.type;
@@ -263,8 +266,11 @@ class JudgeTask {
         await rmdir(path.resolve(TEMP_DIR, this.host, this.rid));
     }
     async do_submission() {
+        this.stat.cache_start = new Date();
         this.folder = await this.session.cache_open(this.domain_id, this.pid);
+        this.stat.read_cases = new Date();
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        this.stat.judge = new Date();
         await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {

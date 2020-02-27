@@ -66,15 +66,17 @@ async function daemon(_CONFIG_FILE) {
     global.hosts = hosts;
     global.onDestory.push(async () => {
         let config = { hosts: {} };
-        for (let i in hosts)
+        for (let i in hosts) {
             config.hosts[i] = {
                 host: i,
-                cookie: hosts[i].config.cookie,
+                type: hosts[i].config.type || 'vj4',
                 uname: hosts[i].config.uname,
                 password: hosts[i].config.password,
-                server_url: hosts[i].config.server_url,
-                detail: hosts[i].config.detail
+                server_url: hosts[i].config.server_url
             };
+            if (hosts[i].config.cookie) config.hosts[i].cookie = hosts[i].config.cookie;
+            if (hosts[i].config.detail) config.hosts[i].detail = hosts[i].config.detail;
+        }
         await fsp.writeFile(FILE, yaml.safeDump(config));
     });
     await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
