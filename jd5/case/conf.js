@@ -20,7 +20,7 @@ module.exports = async function readConfCases(folder) {
         let config_file = (await fsp.readFile(path.resolve(folder, 'problem.conf'))).toString().split('\n');
         for (let line of config_file) {
             let i = line.split(' ');
-            map[i[0]] = i[i];
+            map[i[0]] = i[1];
         }
         assert(map.use_builtin_judger);
         assert(map.use_builtin_checker);
@@ -34,7 +34,7 @@ module.exports = async function readConfCases(folder) {
         assert(map.time_limit);
         assert(map.memory_limit);
     } catch (e) {
-        throw new FormatError('Invalid problem.conf file.');
+        throw new FormatError('Invalid problem.conf file.', [e]);
     }
     let c = await readAutoCases(folder);
     config.subtasks = c.subtasks;

@@ -8,6 +8,21 @@ cc:
     compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
     code_file: foo.cc
     execute: /home/%filename%
+cc98:
+    type: compiler
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    code_file: foo.cc
+    execute: /home/%filename%
+cc11:
+    type: compiler
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    code_file: foo.cc
+    execute: /home/%filename%
+cc17:
+    type: compiler
+    compile: /usr/bin/g++ -O2 -Wall -std=c++17 -o %filename% foo.cc -lm
+    code_file: foo.cc
+    execute: /home/%filename%
 pas:
     type: compiler
     compile: /usr/bin/fpc -O2 -o/home/%filename% foo.pas
