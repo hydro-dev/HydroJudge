@@ -40,8 +40,6 @@ Use the following command to install nodejs requirements:
 yarn
 ```
 
-The nodejs libraries require [Unknown].
-
 Put `config.yaml` and `langs.yaml` in the configuration directory, usually
 in `$HOME/.config/jd5`. `config.yaml` includes the server address, user and
 password and `langs.yaml` includes the compiler options. Examples can be found
@@ -56,23 +54,8 @@ node jd5/daemon.js
 
 Note that this requires a `sudo` to create cgroups.
 
-## FAQ
-
-### How are the programs sandboxed?
-
-We unshare everything (namely mount, uts, ipc, user, pid and net), and then
-create a root filesystem using tmpfs and bind mount, finally `pivot_root`
-into it. We also use cgroup to limit the time, memory and number of processes
-of user execution.
-
-### Why are the sandboxes reused?
-
-We noticed that sandbox creation took around 100ms, therefore becomes the
-bottleneck while judging small programs. With sandbox pooling, we see 300-400
-executions per second on our development machine.
-
 ## Copyright and License
 
-Copyright (c) 2019 Vijos Dev Team.  All rights reserved.
+Copyright (c) 2020 Vijos Dev Team.  All rights reserved.
 
 License: GPL-3.0-only

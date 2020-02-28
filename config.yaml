@@ -1,0 +1,8 @@
+hosts:
+  uoj:
+    host: uoj
+    type: uoj
+    uname: jd5
+    password: 1oGNGcwcDW7oGPHcv62UksB41h0mOxl2
+    server_url: 'http://localhost:20000/'
+    detail: true

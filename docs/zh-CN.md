@@ -31,8 +31,9 @@ jd5 是一个用于信息学算法竞赛的高效评测后端。
 
 ```yaml
 hosts:
-  localhost:
-    server_url: 填写vijos服务端地址 如https://vijos.org/
+  localhost: #ID,可更改
+    type: vj4 # [vj4,uoj]
+    server_url: https://vijos.org/ # 填写vijos服务端地址
     uname: 填写拥有评测权限的用户名
     password: 填写密码
 ```
@@ -49,7 +50,7 @@ hosts:
 下载本仓库，并切换到仓库目录。
 
 ```sh
-npm install -g yarn // 如果已经安装yarn请跳过该步骤
+npm install -g yarn # 如果已经安装yarn请跳过该步骤
 yarn
 ```
 
@@ -68,3 +69,4 @@ node jd5/daemon.js
 见 [测试数据格式](examples/testdata.yaml)
 
 为旧版评测机设计的数据包仍然可用。
+针对 problem.conf 的兼容性测试仍在进行中。

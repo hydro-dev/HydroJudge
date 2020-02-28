@@ -1,5 +1,7 @@
 hosts:
   localhost:
+    type: vj4 # In [vj4, uoj, ide] default to vj4
     server_url: http://localhost:8888/
     uname: judge
     password: abc123
+    detail: true # default to true 
