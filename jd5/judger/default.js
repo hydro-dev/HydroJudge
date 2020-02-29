@@ -5,10 +5,12 @@ const
     { CompileError } = require('../error'),
     { copyFolder, outputLimit } = require('../utils'),
     path = require('path'),
+    tmpfs = require('../tmpfs'),
     compile = require('../compile'),
     signals = require('../signals'),
-    { check, compile_checker } = require('../check'),
+    { check, compile_checker, parseFilename } = require('../check'),
     fs = require('fs'),
+    fsp = fs.promises,
     Score = {
         sum: (a, b) => (a + b),
         max: Math.max,
@@ -27,9 +29,7 @@ function judgeCase(c) {
         let sandbox, code, time_usage_ms, memory_usage_kb, filename = ctx.config.filename;
         try {
             [sandbox] = await ctx.pool.get();
-            let files = [copyFolder(path.resolve(ctx.tmpdir, 'compile'), path.resolve(sandbox.dir, 'home'))];
-            for (let file of ctx.config.user_extra_files)
-                files.push(sandbox.addFile(file));
+            let files = [copyFolder(path.resolve(ctx.tmpdir, 'compile', 'main'), path.resolve(sandbox.dir, 'home'))];
             if (ctx.config.filename) files.push(sandbox.addFile(c.input, `${filename}.in`));
             await Promise.all(files);
             let target_stdout = filename ? path.resolve(sandbox.dir, 'home', `${filename}.out`) : path.resolve(sandbox.dir, 'stdout');
@@ -46,10 +46,7 @@ function judgeCase(c) {
             );
             ({ code, time_usage_ms, memory_usage_kb } = res);
             if (!fs.existsSync(target_stdout)) fs.writeFileSync(target_stdout, '');
-            files = [copyFolder(path.resolve(ctx.tmpdir, 'checker'), path.resolve(sandbox.dir, 'home'))];
-            for (let file of ctx.config.judge_extra_files)
-                files.push(sandbox.addFile(file));
-            await Promise.all(files);
+            await copyFolder(path.resolve(ctx.tmpdir, 'compile', 'checker'), path.resolve(sandbox.dir, 'home'));
             let status, message = '', score;
             if (time_usage_ms > ctx_subtask.subtask.time_limit_ms)
                 status = STATUS_TIME_LIMIT_EXCEEDED;
@@ -111,13 +108,17 @@ function judgeSubtask(subtask) {
 exports.judge = async ctx => {
     ctx.next({ status: STATUS_COMPILING });
     let exit_code, message;
+    tmpfs.mount(path.resolve(ctx.tmpdir, 'compile'));
     [ctx.execute, [exit_code, message]] = await Promise.all([
         (async () => {
             let sandbox, res;
             try {
                 [sandbox] = await ctx.pool.get();
                 res = await build(ctx.next, sandbox, ctx.lang, ctx.code);
-                await copyFolder(path.resolve(sandbox.dir, 'home'), path.resolve(ctx.tmpdir, 'compile'));
+                let files = [copyFolder(path.resolve(sandbox.dir, 'home'), path.resolve(ctx.tmpdir, 'compile', 'main'))];
+                for (let file of ctx.config.user_extra_files)
+                    files.push(fsp.copyFile(file, path.join(ctx.tmpdir, 'compile', 'main', parseFilename(file))));
+                await Promise.all(files);
             } finally {
                 if (sandbox) sandbox.free();
             }
@@ -128,7 +129,10 @@ exports.judge = async ctx => {
             try {
                 [sandbox] = await ctx.pool.get();
                 res = await compile_checker(ctx.judge_sandbox, ctx.config.checker_type || 'default', ctx.config.checker);
-                await copyFolder(path.resolve(sandbox.dir, 'home'), path.resolve(ctx.tmpdir, 'checker'));
+                let files = [copyFolder(path.resolve(sandbox.dir, 'home'), path.resolve(ctx.tmpdir, 'compile', 'checker'))];
+                for (let file of ctx.config.judge_extra_files)
+                    files.push(fsp.copyFile(file, path.join(ctx.tmpdir, 'compile', 'checker', parseFilename(file))));
+                await Promise.all(files);
             } finally {
                 if (sandbox) sandbox.free();
             }
@@ -142,6 +146,7 @@ exports.judge = async ctx => {
     for (let sid in ctx.config.subtasks)
         tasks.push(judgeSubtask(ctx.config.subtasks[sid])(ctx));
     await Promise.all(tasks);
+    tmpfs.umount(path.resolve(ctx.tmpdir, 'compile'));
     ctx.stat.done = new Date();
     ctx.next({ judge_text: JSON.stringify(ctx.stat) });
     ctx.end({

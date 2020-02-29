@@ -14,12 +14,12 @@ const
     EMPTY_STR = /^[ \n\t]*$/i;
 
 async function copyFolder(src, dst) {
-    if (!fs.existsSync(dst)) fs.mkdirSync(dst);
+    if (!fs.existsSync(dst)) fs.mkdirSync(dst, { recursive: true });
     if (!fs.existsSync(src)) return false;
-    var dirs = fs.readdirSync(src);
+    let dirs = fs.readdirSync(src);
     for (let item of dirs) {
-        var item_path = path.join(src, item);
-        var temp = fs.statSync(item_path);
+        let item_path = path.join(src, item);
+        let temp = fs.statSync(item_path);
         if (temp.isFile()) fs.copyFileSync(item_path, path.join(dst, item));
         else if (temp.isDirectory()) await copyFolder(item_path, path.join(dst, item));
     }
@@ -52,6 +52,14 @@ function rmdir(path, recursive = true) {
         fs.rmdirSync(path);
     } else if (fs.existsSync(path)) fs.rmdirSync(path);
 }
+function cleandir(path) {
+    if (fs.existsSync(path))
+        fs.readdirSync(path).forEach(file => {
+            let curPath = path + '/' + file;
+            if (fs.statSync(curPath).isDirectory()) rmdir(curPath);
+            else fs.unlinkSync(curPath);
+        });
+}
 function mkdirp(p) {
     return new Promise((resolve, reject) => {
         _mkdirp(path.resolve(p), err => {
@@ -59,14 +67,6 @@ function mkdirp(p) {
             resolve();
         });
     });
-}
-function parseLang(filename) {
-    let t = filename.split('.');
-    let ext = t[t.length - 1];
-    if (ext == 'cpp') return 'cc';
-    else if (ext == 'py2') return 'py';
-    else if (['pas', 'cc', 'c', 'java', 'py', 'py3', 'php', 'rs', 'js', 'hs', 'go', 'rb', 'cs'].includes(ext)) return ext;
-    throw new FormatError('Unknown checker language', [ext]);
 }
 function parseFilename(path) {
     let t = path.split('/');
@@ -120,5 +120,5 @@ function outputLimit(stdout, stderr, length = 4096) {
 }
 module.exports = {
     Queue, mkdirp, max, rmdir, sleep, copyFolder, outputLimit,
-    parseMemoryMB, parseTimeMS, parseLang, parseFilename, cmd: parse
+    parseMemoryMB, parseTimeMS, parseFilename, cmd: parse, cleandir
 };

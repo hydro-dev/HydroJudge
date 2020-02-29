@@ -2,8 +2,9 @@ const
     EventEmitter = require('events'),
     fs = require('fs'),
     fsp = fs.promises,
+    tmpfs = require('./tmpfs'),
     path = require('path'),
-    { mkdirp, rmdir, parseFilename, cmd } = require('./utils'),
+    { mkdirp, cleandir, parseFilename, cmd } = require('./utils'),
     { SystemError } = require('./error'),
     log = require('./log'),
     os = require('os'),
@@ -60,6 +61,7 @@ module.exports = class SANDBOX extends EventEmitter {
         createCgroup('memory', `jd5/${this.name}`);
         createCgroup('cpuacct', `jd5/${this.name}`);
         createCgroup('pids', `jd5/${this.name}`);
+        global.onDestory.push(() => { this.destory(); });
     }
     async run(execute, {
         time_limit_ms = SYSTEM_TIME_LIMIT_MS,
@@ -87,17 +89,15 @@ module.exports = class SANDBOX extends EventEmitter {
         log.log(`Sandbox init: ${this.dir}`);
         if (!fs.existsSync(`${this.dir}`)) await mkdirp(`${this.dir}`);
         if (!fs.existsSync(`${this.dir}/home`)) await mkdirp(`${this.dir}/home`);
-        if (!fs.existsSync(`${this.dir}/cache`)) await mkdirp(`${this.dir}/cache`);
         if (!fs.existsSync(`${this.dir}/tmp`)) await mkdirp(`${this.dir}/tmp`);
+        tmpfs.mount(`${this.dir}/home`);
+        tmpfs.mount(`${this.dir}/tmp`);
     }
     async reset() {
-        await this.clean();
-        rmdir(path.join(this.dir, 'cache'), true);
-        mkdirp(path.join(this.dir, 'cache'));
+        cleandir(path.join(this.dir, 'home'));
     }
     async clean() {
-        rmdir(path.join(this.dir, 'home'), true);
-        mkdirp(path.join(this.dir, 'home'));
+        cleandir(path.join(this.dir, 'home'));
     }
     async addFile(src, target) {
         if (!src) throw new SystemError('Error while parsing source');
@@ -193,5 +193,7 @@ module.exports = class SANDBOX extends EventEmitter {
         removeCgroup('memory', `jd5/${this.name}`);
         removeCgroup('cpuacct', `jd5/${this.name}`);
         removeCgroup('pids', `jd5/${this.name}`);
+        tmpfs.umount(`${this.dir}/home`);
+        tmpfs.umount(`${this.dir}/tmp`);
     }
 };

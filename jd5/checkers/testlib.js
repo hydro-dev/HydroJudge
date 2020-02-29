@@ -3,7 +3,6 @@ const
     fsp = fs.promises,
     path = require('path'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
-    { parseLang } = require('../utils'),
     _compile = require('../compile');
 
 async function compile(sandbox, checker) {
@@ -11,7 +10,7 @@ async function compile(sandbox, checker) {
         fsp.readFile(checker),
         sandbox.addFile(path.resolve(__dirname, '../files/testlib.h'))
     ]);
-    return await _compile(parseLang(checker), file, sandbox, 'checker');
+    return await _compile(checker.split('.')[1], file, sandbox, 'checker');
 }
 async function check(sandbox, config) {
     await Promise.all([

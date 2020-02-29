@@ -8,7 +8,6 @@ const
     fs = require('fs'),
     fsp = fs.promises,
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
-    { parseLang } = require('../utils'),
     _compile = require('../compile');
 
 async function check(sandbox, config) {
@@ -26,7 +25,7 @@ async function check(sandbox, config) {
 }
 async function compile(sandbox, checker) {
     let file = await fsp.readFile(checker);
-    return _compile(parseLang(checker), file, sandbox, 'checker');
+    return _compile(checker.split('.')[1], file, sandbox, 'checker');
 }
 
 module.exports = { check, compile };
