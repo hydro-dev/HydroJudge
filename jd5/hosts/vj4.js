@@ -4,6 +4,7 @@ const
     fsp = fs.promises,
     path = require('path'),
     WebSocket = require('ws'),
+    tmpfs = require('../tmpfs'),
     log = require('../log'),
     { mkdirp, rmdir, outputLimit } = require('../utils'),
     child = require('child_process'),
@@ -75,7 +76,7 @@ module.exports = class AxiosInstance {
                 w.on('finish', resolve);
                 w.on('error', reject);
             });
-            await mkdirp(path.dirname(save_path));
+            mkdirp(path.dirname(save_path));
             await new Promise((resolve, reject) => {
                 child.exec(`unzip ${tmp_file_path} -d ${save_path}`, e => {
                     if (e) reject(e);
@@ -101,7 +102,7 @@ module.exports = class AxiosInstance {
             w.on('finish', resolve);
             w.on('error', reject);
         });
-        await mkdirp(path.dirname(save_path));
+        mkdirp(path.dirname(save_path));
         await new Promise((resolve, reject) => {
             child.exec(`unzip ${tmp_file_path} -d ${save_path}`, e => {
                 if (e) reject(e);
@@ -262,8 +263,9 @@ class JudgeTask {
                 this.next({ judge_text: e.message + '\n' + e.stack + '\n' + JSON.stringify(e.params) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
+            if (fs.existsSync(path.resolve(this.tmpdir, 'compile'))) tmpfs.umount(path.resolve(this.tmpdir, 'compile'));
         }
-        await rmdir(path.resolve(TEMP_DIR, this.host, this.rid));
+        await rmdir(this.tmpdir);
     }
     async do_submission() {
         this.stat.cache_start = new Date();

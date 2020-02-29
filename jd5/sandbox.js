@@ -87,9 +87,8 @@ module.exports = class SANDBOX extends EventEmitter {
     }
     async init() {
         log.log(`Sandbox init: ${this.dir}`);
-        if (!fs.existsSync(`${this.dir}`)) await mkdirp(`${this.dir}`);
-        if (!fs.existsSync(`${this.dir}/home`)) await mkdirp(`${this.dir}/home`);
-        if (!fs.existsSync(`${this.dir}/tmp`)) await mkdirp(`${this.dir}/tmp`);
+        if (!fs.existsSync(`${this.dir}/home`)) mkdirp(`${this.dir}/home`);
+        if (!fs.existsSync(`${this.dir}/tmp`)) mkdirp(`${this.dir}/tmp`);
         tmpfs.mount(`${this.dir}/home`);
         tmpfs.mount(`${this.dir}/tmp`);
     }

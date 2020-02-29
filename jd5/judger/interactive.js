@@ -3,7 +3,7 @@ const
         STATUS_RUNTIME_ERROR, STATUS_SYSTEM_ERROR, STATUS_WRONG_ANSWER,
         STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { CompileError } = require('../error'),
-    { max, parseLang, parseFilename, outputLimit } = require('../utils'),
+    { max, parseFilename, outputLimit } = require('../utils'),
     path = require('path'),
     signals = require('../signals'),
     compile = require('../compile'),
@@ -28,7 +28,7 @@ async function build(next, sandbox, lang, scode) {
 }
 
 async function build_interactor(sandbox, code_file) {
-    let { code, stdout, stderr, execute } = await compile(parseLang(parseFilename(code_file)), fs.readFileSync(code_file), sandbox, 'interactor');
+    let { code, stdout, stderr, execute } = await compile(parseFilename(code_file).split('.')[1], fs.readFileSync(code_file), sandbox, 'interactor');
     if (code) throw new CompileError({ stdout, stderr });
     return execute;
 }

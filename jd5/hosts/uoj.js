@@ -73,7 +73,7 @@ module.exports = class UOJ {
         log.info(`Getting problem data: ${this.config.host}/${pid}`);
         let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${pid}`);
         await this.uoj_download(`/problem/${pid}`, tmp_file_path);
-        await mkdirp(path.dirname(file_path));
+        mkdirp(path.dirname(file_path));
         await new Promise((resolve, reject) => {
             child.exec(`unzip ${tmp_file_path} -d ${file_path}`, e => {
                 if (e) reject(e);

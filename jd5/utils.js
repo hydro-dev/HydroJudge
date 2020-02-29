@@ -4,7 +4,6 @@ const
     parse = require('shell-quote').parse,
     _ = require('lodash'),
     EventEmitter = require('events'),
-    _mkdirp = require('mkdirp'),
     { FormatError } = require('./error'),
     max = (a, b) => (a > b ? a : b),
     TIME_RE = /^([0-9]+(?:\.[0-9]*)?)([mu]?)s?$/i,
@@ -42,15 +41,14 @@ function sleep(timeout) {
     });
 }
 function rmdir(path, recursive = true) {
-    if (recursive) {
-        if (fs.existsSync(path))
-            fs.readdirSync(path).forEach(file => {
-                let curPath = path + '/' + file;
-                if (fs.statSync(curPath).isDirectory()) rmdir(curPath);
-                else fs.unlinkSync(curPath);
-            });
-        fs.rmdirSync(path);
-    } else if (fs.existsSync(path)) fs.rmdirSync(path);
+    if (!fs.existsSync(path)) return;
+    if (recursive)
+        fs.readdirSync(path).forEach(file => {
+            let curPath = path + '/' + file;
+            if (fs.statSync(curPath).isDirectory()) rmdir(curPath);
+            else fs.unlinkSync(curPath);
+        });
+    fs.rmdirSync(path);
 }
 function cleandir(path) {
     if (fs.existsSync(path))
@@ -61,12 +59,23 @@ function cleandir(path) {
         });
 }
 function mkdirp(p) {
-    return new Promise((resolve, reject) => {
-        _mkdirp(path.resolve(p), err => {
-            if (err) reject(err);
-            resolve();
-        });
-    });
+    p = path.resolve(p);
+    try {
+        fs.mkdirSync(p);
+    } catch (err0) {
+        if (err0.code == 'ENOENT') {
+            mkdirp(path.dirname(p));
+            fs.mkdirSync(p);
+        } else {
+            let stat;
+            try {
+                stat = fs.statSync(p);
+            } catch (err1) {
+                throw err0;
+            }
+            if (!stat.isDirectory()) throw err0;
+        }
+    }
 }
 function parseFilename(path) {
     let t = path.split('/');
