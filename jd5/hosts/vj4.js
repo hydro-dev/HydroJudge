@@ -245,7 +245,7 @@ class JudgeTask {
         this.next = this.get_next(this.ws, this.tag);
         this.end = this.get_end(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
-        fs.mkdirSync(this.tmpdir, { recursive: true });
+        mkdirp(this.tmpdir);
         log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
         try {
             if (this.type == 0) await this.do_submission();

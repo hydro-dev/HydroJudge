@@ -13,7 +13,7 @@ const
     EMPTY_STR = /^[ \n\t]*$/i;
 
 async function copyFolder(src, dst) {
-    if (!fs.existsSync(dst)) fs.mkdirSync(dst, { recursive: true });
+    if (!fs.existsSync(dst)) mkdirp(dst);
     if (!fs.existsSync(src)) return false;
     let dirs = fs.readdirSync(src);
     for (let item of dirs) {

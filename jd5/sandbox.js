@@ -38,7 +38,7 @@ const removeCgroup = (ctrl, cgroup) => {
 };
 const createCgroup = (ctrl, cgroup) => {
     let folder = path.resolve(cgroupPath, ctrl, cgroup);
-    fs.mkdirSync(folder, { recursive: true });
+    mkdirp(folder);
 };
 module.exports = class SANDBOX extends EventEmitter {
     constructor(name) {

@@ -122,7 +122,7 @@ class JudgeTask {
             compiler_text: [],
             judge_text: []
         };
-        fs.mkdirSync(this.tmpdir, { recursive: true });
+        mkdirp(this.tmpdir);
         log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
         try {
             await this.do_submission();

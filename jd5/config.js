@@ -1,6 +1,7 @@
 const
     argv = require('minimist')(process.argv.slice(2)),
     log = require('./log'),
+    { mkdirp } = require('./utils'),
     os = require('os'),
     fs = require('fs'),
     path = require('path');
@@ -29,7 +30,7 @@ if (!config.LANGS_FILE) {
     config.LANGS_FILE = path.resolve(config.CONFIG_DIR[0], 'langs.yaml');
     log.error('Language file not found, using default.');
     if (!fs.existsSync(path.resolve(os.homedir(), '.config', 'jd5')))
-        fs.mkdirSync(path.resolve(os.homedir(), '.config', 'jd5'), { recursive: true });
+        mkdirp(path.resolve(os.homedir(), '.config', 'jd5'));
     fs.copyFileSync(path.resolve(__dirname, '..', 'examples', 'langs.yaml'), config.LANGS_FILE);
 }
 

@@ -1,10 +1,9 @@
 const
     axios = require('axios'),
-    fs = require('fs'),
     path = require('path'),
     WebSocket = require('ws'),
     log = require('../log'),
-    { rmdir, outputLimit } = require('../utils'),
+    { rmdir, mkdirp, outputLimit } = require('../utils'),
     { TEMP_DIR } = require('../config'),
     { CompileError } = require('../error'),
     { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status'),
@@ -71,7 +70,7 @@ class JudgeTask {
         this.next = this.get_next(this.ws, this.tag);
         this.end = this.get_end(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
-        fs.mkdirSync(this.tmpdir, { recursive: true });
+        mkdirp(this.tmpdir);
         log.submission(`${this.host}/${this.rid}`);
         try {
             await this.run();
