@@ -8,6 +8,10 @@ jd5 is a judging daemon for programming contests like OI and ACM. It is called
 jd5 because we had jd, jd2, jd3, jd4 before. Unlike previous versions,
 jd5 supports custom judge, subtask and other many new features.
 
+## Help Center
+
+- [RemoteJudge](wiki/RemoteJudge.md)
+
 ## Usage
 
 Prerequisites:
