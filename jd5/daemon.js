@@ -41,9 +41,14 @@ const terminate = async () => {
 process.on('SIGINT', terminate);
 process.on('SIGTERM', terminate);
 process.stdin.setEncoding('utf8');
-process.stdin.on('data', input => {
+process.stdin.on('data', async input => {
     let i = input.toString().trim();
     if (i == 'stop') terminate();
+    else {
+        i = eval(i);
+        if (i instanceof Promise) i = await i;
+        console.log(i);
+    }
 });
 
 async function daemon(_CONFIG_FILE) {
@@ -85,7 +90,8 @@ async function daemon(_CONFIG_FILE) {
             for (let i in hosts) await hosts[i].consume(queue);
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let [task] = await queue.get();
-                await task.handle(pool);
+                console.log('new task');
+                task.handle(pool);
             }
         } catch (e) {
             log.error(e, e.stack);
