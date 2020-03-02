@@ -1,6 +1,12 @@
 type: remotejudge
+
+# Choices: vj4, vjudge
 server_type: vj4
 server_url: https://vijos.org
+
 username: root # Account for submitting
 password: rootroot
-pid: system/1000 # domain_id/pid for vj4
+
+#For vj4: domain_id/pid  eg: system/1000
+#For vjudge: host_id/pid  eg: CodeForces/33A
+pid: system/1000

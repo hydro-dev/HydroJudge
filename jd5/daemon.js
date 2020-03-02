@@ -90,7 +90,6 @@ async function daemon(_CONFIG_FILE) {
             for (let i in hosts) await hosts[i].consume(queue);
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let [task] = await queue.get();
-                console.log('new task');
                 task.handle(pool);
             }
         } catch (e) {
