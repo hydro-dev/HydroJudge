@@ -22,11 +22,11 @@ if (argv.config) config.CONFIG_FILE = path.resolve(argv.config);
 if (argv.langs) config.LANGS_FILE = path.resolve(argv.langs);
 if (argv.tmp) config.TMP_DIR = path.resolve(argv.tmp);
 if (argv.root) config.SANDBOX_ROOT = path.resolve(argv.root);
-if (!config.CONFIG_FILE) {
+if (!fs.existsSync(config.CONFIG_FILE)) {
     log.error('Config file not found.');
     process.exit(1);
 }
-if (!config.LANGS_FILE) {
+if (!fs.existsSync(config.LANGS_FILE)) {
     config.LANGS_FILE = path.resolve(config.CONFIG_DIR[0], 'langs.yaml');
     log.error('Language file not found, using default.');
     if (!fs.existsSync(path.resolve(os.homedir(), '.config', 'jd5')))
