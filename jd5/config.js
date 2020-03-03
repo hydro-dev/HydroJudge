@@ -27,10 +27,9 @@ if (!fs.existsSync(config.CONFIG_FILE)) {
     process.exit(1);
 }
 if (!fs.existsSync(config.LANGS_FILE)) {
-    config.LANGS_FILE = path.resolve(config.CONFIG_DIR[0], 'langs.yaml');
     log.error('Language file not found, using default.');
-    if (!fs.existsSync(path.resolve(os.homedir(), '.config', 'jd5')))
-        mkdirp(path.resolve(os.homedir(), '.config', 'jd5'));
+    if (!fs.existsSync(path.dirname(config.LANGS_FILE)))
+        mkdirp(path.dirname(config.LANGS_FILE));
     fs.copyFileSync(path.resolve(__dirname, '..', 'examples', 'langs.yaml'), config.LANGS_FILE);
 }
 
