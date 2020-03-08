@@ -1,13 +1,15 @@
-FROM node:10-stretch-slim
-COPY --from=vijos/jd4 / /opt/sandbox/rootfs
+FROM golang:latest AS build 
+WORKDIR /build
+RUN git clone https://github.com/criyle/go-judge.git /build && \
+    go mod download && \
+    go build -o executorserver ./cmd/executorserver
+
+FROM node:12-stretch-slim
+COPY --from=build /build/executorserver /
 COPY . /jd5
 WORKDIR /jd5
 RUN mkdir -p /root/.config/jd5 && \
-    apt-get update && \
-    apt-get install -y unzip python g++ make && \
-    yarn && \
-    apt-get -y remove python g++ make && \
-    apt-get autoremove -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    touch /opt/sandbox/rootfs/dev/null
-CMD bash -c "cd /jd5 && node jd5/daemon.js"
+    apt-get update && apt-get install -y unzip && \
+    yarn
+
+CMD /executorserver & node jd5/daemon.js

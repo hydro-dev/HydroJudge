@@ -5,7 +5,7 @@ const
     path = require('path'),
     assert = require('assert'),
     log = require('../log'),
-    { mkdirp, rmdir, outputLimit } = require('../utils'),
+    { mkdirp, rmdir, compilerText } = require('../utils'),
     child = require('child_process'),
     { CACHE_DIR, TEMP_DIR } = require('../config'),
     { FormatError, CompileError } = require('../error'),
@@ -107,16 +107,15 @@ class JudgeTask {
         this.session = session;
         this.submission = submission;
     }
-    async handle(pool) {
+    async handle() {
         this.stat.handle = new Date();
-        this.pool = pool;
         this.host = this.session.config.host;
         this.rid = this.submission.id;
         this.pid = this.submission.problem_id;
         this.problem_mtime = this.submission.problem_mtime;
         for (let i of this.submission.content.config)
             if (i[0] == 'answer_language') this.lang = LANGS_MAP[i[1]];
-        this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid.toString());
+        this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid.toString());
         this.details = {
             cases: [],
             compiler_text: [],
@@ -128,7 +127,7 @@ class JudgeTask {
             await this.do_submission();
         } catch (e) {
             if (e instanceof CompileError) {
-                this.next({ compiler_text: outputLimit(e.stdout, e.stderr) });
+                this.next({ compiler_text: compilerText(e.stdout, e.stderr) });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
                 this.next({ judge_text: e.message + '\n' + JSON.stringify(e.params) });
@@ -139,7 +138,7 @@ class JudgeTask {
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
-        await rmdir(path.resolve(TEMP_DIR, this.host, this.rid.toString()));
+        await rmdir(this.tmpdir);
     }
     dir(p) {
         return path.resolve(this.tmpdir, p);
@@ -155,24 +154,6 @@ class JudgeTask {
             });
         });
         this.code = await fsp.readFile(this.dir('all/answer.code'));
-        if (this.submission.is_hack) {
-            if (this.submission.hack.input_type == 'USE_FORMATTER') {
-                await this.session.download(this.submission.hack.input, this.dir('hack_input_raw.txt'));
-                let sandbox;
-                try {
-                    [sandbox] = await this.pool.get();
-                    let res = await sandbox.run(
-                        this.dir('formatter'),
-                        { stdin: this.dir('hack_input_raw.txt'), stdout: this.dir('hack_input.txt'), stderr: '/dev/null' }
-                    );
-                    if (res.code) throw new Error('Cannot format input');
-                } finally {
-                    if (sandbox) sandbox.free();
-                }
-            }
-            else
-                await this.session.download(this.submission.hack.input, this.dir('hack_input.txt'));
-        }
         this.stat.read_cases = new Date();
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
         this.stat.judge = new Date();

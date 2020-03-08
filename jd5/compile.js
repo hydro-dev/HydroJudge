@@ -1,9 +1,12 @@
 const
-    path = require('path'),
     yaml = require('js-yaml'),
     fs = require('fs'),
+    path = require('path'),
+    fsp = fs.promises,
+    run = require('./run'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
+    { compilerText } = require('./utils'),
     { LANGS_FILE } = require('./config');
 
 let _langs = {};
@@ -14,21 +17,20 @@ try {
     log.error(e);
     process.exit(1);
 }
-async function compile(lang, code, sandbox, target) {
+async function compile(lang, code, dir, target, copyIn, next) {
     if (!_langs[lang]) throw new SystemError('Language not supported');
-    let info = _langs[lang], exit_code;
-    let stdout = path.resolve(sandbox.dir, 'stdout');
-    let stderr = path.resolve(sandbox.dir, 'stderr');
+    let info = _langs[lang];
     if (info.type == 'compiler') {
-        await sandbox.writeFile(info.code_file, code);
-        ({ code: exit_code } = await sandbox.run(info.compile.replace('%filename%', target), {
-            stdout, stderr
-        }));
-        if (exit_code) throw new CompileError({ stdout, stderr });
-    } else if (info.type == 'interpreter') {
-        await sandbox.writeFile(target, code);
-    }
-    return { code: 0, stdout, stderr, execute: info.execute };
+        copyIn[info.code_file] = { content: code };
+        let { status, stdout, stderr } = await run(
+            info.compile.replace(/\$\{name\}/g, target),
+            { copyIn, copyOutDir: dir }
+        );
+        if (next) next({ compiler_text: compilerText(stdout, stderr) });
+        if (status != 'Accepted') throw new CompileError({ status, stdout, stderr });
+    } else if (info.type == 'interpreter')
+        await fsp.writeFile(path.resolve(dir, target), code);
+    return info.execute;
 }
 
 module.exports = compile;

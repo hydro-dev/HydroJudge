@@ -10,7 +10,7 @@ jd5 supports custom judge, subtask and other many new features.
 
 ## Help Center
 
-- [RemoteJudge](wiki/RemoteJudge.md)
+- [RemoteJudge](docs/RemoteJudge.md)
 
 ## Usage
 
@@ -29,7 +29,13 @@ hosts:
     password: Judge account password
 ```
 
-Then use `docker run --privileged -d -v ./config.yaml:/root/.config/jd5/config.yaml masnn/jd5` to start.
+Then use `docker run --privileged -d -v ./config.yaml:/root/.config/jd5/config.yaml masnn/jd5:default` to start.  
+Hint: there are 3 tags built for docker:  
+
+- `masnn/jd5:latest` No compiler installed
+- `masnn/jd5:default` Default compiler for vijos
+- `masnn/jd5:slim` C C++ Pascal
+
 
 ## Development
 
@@ -49,14 +55,12 @@ in `$HOME/.config/jd5`. `config.yaml` includes the server address, user and
 password and `langs.yaml` includes the compiler options. Examples can be found
 under the `examples` directory.
 
-
-Use the following command to run the daemon:
+Run the [executor-server](https://github.com/criyle/go-judge) first,  
+And use the following command to run the daemon:  
 
 ```sh
 node jd5/daemon.js
 ```
-
-Note that this requires a `sudo` to create cgroups.
 
 ## Copyright and License
 

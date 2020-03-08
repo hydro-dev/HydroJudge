@@ -2,5 +2,3 @@ node_modules
 *.ignore.*
 *.log
 __*
-simple-sandbox
-build

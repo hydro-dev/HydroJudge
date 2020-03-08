@@ -6,7 +6,7 @@ const
     WebSocket = require('ws'),
     tmpfs = require('../tmpfs'),
     log = require('../log'),
-    { mkdirp, rmdir, outputLimit } = require('../utils'),
+    { mkdirp, rmdir, compilerText } = require('../utils'),
     child = require('child_process'),
     { CACHE_DIR, TEMP_DIR } = require('../config'),
     { FormatError, CompileError, SystemError } = require('../error'),
@@ -232,9 +232,8 @@ class JudgeTask {
         this.request = request;
         this.ws = ws;
     }
-    async handle(pool) {
+    async handle() {
         this.stat.handle = new Date();
-        this.pool = pool;
         this.tag = this.request.tag;
         this.type = this.request.type;
         this.domain_id = this.request.domain_id;
@@ -244,8 +243,9 @@ class JudgeTask {
         this.code = this.request.code;
         this.next = this.get_next(this.ws, this.tag);
         this.end = this.get_end(this.ws, this.tag);
-        this.tmpdir = path.resolve(TEMP_DIR, this.host, this.rid);
+        this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
         mkdirp(this.tmpdir);
+        tmpfs.mount(this.tmpdir, '64m');
         log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
         try {
             if (this.type == 0) await this.do_submission();
@@ -253,7 +253,7 @@ class JudgeTask {
             else throw new SystemError(`Unsupported type: ${this.type}`);
         } catch (e) {
             if (e instanceof CompileError) {
-                this.next({ compiler_text: outputLimit(e.stdout, e.stderr) });
+                this.next({ compiler_text: compilerText(e.stdout, e.stderr) });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
                 this.next({ judge_text: e.message + '\n' + JSON.stringify(e.params) });
@@ -263,8 +263,8 @@ class JudgeTask {
                 this.next({ judge_text: e.message + '\n' + e.stack + '\n' + JSON.stringify(e.params) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
-            if (fs.existsSync(path.resolve(this.tmpdir, 'compile'))) tmpfs.umount(path.resolve(this.tmpdir, 'compile'));
         }
+        tmpfs.umount(this.tmpdir);
         await rmdir(this.tmpdir);
     }
     async do_submission() {

@@ -7,25 +7,25 @@
 const
     fs = require('fs'),
     fsp = fs.promises,
+    run = require('../run'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 
-async function check(sandbox, config) {
-    await Promise.all([
-        sandbox.addFile(config.user_stdout, 'usrout'),
-        sandbox.addFile(config.output, 'stdout'),
-        sandbox.addFile(config.input, 'input')
-    ]);
-    let { code, stdout } = await sandbox.run(
-        '/home/checker input stdout usrout', {}
-    );
+async function check(config) {
+    let { code, stdout } = await run('%dir%/checker input stdout usrout', {
+        copyIn: {
+            usrout: { src: config.user_stdout },
+            stdout: { src: config.output },
+            input: { src: config.input }
+        }
+    });
     let status = (code == 0) ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
     let message = (await fsp.readFile(stdout)).toString();
-    return { code, status, score: (status == STATUS_ACCEPTED) ? config.score : 0, message };
+    return { status, score: (status == STATUS_ACCEPTED) ? config.score : 0, message };
 }
-async function compile(sandbox, checker) {
+async function compile(dir, checker, copyIn) {
     let file = await fsp.readFile(checker);
-    return _compile(checker.split('.')[1], file, sandbox, 'checker');
+    return _compile(checker.split('.')[1], file, dir, 'checker', copyIn);
 }
 
 module.exports = { check, compile };

@@ -54,6 +54,7 @@ module.exports = class VJ4 {
         await new Promise(resolve => {
             this.timeout = setTimeout(resolve, 5000);
             this.ws.on('message', data => {
+                // TODO: handle real-time update
                 clearTimeout(this.timeout);
                 this.timeout = setTimeout(resolve, 5000);
             });

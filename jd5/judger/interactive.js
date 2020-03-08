@@ -3,7 +3,7 @@ const
         STATUS_RUNTIME_ERROR, STATUS_SYSTEM_ERROR, STATUS_WRONG_ANSWER,
         STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { CompileError } = require('../error'),
-    { max, parseFilename, outputLimit } = require('../utils'),
+    { max, parseFilename, compilerText } = require('../utils'),
     path = require('path'),
     signals = require('../signals'),
     compile = require('../compile'),
@@ -23,7 +23,7 @@ const
 async function build(next, sandbox, lang, scode) {
     let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'code');
     if (code) throw new CompileError({ stdout, stderr });
-    else next({ compiler_text: outputLimit(stdout, stderr) });
+    else next({ compiler_text: compilerText(stdout, stderr) });
     return execute;
 }
 
@@ -70,7 +70,7 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                     pipe1 = pipe();
                     pipe2 = pipe();
                     let judge_promise = judge_sandbox.run(
-                        execute_checker.replace('%filename%', 'interactor'),
+                        execute_checker.replace(/\$\{name\}/g, 'interactor'),
                         {
                             stdin: pipe2.read, stdout: pipe1.write, stderr: interactor_stderr,
                             time_limit_ms: subtask.time_limit_ms * 1.2,
@@ -78,7 +78,7 @@ exports.judge = async function ({ next, end, config, pool, lang, code }) {
                         }
                     );
                     let { code: usr_code, time_usage_ms, memory_usage_kb } = await usr_sandbox.run(
-                        execute_user.replace('%filename%', 'code'),
+                        execute_user.replace(/\$\{name\}/g, 'code'),
                         {
                             stdin: pipe1.read, stdout: pipe2.write, stderr: user_stderr,
                             time_limit_ms: subtask.time_limit_ms,

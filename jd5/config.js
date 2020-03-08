@@ -13,15 +13,12 @@ let config = {
     SYSTEM_TIME_LIMIT_MS: 16000,
     SYSTEM_PROCESS_LIMIT: 32,
     RETRY_DELAY_SEC: 15,
-    SANDBOX_ROOT: path.resolve(os.tmpdir(), 'jd5'),
-    SANDBOX_POOL_COUNT: 2,
-    TEMP_DIR: path.resolve(os.tmpdir(), 'jd5', 'tmp'),
-    CGROUP: 'jd5'
+    TEMP_DIR: path.resolve(os.tmpdir(), 'jd5'),
+    EXECUTION_HOST: 'http://localhost:5050'
 };
 if (argv.config) config.CONFIG_FILE = path.resolve(argv.config);
 if (argv.langs) config.LANGS_FILE = path.resolve(argv.langs);
 if (argv.tmp) config.TMP_DIR = path.resolve(argv.tmp);
-if (argv.root) config.SANDBOX_ROOT = path.resolve(argv.root);
 if (!fs.existsSync(config.CONFIG_FILE)) {
     log.error('Config file not found.');
     process.exit(1);

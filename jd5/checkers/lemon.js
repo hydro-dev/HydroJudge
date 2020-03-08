@@ -9,29 +9,29 @@ argv[6]：输出错误报告的文件
 
 const
     fsp = require('fs').promises,
-    path = require('path'),
+    run = require('../run'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 
-async function check(sandbox, config) {
-    await Promise.all([
-        sandbox.addFile(config.user_stdout, 'usrout'),
-        sandbox.addFile(config.output, 'stdout'),
-        sandbox.addFile(config.input, 'input')
-    ]);
-    let { code } = await sandbox.run(
-        `/home/checker input usrout stdout ${config.score} score message`, {}
-    );
-    let message = (await fsp.readFile(path.resolve(sandbox.dir, 'home', 'message'))).toString();
-    let score = (await fsp.readFile(path.resolve(sandbox.dir, 'home', 'score'))).toString();
+async function check(config) {
+    let { files } = await run(`%dir%/checker input usrout stdout ${config.score} score message`, {
+        copyIn: {
+            usrout: { src: config.user_stdout },
+            stdout: { src: config.output },
+            input: { src: config.input }
+        },
+        copyOut: ['score', 'message']
+    });
+    let message = files.message;
+    let score = parseInt(files.score);
     return {
-        code, score, message,
+        score, message,
         status: score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER
     };
 }
-async function compile(sandbox, checker) {
+async function compile(dir, checker, copyIn) {
     let file = await fsp.readFile(checker);
-    return _compile(checker.split('.')[1], file, sandbox, 'checker');
+    return _compile(checker.split('.')[1], file, dir, 'checker', copyIn);
 }
 
 module.exports = { check, compile };

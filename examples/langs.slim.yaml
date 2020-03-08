@@ -1,30 +1,30 @@
 c:
     type: compiler
-    compile: /usr/bin/gcc -O2 -Wall -std=c99 -o %filename% foo.c -lm
+    compile: /usr/bin/gcc -O2 -Wall -std=c99 -o ${name} foo.c -lm
     code_file: foo.c
-    execute: /home/%filename%
+    execute: ${dir}/${name}
 cc:
     type: compiler
-    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o ${name} foo.cc -lm
     code_file: foo.cc
-    execute: /home/%filename%
+    execute: ${dir}/${name}
 cc98:
     type: compiler
-    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o ${name} foo.cc -lm
     code_file: foo.cc
-    execute: /home/%filename%
+    execute: ${dir}/${name}
 cc11:
     type: compiler
-    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o %filename% foo.cc -lm
+    compile: /usr/bin/g++ -O2 -Wall -std=c++11 -o ${name} foo.cc -lm
     code_file: foo.cc
-    execute: /home/%filename%
+    execute: ${dir}/${name}
 cc17:
     type: compiler
-    compile: /usr/bin/g++ -O2 -Wall -std=c++17 -o %filename% foo.cc -lm
+    compile: /usr/bin/g++ -O2 -Wall -std=c++17 -o ${name} foo.cc -lm
     code_file: foo.cc
-    execute: /home/%filename%
+    execute: ${dir}/${name}
 pas:
     type: compiler
-    compile: /usr/bin/fpc -O2 -o/home/%filename% foo.pas
+    compile: /usr/bin/fpc -O2 -o${dir}/${name} foo.pas
     code_file: foo.pas
-    execute: /home/%filename%
+    execute: ${dir}/${name}

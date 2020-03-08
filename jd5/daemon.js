@@ -17,9 +17,8 @@ const
     { sleep, Queue } = require('./utils'),
     log = require('./log'),
     fsp = require('fs').promises,
-    Pool = require('./pool'),
     yaml = require('js-yaml'),
-    { RETRY_DELAY_SEC, SANDBOX_POOL_COUNT, CONFIG_FILE } = require('./config');
+    { RETRY_DELAY_SEC, CONFIG_FILE } = require('./config');
 
 global.onDestory = [];
 const terminate = async () => {
@@ -33,7 +32,7 @@ const terminate = async () => {
     } catch (e) {
         if (global.SI) process.exit(1);
         log.error(e);
-        log.error('An error occured when destorying the sandbox.');
+        log.error('An error occured when exiting.');
         log.error('Press Ctrl-C again for force exit.');
         global.SI = true;
     }
@@ -50,6 +49,9 @@ process.stdin.on('data', async input => {
         console.log(i);
     }
 });
+process.on('unhandledRejection', (reason, p) => {
+    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+});
 
 async function daemon(_CONFIG_FILE) {
     let FILE = _CONFIG_FILE || CONFIG_FILE;
@@ -62,7 +64,6 @@ async function daemon(_CONFIG_FILE) {
     }
     let hosts = {};
     let queue = new Queue();
-    let pool = new Pool();
     for (let i in config.hosts) {
         config.hosts[i].host = i;
         hosts[i] = new Session[config.hosts[i].type || 'vj4'](config.hosts[i]);
@@ -84,13 +85,12 @@ async function daemon(_CONFIG_FILE) {
         }
         await fsp.writeFile(FILE, yaml.safeDump(config));
     });
-    await Promise.all([pool.create(SANDBOX_POOL_COUNT || 2)]);
     while ('Orz twd2')  //eslint-disable-line no-constant-condition
         try {
             for (let i in hosts) await hosts[i].consume(queue);
             while ('Orz iceb0y') { //eslint-disable-line no-constant-condition
                 let [task] = await queue.get();
-                task.handle(pool);
+                task.handle();
             }
         } catch (e) {
             log.error(e, e.stack);

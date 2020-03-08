@@ -21,7 +21,7 @@ jd5 是一个用于信息学算法竞赛的高效评测后端。
 
 ## 帮助中心
 
-- [RemoteJudge](../wiki/RemoteJudge.md)
+- [RemoteJudge](./RemoteJudge.md)
 
 ## 安装与使用
 
@@ -43,7 +43,12 @@ hosts:
     password: 填写密码
 ```
 
-之后使用 `docker run -d --privileged -v ./config.yaml:/root/.config/jd5/config.yaml masnn/jd5` 即可启动。
+之后使用 `docker run -d --privileged -v ./config.yaml:/root/.config/jd5/config.yaml masnn/jd5:default` 即可启动。
+提示：为docker预构建了三个版本的镜像：
+
+- `masnn/jd5:latest` 未安装任何编译器，需手动安装
+- `masnn/jd5:default` Vijos默认语言的编译器支持
+- `masnn/jd5:slim` C C++ Pascal 语言支持
 
 ### 手动安装
 
@@ -59,10 +64,9 @@ npm install -g yarn # 如果已经安装yarn请跳过该步骤
 yarn
 ```
 
-您应当为沙箱准备一个rootfs，并放置于 `/opt/sandbox/rootfs`。  
-创建设置目录 `~/.config/jd5` ，并放置 `config.yaml` ，配置文件格式详见 [examples/config.yaml](examples/config.yaml)
-
-您应当以 root 身份运行。
+创建设置目录 `~/.config/jd5` ，并放置 `config.yaml` ，配置文件格式详见 [examples/config.yaml](examples/config.yaml)  
+启动 [go-sandbox](https://github.com/criyle/go-judge)，监听端口5050。  
+您应当以 root 身份运行。  
 
 ```sh
 node jd5/daemon.js

@@ -9,30 +9,28 @@
 const
     fs = require('fs'),
     fsp = fs.promises,
-    path = require('path'),
+    run = require('../run'),
     { SystemError } = require('../error'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 
-async function check(sandbox, config) {
-    await Promise.all([
-        sandbox.addFile(config.input, 'in'),
-        sandbox.addFile(config.user_stdout, 'user_out'),
-        sandbox.addFile(config.output, 'answer'),
-        sandbox.writeFile('code', config.code)
-    ]);
-    let stdout = path.resolve(sandbox.dir, 'home', 'stdout');
-    let stderr = path.resolve(sandbox.dir, 'home', 'stderr');
-    let { code } = await sandbox.run('/home/checker', { stdout, stderr });
-    if (code) throw new SystemError('Checker returned a non-zero value', [code]);
-    let score = parseInt((await fsp.readFile(stdout)).toString());
-    let message = (await fsp.readFile(stderr)).toString();
-    let status = score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
-    return { code, status, score, message };
+async function check(config) {
+    let { status, stdout, stderr } = await run('%dir%/checker', {
+        copyIn: {
+            in: { src: config.input },
+            user_out: { src: config.user_stdout },
+            answer: { src: config.output },
+            code: { content: config.code }
+        }
+    });
+    if (status != 'Accepted') throw new SystemError('Checker returned a non-zero value', [status]);
+    let score = parseInt(stdout);
+    status = score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
+    return { status, score, message: stderr };
 }
-async function compile(sandbox, checker) {
+async function compile(dir, checker, copyIn) {
     let file = await fsp.readFile(checker);
-    return _compile(checker.split('.')[1], file, sandbox, 'checker');
+    return _compile(checker.split('.')[1], file, dir, 'checker', copyIn);
 }
 
 module.exports = { check, compile };

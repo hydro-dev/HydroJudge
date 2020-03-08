@@ -10,7 +10,7 @@ const
     TIME_UNITS = { '': 1000, 'm': 1, 'u': 0.001 },
     MEMORY_RE = /^([0-9]+(?:\.[0-9]*)?)([kmg])b?$/i,
     MEMORY_UNITS = { 'k': 0.1, 'm': 1, 'g': 1024 },
-    EMPTY_STR = /^[ \n\t]*$/i;
+    EMPTY_STR = /^[ \r\n\t]*$/i;
 
 async function copyFolder(src, dst) {
     if (!fs.existsSync(dst)) mkdirp(dst);
@@ -113,21 +113,28 @@ class Queue extends EventEmitter {
         }
     }
 }
-function outputLimit(stdout, stderr, length = 4096) {
-    if (!fs.existsSync(stdout)) fs.writeFileSync(stdout, '');
-    if (!fs.existsSync(stderr)) fs.writeFileSync(stderr, '');
-    let len = fs.statSync(stdout).size + fs.statSync(stderr).size;
-    if (len <= length) {
-        let ret = [];
-        stdout = fs.readFileSync(stdout).toString();
-        stderr = fs.readFileSync(stderr).toString();
-        if (!EMPTY_STR.test(stdout)) ret.push(stdout);
-        if (!EMPTY_STR.test(stderr)) ret.push(stderr);
-        ret.push('自豪的采用jd5进行评测(github.com/masnn/jd5)');
-        return ret.join('\n');
-    } else return 'Compiler output limit exceeded.';
+function compilerText(stdout, stderr) {
+    let ret = [];
+    if (!EMPTY_STR.test(stdout)) ret.push(stdout);
+    if (!EMPTY_STR.test(stderr)) ret.push(stderr);
+    ret.push('自豪的采用jd5进行评测(github.com/masnn/jd5)');
+    return ret.join('\n');
 }
+function copyInDir(dir) {
+    let files = {};
+    if (fs.existsSync(dir))
+        fs.readdirSync(dir).forEach(f1 => {
+            let p1 = dir + '/' + f1;
+            if (fs.statSync(p1).isDirectory())
+                fs.readdirSync(p1).forEach(f2 => {
+                    files[`${f1}/${f2}`] = { src: `${dir}/${f1}/${f2}` };
+                });
+            else files[f1] = { src: `${dir}/${f1}` };
+        });
+    return files;
+}
+
 module.exports = {
-    Queue, mkdirp, max, rmdir, sleep, copyFolder, outputLimit,
+    Queue, mkdirp, max, rmdir, sleep, copyFolder, compilerText, copyInDir,
     parseMemoryMB, parseTimeMS, parseFilename, cmd: parse, cleandir
 };

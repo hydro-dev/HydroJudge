@@ -1,24 +1,20 @@
 const
-    path = require('path'),
-    { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
-    fs = require('fs');
+    run = require('../run'),
+    { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status');
 
-async function check(sandbox, config) {
-    await Promise.all([
-        sandbox.addFile(config.user_stdout, 'usrout'),
-        sandbox.addFile(config.output, 'stdout')
-    ]);
-    let stdout = path.resolve(sandbox.dir, 'home', 'message');
-    await sandbox.run('/usr/bin/diff -BZ usrout stdout', {
-        time_limit_ms: 1000, stdout, stdin: '/dev/null', stderr: '/dev/null'
+async function check(config) {
+    let { stdout } = await run('/usr/bin/diff -BZ usrout stdout', {
+        copyIn: {
+            usrout: { src: config.user_stdout },
+            stdout: { src: config.output }
+        }
     });
     let status, message = '';
-    let opt = fs.readFileSync(stdout).toString();
-    if (opt) {
+    if (stdout) {
         status = STATUS_WRONG_ANSWER;
         if (config.detail)
             try {
-                let pt = opt.split('---');
+                let pt = stdout.split('---');
                 let u = pt[0].split('\n');
                 let pos = u[0];
                 let usr = u[1].substring(2, u[1].length - 1).trim().split(' ');
@@ -40,16 +36,16 @@ async function check(sandbox, config) {
                     message = `Read ${usr} at ${pos} but expect ${std}`;
                 }
             } catch (e) {
-                message = opt.substring(0, opt.length - 1 <= 30 ? opt.length - 1 : 30);
+                message = stdout.substring(0, stdout.length - 1 <= 30 ? stdout.length - 1 : 30);
             }
     } else status = STATUS_ACCEPTED;
     return {
-        code: 0, score: status == STATUS_ACCEPTED ? config.score : 0,
+        score: status == STATUS_ACCEPTED ? config.score : 0,
         status, message
     };
 }
 async function compile() {
-    return { code: 0 };
+    return {};
 }
 
 module.exports = { check, compile };
