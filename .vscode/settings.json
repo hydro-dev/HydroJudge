@@ -1,5 +1,6 @@
 {
     "eslint.autoFixOnSave": true,
+    "editor.tabSize": 4,
     "files.encoding": "utf8",
     "files.autoGuessEncoding": false,
     "editor.codeActionsOnSave": {
