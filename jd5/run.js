@@ -5,7 +5,7 @@ const
     fsp = fs.promises,
     { cmd } = require('./utils');
 
-const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'];
+const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
 const axios = Axios.create({ baseURL: EXECUTION_HOST });
 module.exports = async function run(execute, {
     time_limit_ms = SYSTEM_TIME_LIMIT_MS,
