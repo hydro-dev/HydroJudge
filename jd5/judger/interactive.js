@@ -1,144 +1,118 @@
 const
-    { STATUS_ACCEPTED, STATUS_JUDGING, STATUS_COMPILING,
-        STATUS_RUNTIME_ERROR, STATUS_SYSTEM_ERROR, STATUS_WRONG_ANSWER,
-        STATUS_IGNORED, STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
-    { CompileError } = require('../error'),
-    { max, parseFilename, compilerText } = require('../utils'),
-    path = require('path'),
-    signals = require('../signals'),
+    { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
+        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+    { parseFilename } = require('../utils'),
+    run = require('../run'),
+    log = require('../log'),
+    { default: Queue } = require('p-queue'),
     compile = require('../compile'),
-    pipe = require('./../../build/Release/pipe'),
+    signals = require('../signals'),
     fs = require('fs'),
-    closePipe = async pipe => {
-        if (pipe) await Promise.all([
-            new Promise(resolve => {
-                fs.close(pipe.read, resolve);
-            }),
-            new Promise(resolve => {
-                fs.close(pipe.write, resolve);
-            })
-        ]);
+    Score = {
+        sum: (a, b) => (a + b),
+        max: Math.max,
+        min: Math.min
     };
 
-async function build(next, sandbox, lang, scode) {
-    let { code, stdout, stderr, execute } = await compile(lang, scode, sandbox, 'code');
-    if (code) throw new CompileError({ stdout, stderr });
-    else next({ compiler_text: compilerText(stdout, stderr) });
-    return execute;
+function judgeCase(c) {
+    return async (ctx, ctx_subtask) => {
+        let code, time_usage_ms, memory_usage_kb;
+        ctx.executeInteractor.copyIn.stdans = { src: c.input };
+        let [resUser, resInteractor] = await run([
+            {
+                execute: ctx.executeUser.execute.replace(/\$\{name\}/g, 'code'),
+                copyIn: ctx.executeUser.copyIn,
+                time_limit_ms: ctx_subtask.subtask.time_limit_ms,
+                memory_limit_mb: ctx_subtask.subtask.memory_limit_mb
+            }, {
+                execute: ctx.executeInteractor.execute.replace(/\$\{name\}/g, 'code'),
+                copyIn: ctx.executeInteractor.copyIn,
+                time_limit_ms: ctx_subtask.subtask.time_limit_ms * 2,
+                memory_limit_mb: ctx_subtask.subtask.memory_limit_mb * 2
+            }
+        ]);
+        ({ code, time_usage_ms, memory_usage_kb } = resUser);
+        let status, message = '', score;
+        if (time_usage_ms > ctx_subtask.subtask.time_limit_ms)
+            status = STATUS_TIME_LIMIT_EXCEEDED;
+        else if (memory_usage_kb > ctx_subtask.subtask.memory_limit_mb * 1024)
+            status = STATUS_MEMORY_LIMIT_EXCEEDED;
+        else if (code) {
+            status = STATUS_RUNTIME_ERROR;
+            if (code < 32) message = signals[code];
+            else message = `Your program exited with code ${code}.`;
+        } else[status, score, message] = resInteractor.files.stderr.split('\n');
+        ctx_subtask.score = Score[ctx_subtask.subtask.type](ctx_subtask.score, score);
+        ctx_subtask.status = Math.max(ctx_subtask.status, status);
+        ctx.total_time_usage_ms += time_usage_ms;
+        ctx.total_memory_usage_kb = Math.max(ctx.total_memory_usage_kb, memory_usage_kb);
+        ctx.next({
+            status: STATUS_JUDGING,
+            case: {
+                status,
+                score: 0,
+                time_ms: time_usage_ms,
+                memory_kb: memory_usage_kb,
+                judge_text: message
+            },
+            progress: Math.floor(c.id * 100 / ctx.config.count)
+        });
+    };
 }
 
-async function build_interactor(sandbox, code_file) {
-    let { code, stdout, stderr, execute } = await compile(parseFilename(code_file).split('.')[1], fs.readFileSync(code_file), sandbox, 'interactor');
-    if (code) throw new CompileError({ stdout, stderr });
-    return execute;
+function judgeSubtask(subtask) {
+    return async ctx => {
+        subtask.type = subtask.type || 'min';
+        let ctx_subtask = {
+            subtask, status: 0,
+            score: subtask.type == 'min'
+                ? subtask.score
+                : 0
+        };
+        let cases = [];
+        for (let cid in subtask.cases)
+            cases.push(ctx.queue.add(() => judgeCase(subtask.cases[cid])(ctx, ctx_subtask)));
+        await Promise.all(cases);
+        ctx.total_status = Math.max(ctx.total_status, ctx_subtask.status);
+        ctx.total_score += ctx_subtask.score;
+    };
 }
 
-exports.judge = async function ({ next, end, config, pool, lang, code }) {
-    let [usr_sandbox, judge_sandbox] = await pool.get(2);
-    let pipe1 = null, pipe2 = null;
-    try {
-        for (let i in config.judge_extra_files)
-            config.judge_extra_files[i] = judge_sandbox.addFile(config.judge_extra_files[i]);
-        await Promise.all(config.judge_extra_files);
-        for (let i in config.user_extra_files)
-            config.user_extra_files[i] = usr_sandbox.addFile(config.user_extra_files[i]);
-        await Promise.all(config.user_extra_files);
-        next({ status: STATUS_COMPILING });
-        let [execute_user, execute_checker] = await Promise.all([
-            build(next, usr_sandbox, lang, code),
-            build_interactor(judge_sandbox, config.checker)
-        ]);
-        next({ status: STATUS_JUDGING, progress: 0 });
-        let total_status = 0, total_score = 0, total_memory_usage_kb = 0, total_time_usage_ms = 0;
-        for (let subtask of config.subtasks) {
-            let failed = false;
-            for (let c of subtask.cases) {
-                if (failed) next({
-                    status: total_status,
-                    case: {
-                        status: STATUS_IGNORED,
-                        score: 0,
-                        time_ms: 0,
-                        memory_kb: 0,
-                        judge_text: ''
-                    },
-                    progress: Math.floor(c.id * 100 / config.count)
-                });
-                else {
-                    let interactor_stderr = path.resolve(judge_sandbox.dir, 'stderr');
-                    let user_stderr = path.resolve(usr_sandbox.dir, 'stderr');
-                    pipe1 = pipe();
-                    pipe2 = pipe();
-                    let judge_promise = judge_sandbox.run(
-                        execute_checker.replace(/\$\{name\}/g, 'interactor'),
-                        {
-                            stdin: pipe2.read, stdout: pipe1.write, stderr: interactor_stderr,
-                            time_limit_ms: subtask.time_limit_ms * 1.2,
-                            memory_limit_mb: subtask.memory_limit_mb * 1.2
-                        }
-                    );
-                    let { code: usr_code, time_usage_ms, memory_usage_kb } = await usr_sandbox.run(
-                        execute_user.replace(/\$\{name\}/g, 'code'),
-                        {
-                            stdin: pipe1.read, stdout: pipe2.write, stderr: user_stderr,
-                            time_limit_ms: subtask.time_limit_ms,
-                            memory_limit_mb: subtask.memory_limit_mb
-                        }
-                    );
-                    let { code: interactor_code } = await judge_promise;
-                    let status, message = '';
-                    if (interactor_code) {
-                        status = STATUS_SYSTEM_ERROR;
-                        if (interactor_code < 32) message = signals[interactor_code];
-                        else message = `Interactor exited with code ${interactor_code}.`;
-                    } else if (time_usage_ms > subtask.time_limit_ms)
-                        status = STATUS_TIME_LIMIT_EXCEEDED;
-                    else if (memory_usage_kb > subtask.memory_limit_mb * 1024)
-                        status = STATUS_MEMORY_LIMIT_EXCEEDED;
-                    else if (usr_code) {
-                        status = STATUS_RUNTIME_ERROR;
-                        if (usr_code < 32) message = signals[usr_code];
-                        else message = `Your program exited with code ${usr_code}.`;
-                    } else {
-                        let st = (await fs.readFile(path.resolve(judge_sandbox.dir, 'stderr'))).toString;
-                        if (st == 'ok') status = STATUS_ACCEPTED;
-                        else status = STATUS_WRONG_ANSWER;
-                    }
-                    total_status = max(total_status, status);
-                    total_time_usage_ms += time_usage_ms;
-                    total_memory_usage_kb = max(total_memory_usage_kb, memory_usage_kb);
-                    if (status != STATUS_ACCEPTED) failed = true;
-                    await Promise.all([closePipe(pipe1), closePipe(pipe2)]);
-                    next({
-                        status: total_status,
-                        case: {
-                            status,
-                            score: 0,
-                            time_ms: time_usage_ms,
-                            memory_kb: memory_usage_kb,
-                            judge_text: message
-                        },
-                        progress: Math.floor(c.id * 100 / config.count)
-                    });
-                }
-            } //End: for(case)
-            if (!failed) total_score += subtask.score;
-        } //End: for(subtask)
-        await Promise.all([
-            end({
-                status: total_status,
-                score: total_score,
-                time_ms: total_time_usage_ms,
-                memory_kb: total_memory_usage_kb
-            }),
-            usr_sandbox.free(),
-            judge_sandbox.free()
-        ]);
-    } catch (e) {
-        if (usr_sandbox) usr_sandbox.free();
-        if (judge_sandbox) judge_sandbox.free();
-        if (pipe1) closePipe(pipe1);
-        if (pipe2) closePipe(pipe2);
-        throw e;
-    }
+exports.judge = async ctx => {
+    ctx.next({ status: STATUS_COMPILING });
+    [ctx.executeUser, ctx.executeInteractor] = await Promise.all([
+        (async () => {
+            let copyIn = {};
+            for (let file of ctx.config.user_extra_files)
+                copyIn[parseFilename(file)] = { src: file };
+            return await compile(ctx.lang, ctx.code, 'code', copyIn, ctx.next);
+        })(),
+        (async () => {
+            let copyIn = {};
+            for (let file of ctx.config.judge_extra_files)
+                copyIn[parseFilename(file)] = { src: file };
+            return await compile(parseFilename(ctx.checker).split('.')[1], fs.readFileSync(ctx.checker), 'interactor', copyIn);
+        })(),
+    ]);
+    ctx.next({ status: STATUS_JUDGING, progress: 0 });
+    let tasks = [];
+    ctx.total_status = 0, ctx.total_score = 0, ctx.total_memory_usage_kb = 0, ctx.total_time_usage_ms = 0;
+    ctx.queue = new Queue({ concurrency: ctx.config.concurrency || 2 });
+    for (let sid in ctx.config.subtasks)
+        tasks.push(judgeSubtask(ctx.config.subtasks[sid])(ctx));
+    await Promise.all(tasks);
+    ctx.stat.done = new Date();
+    ctx.next({ judge_text: JSON.stringify(ctx.stat) });
+    log.log({
+        status: ctx.total_status,
+        score: ctx.total_score,
+        time_ms: ctx.total_time_usage_ms,
+        memory_kb: ctx.total_memory_usage_kb
+    });
+    ctx.end({
+        status: ctx.total_status,
+        score: ctx.total_score,
+        time_ms: ctx.total_time_usage_ms,
+        memory_kb: ctx.total_memory_usage_kb
+    });
 };
