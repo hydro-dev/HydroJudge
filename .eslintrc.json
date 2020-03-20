@@ -32,6 +32,6 @@
         "no-unused-vars": [
             "warn"
         ],
-        "require-atomic-updates": "warn"
+        "require-atomic-updates": 0
     }
 }

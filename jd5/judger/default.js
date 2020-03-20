@@ -1,14 +1,14 @@
 const
     { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
         STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
-    { copyInDir } = require('../utils'),
+    { copyInDir, parseFilename } = require('../utils'),
     run = require('../run'),
     log = require('../log'),
     { default: Queue } = require('p-queue'),
     path = require('path'),
     compile = require('../compile'),
     signals = require('../signals'),
-    { check, compile_checker, parseFilename } = require('../check'),
+    { check, compile_checker } = require('../check'),
     fs = require('fs'),
     Score = {
         sum: (a, b) => (a + b),

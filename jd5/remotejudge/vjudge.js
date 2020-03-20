@@ -1,9 +1,6 @@
 const
     axios = require('axios'),
-    WebSocket = require('ws'),
     { SystemError, CompileError } = require('../error'),
-    RE_CSRF = /\{"csrf_token":"(.*?)"/i,
-    RE_RID = /\{"socketUrl":"(.*?)"/i,
     status = require('../status'),
     STATUS = {
         'QUEUEING': status.STATUS_COMPILING,

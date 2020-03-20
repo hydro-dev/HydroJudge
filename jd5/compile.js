@@ -1,8 +1,6 @@
 const
     yaml = require('js-yaml'),
     fs = require('fs'),
-    path = require('path'),
-    fsp = fs.promises,
     run = require('./run'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
