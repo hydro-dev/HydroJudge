@@ -15,7 +15,7 @@ const
     _compile = require('../compile');
 
 async function check(config) {
-    let { status, stdout, stderr } = await run('%dir%/checker', {
+    let { status, stdout, stderr } = await run('${dir}/checker', {
         copyIn: {
             in: { src: config.input },
             user_out: { src: config.user_stdout },
@@ -28,9 +28,9 @@ async function check(config) {
     status = score == config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
     return { status, score, message: stderr };
 }
-async function compile(dir, checker, copyIn) {
+async function compile(checker, copyIn) {
     let file = await fsp.readFile(checker);
-    return _compile(checker.split('.')[1], file, dir, 'checker', copyIn);
+    return _compile(checker.split('.')[1], file, 'checker', copyIn);
 }
 
 module.exports = { check, compile };

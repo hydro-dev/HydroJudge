@@ -11,7 +11,8 @@ module.exports = async function run(execute, {
     time_limit_ms = SYSTEM_TIME_LIMIT_MS,
     memory_limit_mb = SYSTEM_MEMORY_LIMIT_MB,
     process_limit = SYSTEM_PROCESS_LIMIT,
-    stdin, stdout, stderr, copyIn = {}, copyOutDir = null, copyOut = []
+    stdin, stdout, stderr,
+    copyIn = {}, copyOut = [], copyOutCached = []
 } = {}) {
     execute = execute.replace(/\$\{dir\}/g, '/w');
     let args = cmd(execute), result, body;
@@ -28,7 +29,7 @@ module.exports = async function run(execute, {
                 readCpuLimit: time_limit_ms * 1200 * 1000,
                 memoryLimit: memory_limit_mb * 1024 * 1024,
                 procLimit: process_limit,
-                copyIn, copyOutDir, copyOut
+                copyIn, copyOut, copyOutCached
             }]
         };
         let res = await axios.post('/run', body);
@@ -51,5 +52,6 @@ module.exports = async function run(execute, {
         ret.error = result.error;
     }
     ret.files = result.files;
+    ret.fileIds = result.fileIds || {};
     return ret;
 };

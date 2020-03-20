@@ -7,7 +7,7 @@ const
     _compile = require('../compile');
 
 async function check(config) {
-    let { stdout, stderr } = await run('%dir%/checker %dir%/in %dir%/user_out %dir%/answer', {
+    let { stdout, stderr } = await run('${dir}/checker ${dir}/in ${dir}/user_out ${dir}/answer', {
         copyIn: {
             in: { src: config.input },
             user_out: { src: config.user_stdout },
@@ -19,10 +19,10 @@ async function check(config) {
         score: stderr == 'ok \n' ? config.score : 0, message: stdout
     };
 }
-async function compile(dir, checker, copyIn) {
+async function compile(checker, copyIn) {
     copyIn['testlib.h'] = { src: path.resolve(__dirname, '../files/testlib.h') };
     let file = await fsp.readFile(checker);
-    return await _compile(checker.split('.')[1], file, dir, 'checker', copyIn);
+    return await _compile(checker.split('.')[1], file, 'checker', copyIn);
 }
 
 module.exports = { check, compile };

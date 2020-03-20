@@ -1,9 +1,7 @@
 const
     { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
-        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED,
-        STATUS_ACCEPTED } = require('../status'),
-    { CompileError } = require('../error'),
-    { copyInDir, mkdirp } = require('../utils'),
+        STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+    { copyInDir } = require('../utils'),
     run = require('../run'),
     log = require('../log'),
     { default: Queue } = require('p-queue'),
@@ -21,28 +19,24 @@ const
 function judgeCase(c) {
     return async (ctx, ctx_subtask) => {
         let code, time_usage_ms, memory_usage_kb, filename = ctx.config.filename;
-        let copyIn = copyInDir(path.resolve(ctx.tmpdir, 'main'));
+        let copyIn = ctx.execute.copyIn;
         if (ctx.config.filename) copyIn[`${filename}.in`] = { src: c.input };
-        let copyOutDir = path.resolve(ctx.tmpdir, c.id.toString());
-        let target_stdout = filename
-            ? path.resolve(copyOutDir, `${filename}.out`)
-            : path.resolve(ctx.tmpdir, `${c.id}.out`);
+        let copyOut = filename ? [`${filename}.out`] : [];
         let stdin = filename ? null : c.input;
-        let stdout = filename ? null : target_stdout;
+        let stdout = path.resolve(ctx.tmpdir, `${c.id}.out`);
         let stderr = path.resolve(ctx.tmpdir, `${c.id}.err`);
         let res = await run(
-            ctx.execute.replace(/\$\{name\}/g, 'code'),
+            ctx.execute.execute.replace(/\$\{name\}/g, 'code'),
             {
-                stdin, stdout, stderr, copyIn, copyOutDir,
+                stdin, stdout: filename ? null : stdout, stderr,
+                copyIn, copyOut,
                 time_limit_ms: ctx_subtask.subtask.time_limit_ms,
                 memory_limit_mb: ctx_subtask.subtask.memory_limit_mb
             }
         );
         ({ code, time_usage_ms, memory_usage_kb } = res);
-        if (!fs.existsSync(target_stdout)) {
-            mkdirp(path.dirname(target_stdout));
-            fs.writeFileSync(target_stdout, '');
-        }
+        if (res.files[`${filename}.out`] || !fs.existsSync(stdout))
+            fs.writeFileSync(stdout, res.files[`${filename}.out`] || '');
         let status, message = '', score;
         if (time_usage_ms > ctx_subtask.subtask.time_limit_ms)
             status = STATUS_TIME_LIMIT_EXCEEDED;
@@ -56,7 +50,7 @@ function judgeCase(c) {
             copyIn: copyInDir(path.resolve(ctx.tmpdir, 'checker')),
             stdin: c.input,
             stdout: c.output,
-            user_stdout: target_stdout,
+            user_stdout: stdout,
             user_stderr: stderr,
             checker: ctx.config.checker,
             checker_type: ctx.config.checker_type,
@@ -95,33 +89,30 @@ function judgeSubtask(subtask) {
             cases.push(ctx.queue.add(() => judgeCase(subtask.cases[cid])(ctx, ctx_subtask)));
         await Promise.all(cases);
         ctx.total_status = Math.max(ctx.total_status, ctx_subtask.status);
-        if (ctx_subtask.status == STATUS_ACCEPTED) ctx.total_score += ctx_subtask.score;
+        ctx.total_score += ctx_subtask.score;
     };
 }
 
 exports.judge = async ctx => {
     ctx.next({ status: STATUS_COMPILING });
-    let exit_code, message;
-    [ctx.execute, [exit_code, message]] = await Promise.all([
+    [ctx.execute] = await Promise.all([
         (async () => {
             let copyIn = {};
             for (let file of ctx.config.user_extra_files)
                 copyIn[parseFilename(file)] = { src: file };
-            return await compile(ctx.lang, ctx.code, path.resolve(ctx.tmpdir, 'main'), 'code', copyIn, ctx.next);
+            return await compile(ctx.lang, ctx.code, 'code', copyIn, ctx.next);
         })(),
         (async () => {
             let copyIn = {};
             for (let file of ctx.config.judge_extra_files)
                 copyIn[parseFilename(file)] = { src: file };
             return await compile_checker(
-                path.resolve(ctx.tmpdir, 'checker'),
                 ctx.config.checker_type || 'default',
                 ctx.config.checker,
                 copyIn
             );
         })()
     ]);
-    if (exit_code) throw new CompileError({ stdout: 'Checker compile failed:', stderr: message });
     ctx.next({ status: STATUS_JUDGING, progress: 0 });
     let tasks = [];
     ctx.total_status = 0, ctx.total_score = 0, ctx.total_memory_usage_kb = 0, ctx.total_time_usage_ms = 0;

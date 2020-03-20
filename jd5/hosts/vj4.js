@@ -43,7 +43,7 @@ module.exports = class AxiosInstance {
                 if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
                 res.config = res.request = null;
                 err = res;
-                console.log(err);
+                log.err(err);
             }
         }
         if (!location) return 'unknown';
@@ -59,7 +59,7 @@ module.exports = class AxiosInstance {
                 if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
                 res.config = res.request = null;
                 err = res;
-                console.log(err);
+                log.error(err);
             }
         }
         return 'unknown';

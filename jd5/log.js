@@ -4,7 +4,10 @@ function warp(func) {
         if (d) func(`${dt} ${a}`, b, c, d);
         else if (c) func(`${dt} ${a}`, b, c);
         else if (b) func(`${dt} ${a}`, b);
-        else if (a) func(`${dt} ${a}`);
+        else if (a) {
+            if (typeof a == 'string' || a instanceof String) func(`${dt} ${a}`);
+            else func(dt, a);
+        }
     };
 }
 

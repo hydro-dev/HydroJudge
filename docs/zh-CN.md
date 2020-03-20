@@ -79,3 +79,9 @@ node jd5/daemon.js
 
 为旧版评测机设计的数据包仍然可用。
 针对 problem.conf 的兼容性测试仍在进行中。
+
+## 捐助
+
+通过支付宝付款：
+
+![alipay.png](../alipay.png)

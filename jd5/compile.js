@@ -17,20 +17,23 @@ try {
     log.error(e);
     process.exit(1);
 }
-async function compile(lang, code, dir, target, copyIn, next) {
+async function compile(lang, code, target, copyIn, next) {
     if (!_langs[lang]) throw new SystemError('Language not supported');
-    let info = _langs[lang];
+    let info = _langs[lang], f = {};
     if (info.type == 'compiler') {
         copyIn[info.code_file] = { content: code };
-        let { status, stdout, stderr } = await run(
+        let { status, stdout, stderr, fileIds } = await run(
             info.compile.replace(/\$\{name\}/g, target),
-            { copyIn, copyOutDir: dir }
+            { copyIn, copyOutCached: [target] }
         );
         if (next) next({ compiler_text: compilerText(stdout, stderr) });
         if (status != 'Accepted') throw new CompileError({ status, stdout, stderr });
-    } else if (info.type == 'interpreter')
-        await fsp.writeFile(path.resolve(dir, target), code);
-    return info.execute;
+        if (!fileIds[target]) throw new CompileError({ stderr: 'No executable file' });
+        f[target] = { fileId: fileIds[target] };
+        return { execute: info.execute, copyIn: f };
+    } else if (info.type == 'interpreter') {
+        f[target] = { content: code };
+        return { execute: info.execute, copyIn: f };
+    }
 }
-
 module.exports = compile;
