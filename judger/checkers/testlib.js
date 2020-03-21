@@ -20,12 +20,12 @@ async function check(config) {
     };
 }
 async function compile_checker(checker, copyIn) {
-    copyIn['testlib.h'] = { src: path.resolve(__dirname, '../files/testlib.h') };
+    copyIn['testlib.h'] = { src: path.resolve(process.cwd(), 'files/testlib.h') };
     let file = await fsp.readFile(checker);
     return await _compile(checker.split('.')[1], file, 'checker', copyIn);
 }
 async function compile_interactor(interactor, copyIn) {
-    copyIn['testlib.h'] = { src: path.resolve(__dirname, '../files/testlib.h') };
+    copyIn['testlib.h'] = { src: path.resolve(process.cwd(), 'files/testlib.h') };
     let file = await fsp.readFile(interactor);
     return await _compile(interactor.split('.')[1], file, 'interactor', copyIn);
 }

@@ -27,7 +27,7 @@ if (!fs.existsSync(config.LANGS_FILE)) {
     log.error('Language file not found, using default.');
     if (!fs.existsSync(path.dirname(config.LANGS_FILE)))
         mkdirp(path.dirname(config.LANGS_FILE));
-    fs.copyFileSync(path.resolve(__dirname, '..', 'examples', 'langs.yaml'), config.LANGS_FILE);
+    fs.copyFileSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'), config.LANGS_FILE);
 }
 
 module.exports = config;
