@@ -117,7 +117,7 @@ function compilerText(stdout, stderr) {
     let ret = [];
     if (!EMPTY_STR.test(stdout)) ret.push(stdout);
     if (!EMPTY_STR.test(stderr)) ret.push(stderr);
-    ret.push('自豪的采用jd5进行评测(github.com/masnn/jd5)');
+    ret.push('自豪的采用 HydroJudger 进行评测(github.com/hydro-dev/HydroJudger)');
     return ret.join('\n');
 }
 function copyInDir(dir) {

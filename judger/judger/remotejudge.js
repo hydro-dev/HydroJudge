@@ -1,9 +1,9 @@
 const
     api = require('../remotejudge'),
-    RE_USERNAME = /<jd5:username=(.+?)>/i,
-    RE_PASSWORD = /<jd5:password=(.+?)>/i,
-    RE_LANGUAGE = /<jd5:language=(.+?)>/i,
-    RE_TOKEN = /<jd5:token=(.+?)>/i,
+    RE_USERNAME = /<j:username=(.+?)>/i,
+    RE_PASSWORD = /<j:password=(.+?)>/i,
+    RE_LANGUAGE = /<j:language=(.+?)>/i,
+    RE_TOKEN = /<j:token=(.+?)>/i,
     { SystemError } = require('../error');
 exports.judge = async ctx => {
     let username = ctx.config.username;

@@ -6,14 +6,14 @@ const
     fs = require('fs'),
     path = require('path');
 let config = {
-    CONFIG_FILE: path.resolve(os.homedir(), '.config', 'jd5', 'config.yaml'),
-    LANGS_FILE: path.resolve(os.homedir(), '.config', 'jd5', 'langs.yaml'),
-    CACHE_DIR: path.resolve(os.homedir(), '.cache', 'jd5'),
+    CONFIG_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'judger.yaml'),
+    LANGS_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'langs.yaml'),
+    CACHE_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'judger'),
     SYSTEM_MEMORY_LIMIT_MB: 1024,
     SYSTEM_TIME_LIMIT_MS: 16000,
     SYSTEM_PROCESS_LIMIT: 32,
     RETRY_DELAY_SEC: 15,
-    TEMP_DIR: path.resolve(os.tmpdir(), 'jd5'),
+    TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judger'),
     EXECUTION_HOST: 'http://localhost:5050'
 };
 if (argv.config) config.CONFIG_FILE = path.resolve(argv.config);

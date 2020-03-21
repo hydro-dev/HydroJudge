@@ -18,9 +18,9 @@ RUN apt-get update && \
             mono-runtime mono-mcs
 
 COPY --from=build /build/executorserver /
-COPY . /jd5
-WORKDIR /jd5
-RUN mkdir -p /root/.config/jd5 && \
+COPY . /hydro
+WORKDIR /hydro
+RUN mkdir -p /root/.config/hydro && \
     yarn
 
-CMD /executorserver & node jd5/daemon.js
+CMD /executorserver --dir /tmp/hydro/judger & node judger/daemon.js

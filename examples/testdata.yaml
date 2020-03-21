@@ -28,9 +28,10 @@ judge_extra_files:                                                              
 # When Problem type is 'interactive', The following options are allowed:   ---------+
 # 当问题类型为 'interactive' 时，下面的设置可用:                                     #
 # Interactor file (path in the zipfile)    交互器路径（位于压缩包中的路径）          #
-checker: interactor.cpp                                                             #
+interactor: interactor.cpp                                                             #
 # Extra files 额外文件                                                              #
 # These files will be copied to the working directory 这些文件将被复制到工作目录。   #
+# judge_extra_files will be copy into workdir of both checker and interactor.    #
 user_extra_files:                                                                   #
   - extra_input.txt                                                                 #
 judge_extra_files:                                                                  #

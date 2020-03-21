@@ -1,7 +1,7 @@
 {
-  "name": "jd5",
-  "version": "0.0.2",
-  "main": "jd5/daemon.js",
+  "name": "hydrojudger",
+  "version": "0.1.0",
+  "main": "judger/daemon.js",
   "author": "masnn",
   "os": [
     "linux"
