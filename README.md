@@ -66,9 +66,3 @@ node judger/daemon.js
 Copyright (c) 2020 Vijos Dev Team.  All rights reserved.
 
 License: GPL-3.0-only
-
-## Donate
-
-Donate using alipay:
-
-![alipay.png](./alipay.png)
