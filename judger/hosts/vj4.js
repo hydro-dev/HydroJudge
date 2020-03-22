@@ -84,7 +84,7 @@ module.exports = class AxiosInstance {
                 });
             });
             await fsp.unlink(tmp_file_path);
-            await this.process_data(save_path);
+            await this.process_data(save_path).catch();
         } catch (e) {
             if (retry) await this.problem_data(domain_id, pid, save_path, retry - 1);
             else throw e;
@@ -166,7 +166,7 @@ module.exports = class AxiosInstance {
         let res = await this.axios.post('login', {
             uname: this.config.uname, password: this.config.password, rememberme: 'on'
         });
-        await this.setCookie(res.headers['set-cookie'][0].split(';')[0]);
+        await this.setCookie(res.headers['set-cookie'].join(';'));
     }
     async ensureLogin() {
         try {
@@ -287,34 +287,35 @@ class JudgeTask {
         return (data, id) => {
             data.key = 'next';
             data.tag = that.tag;
-            if (id) {
+            if (id)
                 if (id == that.nextId) {
                     that.ws.send(JSON.stringify(data));
                     that.nextId++;
                     let t = true;
                     while (t) {
                         t = false;
-                        for (let i in that.nextWaiting) {
+                        for (let i in that.nextWaiting)
                             if (that.nextId == that.nextWaiting[i].id) {
                                 that.ws.send(JSON.stringify(that.nextWaiting[i].data));
                                 that.nextId++;
                                 that.nextWaiting.splice(i, 1);
                                 t = true;
                             }
-                        }
                     }
-                } else {
-                    that.nextWaiting.push({ data, id });
-                }
-            } else {
-                that.ws.send(JSON.stringify(data));
-            }
+                } else that.nextWaiting.push({ data, id });
+            else that.ws.send(JSON.stringify(data));
         };
     }
     get_end(ws, tag) {
         return data => {
             data.key = 'end';
             data.tag = tag;
+            log.log({
+                status: data.status,
+                score: data.score,
+                time_ms: data.time_ms,
+                memory_kb: data.memory_kb
+            });
             ws.send(JSON.stringify(data));
         };
     }
