@@ -36,7 +36,7 @@ module.exports = class AxiosInstance {
             res.response = res.response || {};
             if (res.response.status == 302) {
                 location = res.response.headers.location;
-                if (location.startsWith('/fs/')) return location.split('/')[2];
+                if (location.includes('/fs/')) return location;
             } else if (res.response.status == 404)
                 throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
             else {
@@ -52,7 +52,7 @@ module.exports = class AxiosInstance {
         } catch (res) {
             res.response = res.response || {};
             if (res.response.status == 302)
-                return res.response.headers.location.split('/')[2];
+                return res.response.headers.location;
             else if (res.response.status == 404)
                 throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
             else {
@@ -241,7 +241,7 @@ class JudgeTask {
         this.rid = this.request.rid;
         this.lang = this.request.lang;
         this.code = this.request.code;
-        this.next = this.get_next(this.ws, this.tag);
+        this.next = this.get_next(this);
         this.end = this.get_end(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
         mkdirp(this.tmpdir);
@@ -281,11 +281,34 @@ class JudgeTask {
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
         await judger[this.config.type || 'default'].judge(this);
     }
-    get_next(ws, tag) {
-        return data => {
+    get_next(that) {
+        that.nextId = 1;
+        that.nextWaiting = [];
+        return (data, id) => {
             data.key = 'next';
-            data.tag = tag;
-            ws.send(JSON.stringify(data));
+            data.tag = that.tag;
+            if (id) {
+                if (id == that.nextId) {
+                    that.ws.send(JSON.stringify(data));
+                    that.nextId++;
+                    let t = true;
+                    while (t) {
+                        t = false;
+                        for (let i in that.nextWaiting) {
+                            if (that.nextId == that.nextWaiting[i].id) {
+                                that.ws.send(JSON.stringify(that.nextWaiting[i].data));
+                                that.nextId++;
+                                that.nextWaiting.splice(i, 1);
+                                t = true;
+                            }
+                        }
+                    }
+                } else {
+                    that.nextWaiting.push({ data, id });
+                }
+            } else {
+                that.ws.send(JSON.stringify(data));
+            }
         };
     }
     get_end(ws, tag) {

@@ -24,9 +24,9 @@ async function compile(lang, code, target, copyIn, next) {
             info.compile.replace(/\$\{name\}/g, target),
             { copyIn, copyOutCached: [target] }
         );
-        if (next) next({ compiler_text: compilerText(stdout, stderr) });
         if (status != 'Accepted') throw new CompileError({ status, stdout, stderr });
         if (!fileIds[target]) throw new CompileError({ stderr: 'No executable file' });
+        if (next) next({ compiler_text: compilerText(stdout, stderr) });
         f[target] = { fileId: fileIds[target] };
         return { execute: info.execute, copyIn: f };
     } else if (info.type == 'interpreter') {

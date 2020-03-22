@@ -71,7 +71,7 @@ function judgeCase(c) {
                 judge_text: message
             },
             progress: Math.floor(c.id * 100 / ctx.config.count)
-        });
+        }, c.id);
     };
 }
 
