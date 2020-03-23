@@ -1,6 +1,7 @@
 const
     yaml = require('js-yaml'),
     fs = require('fs'),
+    del = require('./delete'),
     run = require('./run'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
@@ -28,10 +29,10 @@ async function compile(lang, code, target, copyIn, next) {
         if (!fileIds[target]) throw new CompileError({ stderr: 'No executable file' });
         if (next) next({ compiler_text: compilerText(stdout, stderr) });
         f[target] = { fileId: fileIds[target] };
-        return { execute: info.execute, copyIn: f };
+        return { execute: info.execute, copyIn: f, clean: () => del(fileIds[target]) };
     } else if (info.type == 'interpreter') {
         f[target] = { content: code };
-        return { execute: info.execute, copyIn: f };
+        return { execute: info.execute, copyIn: f, clean: () => Promise.resolve() };
     }
 }
 module.exports = compile;

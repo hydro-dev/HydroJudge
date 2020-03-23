@@ -113,6 +113,7 @@ exports.judge = async ctx => {
             );
         })()
     ]);
+    ctx.clean.push(ctx.execute.clean);
     ctx.next({ status: STATUS_JUDGING, progress: 0 });
     let tasks = [];
     ctx.total_status = 0, ctx.total_score = 0, ctx.total_memory_usage_kb = 0, ctx.total_time_usage_ms = 0;

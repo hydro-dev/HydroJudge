@@ -21,6 +21,7 @@ module.exports = class AxiosInstance {
         this.config.cookie = this.config.cookie || '';
         this.config.last_update_at = this.config.last_update_at || 0;
         if (!this.config.server_url.startsWith('http')) this.config.server_url = 'http://' + this.config.server_url;
+        if (!this.config.server_url.endsWith('/')) this.config.server_url = this.config.server_url + '/';
     }
     async init() {
         await this.setCookie(this.config.cookie || '');
@@ -244,6 +245,7 @@ class JudgeTask {
         this.next = this.get_next(this);
         this.end = this.get_end(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
+        this.clean = [];
         mkdirp(this.tmpdir);
         tmpfs.mount(this.tmpdir, '64m');
         log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
@@ -264,6 +266,7 @@ class JudgeTask {
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             }
         }
+        for (let clean of this.clean) await clean().catch();
         tmpfs.umount(this.tmpdir);
         await rmdir(this.tmpdir);
     }
