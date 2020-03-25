@@ -40,8 +40,8 @@ Hint: there are 3 tags built for docker:
 
 Prerequisites:
 
-- Linux 4.4+
-- NodeJS (Tested on node v10.16.2, not sure about other versions)
+- Linux
+- NodeJS Version 10+
 
 Use the following command to install nodejs requirements:
 
@@ -63,6 +63,6 @@ node judger/daemon.js
 
 ## Copyright and License
 
-Copyright (c) 2020 Vijos Dev Team.  All rights reserved.
+Copyright (c) 2020 Hydro Dev Team.  All rights reserved.
 
 License: GPL-3.0-only

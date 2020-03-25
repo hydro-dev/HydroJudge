@@ -18,5 +18,13 @@
   "license": "GPL-3.0-only",
   "devDependencies": {
     "eslint": "^6.2.2"
+  },
+  "pkg": {
+    "scripts": "judger/daemon.js",
+    "assets": [
+      "judger",
+      "files",
+      "examples"
+    ]
   }
 }
