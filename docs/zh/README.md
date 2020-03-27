@@ -50,7 +50,7 @@ npm install -g yarn # 如果已经安装yarn请跳过该步骤
 yarn
 ```
 
-创建设置目录 `~/.config/hydro` ，并放置 `judger.yaml` ，配置文件格式详见 [examples/judger.yaml](examples/judger.yaml)  
+创建设置目录 `~/.config/hydro` ，并放置 `judger.yaml` ，配置文件格式详见 [examples/judger.yaml](../../examples/judger.yaml)  
 启动 [go-sandbox](https://github.com/criyle/go-judge)，监听端口5050。  
 您应当以 root 身份运行。  
 
@@ -60,8 +60,10 @@ node judger/daemon.js
 
 ## 测试数据格式
 
+[测试数据格式](./Testdata.md)
+
 在压缩包中添加 config.yaml （无此文件表示自动识别，默认1s, 256MB）。
-见 [测试数据格式](examples/testdata.yaml)
+见 [测试数据格式](../../examples/testdata.yaml)
 
 为旧版评测机设计的数据包仍然可用。
 针对 problem.conf 的兼容性测试仍在进行中。

@@ -1,9 +1,9 @@
 const
     { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
         STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
+    { CompileError } = require('../error'),
     { copyInDir, parseFilename } = require('../utils'),
     run = require('../run'),
-    log = require('../log'),
     { default: Queue } = require('p-queue'),
     path = require('path'),
     compile = require('../compile'),
@@ -94,6 +94,12 @@ function judgeSubtask(subtask) {
 }
 
 exports.judge = async ctx => {
+    if (ctx.config.template) {
+        if (ctx.config.template[ctx.lang])
+            ctx.code = ctx.config.template[ctx.lang][0] + ctx.code + ctx.config.template[ctx.lang][1];
+        else
+            throw new CompileError('Language not supported by provided templates');
+    }
     ctx.next({ status: STATUS_COMPILING });
     [ctx.execute] = await Promise.all([
         (async () => {

@@ -1,6 +1,6 @@
 # Judge Daemon
 
-[中文文档](docs/zh-CN.md)
+[中文文档](docs/zh/README.md)
 
 ## Introduction
 
@@ -9,7 +9,7 @@ HydroJudger supports custom judge, subtask and other many new features.
 
 ## Help Center
 
-- [RemoteJudge](docs/RemoteJudge.md)
+- [RemoteJudge](docs/en/RemoteJudge.md)
 
 ## Usage
 
@@ -60,6 +60,9 @@ And use the following command to run the daemon:
 ```sh
 node judger/daemon.js
 ```
+
+## Testdata format
+[Testdata format](docs/en/Testdata.md)
 
 ## Copyright and License
 

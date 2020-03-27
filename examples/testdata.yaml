@@ -2,6 +2,21 @@
 # 问题类型，允许的值有 [default, submit_answer, interactive]
 type: default
 
+template:
+  cc:
+    - >-
+      #include<iostream>
+      using namespace std;
+      int main(){
+    - >-   
+      }
+  pas:
+    - >-
+      var a, b:longint;
+      begin
+    - >-
+      end.
+
 # When Problem type is 'default', The following options are allowed:   -------------+
 # 当问题类型为 'default' 时，下面的设置可用:                                         #
 # Checker type, allow [default, ccr, cena, hustoj, lemon, qduoj, syzoj, testlib]    #
