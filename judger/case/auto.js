@@ -155,6 +155,5 @@ module.exports = async function readAutoCases(folder) {
     } catch (e) {
         throw new SystemError('Failed to read cases.', [e]);
     }
-    if (!config.count) throw new FormatError('No cases found.');
     return config;
 };

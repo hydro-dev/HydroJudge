@@ -55,7 +55,7 @@ module.exports = class VJudge {
         if (!LANGS[oj]) throw new SystemError('Problem config error: Remote oj doesn\'t exist.', [oj]);
         let language = LANGS[oj][lang];
         if (!language) throw new CompileError('Language not supported by remote oj:', [lang]);
-        let source = Buffer.from(code).toString('base64');
+        let source = Buffer.from(encodeURIComponent(code)).toString('base64');
         let res = await this.axios.post('/problem/submit', {
             oj, probNum, share: 0, source, captcha: '', language
         });
@@ -72,7 +72,7 @@ module.exports = class VJudge {
                     next({ judge_text: `Status=${r.status}` });
                     lastStatus = r.status;
                 }
-                if (!res.processing) {
+                if (!r.processing) {
                     console.log(r);
                     next({ compiler_text: r.additionalInfo });
                     end({

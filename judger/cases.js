@@ -1,6 +1,7 @@
 const
     fs = require('fs'),
     path = require('path'),
+    { FormatError } = require('./error'),
     readIniCases = require('./case/ini'),
     readYamlCases = require('./case/yaml'),
     readAutoCases = require('./case/auto'),
@@ -23,6 +24,8 @@ async function readCases(folder, extra_config = {}) {
             break;
         }
     if (!config) config = await readAutoCases(folder);
-    return Object.assign(extra_config, config);
+    config = Object.assign(extra_config, config);
+    if (config.type != 'remotejudge' && !config.count) throw new FormatError('No cases found.');
+    return config;
 }
 module.exports = readCases;
