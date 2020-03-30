@@ -15,11 +15,11 @@ async function check(config) {
         if (config.detail)
             try {
                 let pt = stdout.split('---');
-                let u = pt[0].split('\n');
-                let pos = u[0];
-                let usr = u[1].substring(2, u[1].length - 1).trim().split(' ');
+                let pos = pt[0].split('\n')[0];
+                let u = pt[0].split('\n')[1];
+                let usr = u.substr(2, u.length - 2).trim().split(' ');
                 let t = pt[1].split('\n')[1];
-                let std = t.substring(2, t.length - 1).trim().split(' ');
+                let std = t.substr(2, t.length - 2).trim().split(' ');
                 if (usr.length < std.length)
                     message = 'User output shorter than standard output.';
                 else if (usr.length > std.length)
