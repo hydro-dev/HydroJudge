@@ -5,16 +5,9 @@ RUN git clone -b judger https://github.com/hydro-dev/hydro-files.git /files && \
     go mod download && \
     go build -o /files/executorserver ./cmd/executorserver
 
-FROM node:13-stretch-slim AS judger
-ADD . /build
-WORKDIR /build
-RUN yarn && \
-    yarn add webpack webpack-cli -D && \
-    ./node_modules/.bin/webpack --config webpack.config.js
-
 FROM node:13-stretch-slim
-COPY --from=executorserver /files /files
-COPY --from=judger /build/dist/judger.js /app/judger.js
+WORKDIR /app
+COPY judger.js /app/
 RUN apt-get update && \
     apt-get install -y unzip curl wget && \
     mkdir /config /cache && \
