@@ -1,5 +1,6 @@
 .vscode
 .github
+.git
 .eslintrc.json
 .gitignore
 *.log
