@@ -1,0 +1,13 @@
+name: DockerBuild
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: hydrooj/judger:latest
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: Dockerfile
