@@ -41,10 +41,12 @@ if (!fs.existsSync(config.CONFIG_FILE)) {
     process.exit(1);
 }
 if (!fs.existsSync(config.LANGS_FILE)) {
-    log.error('Language file not found, using default.');
     if (!fs.existsSync(path.dirname(config.LANGS_FILE)))
         mkdirp(path.dirname(config.LANGS_FILE));
-    fs.copyFileSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'), config.LANGS_FILE);
+    if (fs.existsSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'))) {
+        log.error('Language file not found, using default.');
+        fs.copyFileSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'), config.LANGS_FILE);
+    } else throw new Error('Language file not found');
 }
 
 module.exports = config;

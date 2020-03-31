@@ -14,3 +14,15 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile
+    - uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: hydrooj/judger:slim
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: slim.Dockerfile
+    - uses: elgohr/Publish-Docker-Github-Action@master
+      with:
+        name: hydrooj/judger:default
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        dockerfile: default.Dockerfile

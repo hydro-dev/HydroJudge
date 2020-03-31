@@ -1,20 +1,25 @@
-FROM golang:latest AS build 
+FROM golang:latest AS executorserver
 WORKDIR /build
 RUN git clone -b judger https://github.com/hydro-dev/hydro-files.git /files && \
     git clone https://github.com/criyle/go-judge.git /build && \
     go mod download && \
     go build -o /files/executorserver ./cmd/executorserver
 
+FROM node:13-stretch-slim AS judger
+ADD . /build
+WORKDIR /build
+RUN yarn && \
+    yarn add webpack webpack-cli -D && \
+    ./node_modules/.bin/webpack --config webpack.config.js
+
 FROM node:13-stretch-slim
-COPY --from=build /files /files
-COPY . /hydro
-WORKDIR /hydro
+COPY --from=executorserver /files /files
+COPY --from=judger /build/dist/judger.js /app/judger.js
 RUN apt-get update && \
     apt-get install -y unzip curl wget && \
-    mkdir /config && \
-    curl -sSL https://raw.githubusercontent.com/hydro-dev/HydroJudger/master/examples/langs.yaml >/config/langs.yaml && \
-    yarn 
+    mkdir /config /cache && \
+    curl -sSL https://raw.githubusercontent.com/hydro-dev/HydroJudger/master/examples/langs.yaml >/config/langs.yaml
 
-ENV CONFIG_FILE=/config/config.yaml LANGS_FILE=/config/langs.yaml CACHE_DIR=/cache FILES_DIR=/files
+ENV CONFIG_FILE=/app/config.yaml LANGS_FILE=/app/langs.yaml CACHE_DIR=/cache FILES_DIR=/files
 CMD /files/executorserver --dir /tmp/hydro/judger --silent & \
-    node judger/daemon.js
+    node /app/judger.js
