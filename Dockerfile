@@ -5,11 +5,13 @@ RUN git clone https://github.com/criyle/go-judge.git /build && \
     go build -o executorserver ./cmd/executorserver
 
 FROM node:12-stretch-slim
-COPY --from=build /build/executorserver /
+COPY --from=build /build/executorserver /third_party/executorserver
 COPY . /hydro
 WORKDIR /hydro
-RUN mkdir -p /root/.config/hydro && \
-    apt-get update && apt-get install -y unzip && \
-    yarn
-
-CMD /executorserver --dir /tmp/hydro/judger & node hydro/daemon.js
+RUN apt-get update && \
+    apt-get install -y unzip && \
+    yarn && \
+    git clone -b judger https://github.com/hydro-dev/hydro-files.git /files
+ENV CONFIG_FILE=/config/config.yaml LANGS_FILE=/config/langs.yaml CACHE_DIR=/cache FILES_DIR=/files
+CMD /third_party/executorserver --dir /tmp/hydro/judger -silent & \
+    node hydro/daemon.js

@@ -3,6 +3,7 @@ const
     fsp = fs.promises,
     path = require('path'),
     run = require('../run'),
+    { FILES_DIR } = require('../config'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 
@@ -20,12 +21,12 @@ async function check(config) {
     };
 }
 async function compile_checker(checker, copyIn) {
-    copyIn['testlib.h'] = { src: path.resolve(process.cwd(), 'files/testlib.h') };
+    copyIn['testlib.h'] = { src: path.resolve(FILES_DIR, 'testlib.h') };
     let file = await fsp.readFile(checker);
     return await _compile(checker.split('.')[1], file, 'checker', copyIn);
 }
 async function compile_interactor(interactor, copyIn) {
-    copyIn['testlib.h'] = { src: path.resolve(process.cwd(), 'files/testlib.h') };
+    copyIn['testlib.h'] = { src: path.resolve(FILES_DIR, 'testlib.h') };
     let file = await fsp.readFile(interactor);
     return await _compile(interactor.split('.')[1], file, 'interactor', copyIn);
 }

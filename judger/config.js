@@ -9,6 +9,7 @@ let config = {
     CONFIG_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'judger.yaml'),
     LANGS_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'langs.yaml'),
     CACHE_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'judger'),
+    FILES_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'files', 'judger'),
     SYSTEM_MEMORY_LIMIT_MB: 1024,
     SYSTEM_TIME_LIMIT_MS: 16000,
     SYSTEM_PROCESS_LIMIT: 32,
@@ -16,9 +17,25 @@ let config = {
     TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judger'),
     EXECUTION_HOST: 'http://localhost:5050'
 };
-if (argv.config) config.CONFIG_FILE = path.resolve(argv.config);
-if (argv.langs) config.LANGS_FILE = path.resolve(argv.langs);
-if (argv.tmp) config.TMP_DIR = path.resolve(argv.tmp);
+
+if (process.env.CONFIG_FILE || argv.config)
+    config.CONFIG_FILE = path.resolve(process.env.CONFIG_FILE || argv.config);
+
+if (process.env.LANGS_FILE || argv.langs)
+    config.LANGS_FILE = path.resolve(process.env.LANGS_FILE || argv.langs);
+
+if (process.env.TEMP_DIR || argv.tmp)
+    config.TEMP_DIR = path.resolve(process.env.TEMP_DIR || argv.tmp);
+
+if (process.env.CACHE_DIR || argv.cache)
+    config.CACHE_DIR = path.resolve(process.env.CACHE_DIR || argv.cache);
+
+if (process.env.FILES_DIR || argv.files)
+    config.FILES_DIR = path.resolve(process.env.FILES_DIR || argv.files);
+
+if (process.env.EXECUTION_HOST || argv.execute)
+    config.EXECUTION_HOST = path.resolve(process.env.EXECUTION_HOST || argv.execute);
+
 if (!fs.existsSync(config.CONFIG_FILE)) {
     log.error('Config file not found.');
     process.exit(1);

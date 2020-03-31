@@ -3,6 +3,9 @@
 .eslintrc.json
 .gitignore
 *.log
+Dockerfile
+*.Dockerfile
 docs
+examples
 README.md
 node_modules
