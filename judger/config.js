@@ -15,7 +15,10 @@ let config = {
     SYSTEM_PROCESS_LIMIT: 32,
     RETRY_DELAY_SEC: 15,
     TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judger'),
-    EXECUTION_HOST: 'http://localhost:5050'
+    EXECUTION_HOST: 'http://localhost:5050',
+    changeDefault(name, from, to) {
+        if (config[name] == from) config[name] == to;
+    }
 };
 
 if (process.env.CONFIG_FILE || argv.config)

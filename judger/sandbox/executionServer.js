@@ -16,10 +16,13 @@ function proc({
     process_limit = SYSTEM_PROCESS_LIMIT,
     stdin, copyIn = {}, copyOut = [], copyOutCached = []
 } = {}) {
+    for (let i in copyIn)
+        if (copyIn[i].src)
+            copyIn[i] = { content: fs.readFileSync(copyIn[i].src).toString() };
     return {
         args: cmd(execute.replace(/\$\{dir\}/g, '/w')), env,
         files: [
-            stdin ? { src: stdin } : { content: '' },
+            stdin ? { content: fs.readFileSync(stdin).toString() } : { content: '' },
             { name: 'stdout', max: 10240 },
             { name: 'stderr', max: 10240 }
         ],
