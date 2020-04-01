@@ -2,7 +2,7 @@ const
     fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
-    run = require('../run'),
+    { run } = require('../sandbox'),
     { FILES_DIR } = require('../config'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');

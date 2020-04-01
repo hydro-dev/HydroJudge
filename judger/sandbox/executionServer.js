@@ -1,10 +1,10 @@
 const
-    { SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT, SYSTEM_TIME_LIMIT_MS, EXECUTION_HOST } = require('./config'),
+    { SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT, SYSTEM_TIME_LIMIT_MS, EXECUTION_HOST } = require('../config'),
     Axios = require('axios'),
     fs = require('fs'),
     fsp = fs.promises,
-    { SystemError } = require('./error'),
-    { cmd } = require('./utils');
+    { SystemError } = require('../error'),
+    { cmd } = require('../utils');
 
 const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
 const axios = Axios.create({ baseURL: EXECUTION_HOST });
@@ -58,7 +58,12 @@ async function runMultiple(execute) {
     return res.data;
 }
 
-module.exports = async function run(execute, params) {
+exports.del = async function (fileId) {
+    let res = await axios.delete(`/file/${fileId}`);
+    return res.data;
+};
+
+exports.run = async function (execute, params) {
     let result;
     if (typeof execute == 'object') return await runMultiple(execute);
     try {

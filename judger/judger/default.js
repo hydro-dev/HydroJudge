@@ -3,7 +3,7 @@ const
         STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { CompileError } = require('../error'),
     { copyInDir, parseFilename } = require('../utils'),
-    run = require('../run'),
+    { run } = require('../sandbox'),
     { default: Queue } = require('p-queue'),
     path = require('path'),
     compile = require('../compile'),

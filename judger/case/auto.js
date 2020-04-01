@@ -19,17 +19,17 @@ const
 const
     RE0 = [
         {
-            reg: /^([a-zA-Z]*)([0-9]+).in$/,
+            reg: /^([a-z+_\-A-Z]*)([0-9]+).in$/,
             output: a => a[1] + a[2] + '.out',
             id: a => parseInt(a[2]),
         },
         {
-            reg: /^([a-zA-Z]*)([0-9]+).in$/,
+            reg: /^([a-z+_\-A-Z]*)([0-9]+).in$/,
             output: a => a[1] + a[2] + '.ans',
             id: a => parseInt(a[2]),
         },
         {
-            reg: /^([a-zA-Z0-9]*)\.in([0-9]+)$/,
+            reg: /^([a-z+_\-A-Z0-9]*)\.in([0-9]+)$/,
             output: a => a[1] + '.ou' + a[2],
             id: a => parseInt(a[2]),
         },
@@ -41,7 +41,7 @@ const
     ],
     RE1 = [
         {
-            reg: /^([a-zA-Z]*)([0-9]+)-([0-9]+).in$/,
+            reg: /^([a-z+_\-A-Z]*)([0-9]+)-([0-9]+).in$/,
             output: a => a[1] + a[2] + '-' + a[3] + '.out',
             subtask: a => parseInt(a[2]),
             id: a => parseInt(a[3])

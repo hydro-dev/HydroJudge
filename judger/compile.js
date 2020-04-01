@@ -1,8 +1,7 @@
 const
     yaml = require('js-yaml'),
     fs = require('fs'),
-    del = require('./delete'),
-    run = require('./run'),
+    { run, del } = require('./sandbox'),
     { CompileError, SystemError } = require('./error'),
     log = require('./log'),
     { compilerText } = require('./utils'),

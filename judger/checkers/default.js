@@ -1,5 +1,5 @@
 const
-    run = require('../run'),
+    { run } = require('../sandbox'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status');
 
 async function check(config) {

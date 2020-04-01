@@ -9,7 +9,7 @@ argv[6]：输出错误报告的文件
 
 const
     fsp = require('fs').promises,
-    run = require('../run'),
+    { run } = require('../sandbox'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 

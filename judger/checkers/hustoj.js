@@ -7,7 +7,7 @@
 const
     fs = require('fs'),
     fsp = fs.promises,
-    run = require('../run'),
+    { run } = require('../sandbox'),
     { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status'),
     _compile = require('../compile');
 
