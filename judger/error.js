@@ -1,13 +1,8 @@
-const fs = require('fs');
 class CompileError extends Error {
     constructor({ stdout, stderr } = {}) {
         super('Compile Error');
-        if (stdout && stdout[0] == '/' && fs.existsSync(stdout))
-            stdout = fs.readFileSync(stdout).toString();
-        else stdout = stdout || '';
-        if (stderr && stderr[0] == '/' && fs.existsSync(stderr))
-            stderr = fs.readFileSync(stderr).toString();
-        else stderr = stderr || '';
+        this.stdout = stdout || '';
+        this.stderr = stderr || '';
         this.type = 'CompileError';
     }
 }
