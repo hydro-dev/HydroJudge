@@ -28,7 +28,7 @@ hosts:
     password: Judge account password
 ```
 
-Then use `docker run --privileged -d -v ./config.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
+Then use `docker run --privileged -d -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
 Hint: there are 3 tags built for docker:  
 
 - `hydrooj/judger:latest` No compiler installed

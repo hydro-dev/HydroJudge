@@ -29,7 +29,7 @@ hosts:
     password: 填写密码
 ```
 
-之后使用 `docker run -d --privileged -v ./config.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
+之后使用 `docker run -d --privileged -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
 提示：为docker预构建了三个版本的镜像：
 
 - `hydrooj/judger:latest` 未安装任何编译器，需手动安装
