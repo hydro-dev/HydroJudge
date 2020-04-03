@@ -1,8 +1,8 @@
-FROM debian:latest
+FROM alpine
 WORKDIR /app
 COPY Judger_linux_amd64 /app/
-RUN apt-get update && \
-    apt-get install -y unzip curl wget && \
+RUN apk update && \
+    apk add unzip curl wget && \
     mkdir /config /cache && \
     curl -sSL https://raw.githubusercontent.com/hydro-dev/HydroJudger/master/examples/langs.yaml >/config/langs.yaml
 
