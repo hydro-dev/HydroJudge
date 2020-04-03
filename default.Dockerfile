@@ -1,6 +1,5 @@
 FROM hydrooj/judger:latest
-RUN mkdir -p /usr/share/man/man1 && \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y \
             gcc g++ rustc \
             python python3 \
@@ -10,4 +9,5 @@ RUN mkdir -p /usr/share/man/man1 && \
             haskell-platform \
             libjavascriptcoregtk-4.0-bin \
             golang ruby \
-            mono-runtime mono-mcs
+            mono-runtime mono-mcs && \
+    rm -rf /var/lib/apt/lists/*

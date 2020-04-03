@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:stretch
 WORKDIR /app
 COPY Judger_linux_amd64 /app/
 RUN apt-get update && \
