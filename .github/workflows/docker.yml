@@ -38,11 +38,11 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node_version: '13.x'
-    - run: yarn
-    - run: yarn add webpack webpack-cli -D
-    - run: yarn run webpack
-    - if: success()
-      uses: actions/upload-artifact@v1
+    - run: |
+        yarn
+        yarn add webpack webpack-cli -D
+        yarn run webpack
+    - uses: actions/upload-artifact@v1
       with:
         name: judger.js
         path: dist/judger.js
@@ -63,8 +63,9 @@ jobs:
       with:
         name: ExecutorServer
         path: executorserver
-    - run: yarn add pkg -D
-    - run: yarn run pack
+    - run: |
+        yarn add pkg -D
+        yarn run pack
     - uses: actions/upload-artifact@v1
       with:
         name: Judger_linux_amd64
@@ -91,7 +92,7 @@ jobs:
         name: hydrooj/judger:latest
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: Dockerfile
+        dockerfile: Dockerfile/Dockerfile
   alpine:
     name: BuildAlpine
     runs-on: ubuntu-latest
@@ -106,7 +107,7 @@ jobs:
         name: hydrooj/judger:alpine
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: alpine.Dockerfile
+        dockerfile: Dockerfile/alpine.Dockerfile
   slim:
     name: BuildSlim
     runs-on: ubuntu-latest
@@ -118,7 +119,7 @@ jobs:
         name: hydrooj/judger:slim
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: slim.Dockerfile
+        dockerfile: Dockerfile/slim.Dockerfile
   default:
     name: BuildDefault
     runs-on: ubuntu-latest
@@ -130,4 +131,4 @@ jobs:
         name: hydrooj/judger:default
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: default.Dockerfile
+        dockerfile: Dockerfile/default.Dockerfile
