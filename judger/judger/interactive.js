@@ -2,7 +2,7 @@ const
     { STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
         STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED } = require('../status'),
     { parseFilename } = require('../utils'),
-    { run } = require('./sandbox'),
+    { run } = require('../sandbox'),
     log = require('../log'),
     { default: Queue } = require('p-queue'),
     compile = require('../compile'),

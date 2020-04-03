@@ -3,6 +3,7 @@ const
     log = require('./log'),
     { mkdirp } = require('./utils'),
     os = require('os'),
+    child = require('child_process'),
     fs = require('fs'),
     path = require('path');
 let config = {
@@ -21,6 +22,16 @@ let config = {
     }
 };
 
+if (fs.existsSync(path.resolve(process.cwd(), '.env'))) {
+    let env = {};
+    let f = fs.readFileSync('.env').toString();
+    for (let line of f) {
+        let a = line.split('=');
+        env[a[0]] = a[1];
+    }
+    Object.assign(process.env, env);
+}
+
 if (process.env.CONFIG_FILE || argv.config)
     config.CONFIG_FILE = path.resolve(process.env.CONFIG_FILE || argv.config);
 
@@ -38,6 +49,19 @@ if (process.env.FILES_DIR || argv.files)
 
 if (process.env.EXECUTION_HOST || argv.execute)
     config.EXECUTION_HOST = path.resolve(process.env.EXECUTION_HOST || argv.execute);
+
+if (process.env.START_EXECUTOR_SERVER) {
+    let p = child.spawn(path.resolve(__dirname, process.env.START_EXECUTOR_SERVER));
+    p.stdout.on('data', data => {
+        console.log(data.toString());
+    });
+    p.stderr.on('data', data => {
+        console.log(data.toString());
+    });
+    global.onDestory.push(() => {
+        p.emit('exit');
+    });
+}
 
 if (!fs.existsSync(config.CONFIG_FILE)) {
     log.error('Config file not found.');

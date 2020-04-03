@@ -16,10 +16,18 @@
   "devDependencies": {
     "eslint": "^6.2.2"
   },
+  "bin": {
+    "judger": "judger/entrypoint.js"
+  },
+  "scripts": {
+    "webpack": "webpack --config webpack.config.js",
+    "pack": "pkg ."
+  },
   "pkg": {
-    "scripts": "judger/daemon.js",
-    "assets": [
-      "judger"
-    ]
+    "scripts": [
+      "judger/**.js",
+      "judger/**/**.js"
+    ],
+    "assets": "executorserver"
   }
 }

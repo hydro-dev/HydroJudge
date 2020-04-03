@@ -11,6 +11,7 @@
      `-.__          听取人生经验。  __.-'
           ````- - -.......- - -'''    ~
        ~                   */
+global.onDestory = [];
 require('./updater');
 const
     Session = require('./hosts/index'),
@@ -20,7 +21,6 @@ const
     yaml = require('js-yaml'),
     { RETRY_DELAY_SEC, CONFIG_FILE } = require('./config');
 
-global.onDestory = [];
 const terminate = async () => {
     log.log('Saving data');
     try {

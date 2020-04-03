@@ -4,6 +4,32 @@ on:
     branches: 
     - master
 jobs:
+  ExecutorServer:
+    name: Build ExecutorServer
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+    - run: |
+        git clone https://github.com/criyle/go-judge.git
+        cd go-judge
+        go mod download
+        go build -o executorserver ./cmd/executorserver
+        go build -o cinit ./cmd/cinit
+        go build -buildmode=c-shared -o executorserver.so ./cmd/executorserver
+    - uses: actions/upload-artifact@master
+      with:
+        name: ExecutorServer
+        path: go-judge/executorserver
+    - uses: actions/upload-artifact@master
+      with:
+        name: cinit
+        path: go-judge/cinit
+    - uses: actions/upload-artifact@master
+      with:
+        name: ExecutorServer.so
+        path: go-judge/executorserver.so
   webpack:
     name: Webpack
     runs-on: ubuntu-latest
@@ -12,14 +38,39 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node_version: '13.x'
-    - run: npm i yarn -g && yarn
+    - run: yarn
     - run: yarn add webpack webpack-cli -D
-    - run: ./node_modules/.bin/webpack --config webpack.config.js
+    - run: yarn run webpack
     - if: success()
       uses: actions/upload-artifact@v1
       with:
         name: judger.js
         path: dist/judger.js
+  pkg:
+    name: Package
+    runs-on: ubuntu-latest
+    needs: [ExecutorServer, webpack]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node_version: '13.x'
+    - uses: actions/download-artifact@v1
+      with:
+        name: judger.js
+        path: judger.js
+    - uses: actions/download-artifact@v1
+      with:
+        name: ExecutorServer
+        path: executorserver
+    - run: yarn add pkg -D
+    - run: yarn run pack
+    - run: ls
+    - if: success()
+      uses: actions/upload-artifact@v1
+      with:
+        name: Judger_linux_amd64
+        path: hydrojudger
   build:
     name: Build
     runs-on: ubuntu-latest
