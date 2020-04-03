@@ -11,12 +11,37 @@ HydroJudger 是一个用于信息学算法竞赛的高效评测后端。
 
 ## 安装与使用
 
+### 直接运行可执行文件
+### Run packed executable file (suggested)
+
+1. 从 [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  下载自动打包的可执行文件。  
+根据您使用的操作系统选择下面三者中的一个：  
+
+- Judger_win_amd64.exe
+- Judger_linux_amd64
+- Judger_macos_amd64
+
+2. 创建配置文件
+
+`$HOME` 为用户目录，在linux下通常为`/root`或`/home/用户名`，在Windows下通常为`C:\Users\用户名`  
+
+```yaml
+#$HOME/.config/hydro/judger.yaml
+hosts:
+  localhost:
+    server_url: e.g. https://vijos.org
+    uname: Judge account username
+    password: Judge account password
+```
+
+3. 运行
+
+```sh
+chmod +x ./Judger
+./Judger
+```
+
 ### 使用docker部署
-
-前置需求:
-
-- Linux 4.4+
-- Docker
 
 创建 `judger.yaml`，文件如下所示
 
@@ -32,11 +57,12 @@ hosts:
 之后使用 `docker run -d --privileged -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
 **将 /path/to/judger.yaml 替换为您创建的文件的绝对路径！** （众所周知没人会仔细看）  
 
-提示：为docker预构建了三个版本的镜像：
+提示：为docker预构建了四个版本的镜像：
 
-- `hydrooj/judger:latest` 未安装任何编译器，需手动安装
-- `hydrooj/judger:default` Vijos默认语言的编译器支持
-- `hydrooj/judger:slim` C C++ Pascal 语言支持
+- `hydrooj/judger:alpine` 基于AlpineLinux构建的最精简镜像  
+- `hydrooj/judger:latest` 未安装任何编译器，需手动安装  
+- `hydrooj/judger:default` Vijos默认语言的编译器支持  
+- `hydrooj/judger:slim` 基于AlpineLinux，预装了 C C++ Pascal 语言支持  
 
 ### 手动安装
 
@@ -59,6 +85,15 @@ yarn
 ```sh
 node judger/daemon.js
 ```
+
+## 设置
+
+- 自定义配置文件位置: `--config=/path/to/config` 
+- 自定义语言文件位置: `--langs=/path/to/langs`
+- 自定义临时目录: `--tmp=/path/to/tmp`
+- 自定义缓存目录: `--cache=/path/to/cache`
+- 自定义文件目录: `--files=/path/to/files`
+- 自定义沙箱地址: `--execute=http://executionhost/`
 
 ## 测试数据格式
 

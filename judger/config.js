@@ -51,12 +51,15 @@ if (process.env.EXECUTION_HOST || argv.execute)
     config.EXECUTION_HOST = path.resolve(process.env.EXECUTION_HOST || argv.execute);
 
 if (process.env.START_EXECUTOR_SERVER) {
-    let p = child.spawn(path.resolve(__dirname, process.env.START_EXECUTOR_SERVER));
+    let args = (process.env.EXECUTOR_SERVER_ARGS || '').split(' ');
+    let p = child.spawn(path.resolve(__dirname, process.env.START_EXECUTOR_SERVER), args);
     p.stdout.on('data', data => {
-        console.log(data.toString());
+        let s = data.toString();
+        console.log(s.substr(0, s.length - 1));
     });
     p.stderr.on('data', data => {
-        console.log(data.toString());
+        let s = data.toString();
+        console.log(s.substr(0, s.length - 1));
     });
     global.onDestory.push(() => {
         p.emit('exit');
@@ -70,9 +73,9 @@ if (!fs.existsSync(config.CONFIG_FILE)) {
 if (!fs.existsSync(config.LANGS_FILE)) {
     if (!fs.existsSync(path.dirname(config.LANGS_FILE)))
         mkdirp(path.dirname(config.LANGS_FILE));
-    if (fs.existsSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'))) {
+    if (fs.existsSync(path.join(__dirname, '..', 'examples', 'langs.yaml'))) {
         log.error('Language file not found, using default.');
-        fs.copyFileSync(path.resolve(process.cwd(), 'examples', 'langs.yaml'), config.LANGS_FILE);
+        config.LANGS_FILE = path.join(__dirname, '..', 'examples', 'langs.yaml');
     } else throw new Error('Language file not found');
 }
 

@@ -13,10 +13,34 @@ HydroJudger supports custom judge, subtask and other many new features.
 
 ## Usage
 
-Prerequisites:
+### Run packed executable file (suggested)
 
-- Linux 4.4+
-- Docker
+Step 1: Download the latest packed files at [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  
+You should download one of the files below:
+
+- Judger_win_amd64.exe
+- Judger_linux_amd64
+- Judger_macos_amd64
+
+Step 2: Create configuration file  
+
+```yaml
+#$HOME/.config/hydro/judger.yaml
+hosts:
+  localhost:
+    server_url: e.g. https://vijos.org
+    uname: Judge account username
+    password: Judge account password
+```
+
+Step 3: Run! 
+
+```sh
+chmod +x ./Judger
+./Judger
+```
+
+### [Run with docker](docs/en/RunWithDocker.md)
 
 Create `judger.yaml`:
 
@@ -30,12 +54,21 @@ hosts:
 
 Then use `docker run --privileged -d -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
 **Replace /path/to/judger.yaml with your ABSOLUTE PATH!**  
-Hint: there are 3 tags built for docker:  
+Hint: there are 4 tags built for docker:  
 
-- `hydrooj/judger:latest` No compiler installed
-- `hydrooj/judger:default` Default compiler for vijos
-- `hydrooj/judger:slim` C C++ Pascal
+- `hydrooj/judger:alpine` Smallest image based on AlpineLinux  
+- `hydrooj/judger:latest` No compiler installed  
+- `hydrooj/judger:default` Default compiler for vijos  
+- `hydrooj/judger:slim` C C++ Pascal  
 
+## Configuration
+
+- Change the config file path: `--config=/path/to/config` 
+- Change the language file path: `--langs=/path/to/langs`
+- Change temp directory: `--tmp=/path/to/tmp`
+- Change cache directory: `--cache=/path/to/cache`
+- Change files directory: `--files=/path/to/files`
+- Change execution host: `--execute=http://executionhost/`
 
 ## Development
 

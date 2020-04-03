@@ -28,6 +28,9 @@
       "judger/**.js",
       "judger/**/**.js"
     ],
-    "assets": "executorserver"
+    "assets": [
+      "executorserver",
+      "examples/*"
+    ]
   }
 }
