@@ -132,7 +132,7 @@ exports.judge = async ctx => {
     ctx.end({
         status: ctx.total_status,
         score: ctx.total_score,
-        time_ms: ctx.total_time_usage_ms,
+        time_ms: Math.floor(ctx.total_time_usage_ms * 1000000) / 1000000,
         memory_kb: ctx.total_memory_usage_kb
     });
 };

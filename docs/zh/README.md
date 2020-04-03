@@ -30,6 +30,8 @@ hosts:
 ```
 
 之后使用 `docker run -d --privileged -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
+**将 /path/to/judger.yaml 替换为您创建的文件的绝对路径！** （众所周知没人会仔细看）  
+
 提示：为docker预构建了三个版本的镜像：
 
 - `hydrooj/judger:latest` 未安装任何编译器，需手动安装

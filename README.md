@@ -29,6 +29,7 @@ hosts:
 ```
 
 Then use `docker run --privileged -d -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
+**Replace /path/to/judger.yaml with your ABSOLUTE PATH!**  
 Hint: there are 3 tags built for docker:  
 
 - `hydrooj/judger:latest` No compiler installed

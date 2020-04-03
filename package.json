@@ -1,11 +1,8 @@
 {
   "name": "hydrojudger",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "judger/daemon.js",
   "author": "masnn",
-  "os": [
-    "linux"
-  ],
   "dependencies": {
     "axios": "^0.19.0",
     "js-yaml": "^3.13.1",
@@ -22,9 +19,7 @@
   "pkg": {
     "scripts": "judger/daemon.js",
     "assets": [
-      "judger",
-      "files",
-      "examples"
+      "judger"
     ]
   }
 }
