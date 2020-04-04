@@ -22,7 +22,7 @@ const
     { RETRY_DELAY_SEC, CONFIG_FILE } = require('./config');
 
 const terminate = async () => {
-    log.log('Saving data');
+    log.log('正在保存数据');
     try {
         for (let f of global.onDestory) {
             let r = f();
@@ -32,8 +32,8 @@ const terminate = async () => {
     } catch (e) {
         if (global.SI) process.exit(1);
         log.error(e);
-        log.error('An error occured when exiting.');
-        log.error('Press Ctrl-C again for force exit.');
+        log.error('发生了错误。');
+        log.error('再次按下 Ctrl-C 可强制退出。');
         global.SI = true;
     }
 };
@@ -59,7 +59,7 @@ async function daemon(_CONFIG_FILE) {
     try {
         config = yaml.safeLoad(config.toString());
     } catch (e) {
-        log.error('Invalid config file.');
+        log.error('配置文件无效。');
         process.exit(1);
     }
     let hosts = {};
@@ -94,7 +94,7 @@ async function daemon(_CONFIG_FILE) {
             }
         } catch (e) {
             log.error(e, e.stack);
-            log.info(`Retrying after ${RETRY_DELAY_SEC} seconds`);
+            log.info(`在 ${RETRY_DELAY_SEC} 秒后重试`);
             await sleep(RETRY_DELAY_SEC * 1000);
         }
 }

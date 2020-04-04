@@ -1,28 +1,31 @@
 # Judge Daemon
 
-[中文文档](docs/zh/README.md)
+[English](docs/en/README.md)
 
-## Introduction
+## 介绍
+HydroJudger 是一个用于信息学算法竞赛的高效评测后端。  
+和之前的版本相比，HydroJudger 支持了自定义比较器、子任务、交互器等多种新特性。  
 
-HydroJudger is a judging daemon for programming contests like OI and ACM. 
-HydroJudger supports custom judge, subtask and other many new features.
 
-## Help Center
+## 帮助中心
 
-- [RemoteJudge](docs/en/RemoteJudge.md)
+- [RemoteJudge](docs/zh/RemoteJudge.md)
 
-## Usage
+## 安装与使用
 
+### 直接运行可执行文件
 ### Run packed executable file (suggested)
 
-Step 1: Download the latest packed files at [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  
-You should download one of the files below:
+1. 从 [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  下载自动打包的可执行文件。  
+根据您使用的操作系统选择下面三者中的一个：  
 
 - Judger_win_amd64.exe
 - Judger_linux_amd64
 - Judger_macos_amd64
 
-Step 2: Create configuration file  
+2. 创建配置文件
+
+`$HOME` 为用户目录，在linux下通常为`/root`或`/home/用户名`，在Windows下通常为`C:\Users\用户名`  
 
 ```yaml
 #$HOME/.config/hydro/judger.yaml
@@ -33,73 +36,73 @@ hosts:
     password: Judge account password
 ```
 
-Step 3: Run! 
+3. 运行
 
 ```sh
 chmod +x ./Judger
 ./Judger
 ```
 
-### [Run with docker](docs/en/RunWithDocker.md)
+### 使用docker部署
 
-Create `judger.yaml`:
+创建 `judger.yaml`，文件如下所示
 
 ```yaml
 hosts:
-  localhost:
-    server_url: e.g. https://vijos.org
-    uname: Judge account username
-    password: Judge account password
+  localhost: #ID,可更改
+    type: vj4 # [vj4,uoj]
+    server_url: https://vijos.org/ # 填写vijos服务端地址
+    uname: 填写拥有评测权限的用户名
+    password: 填写密码
 ```
 
-Then use `docker run --privileged -d -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
-**Replace /path/to/judger.yaml with your ABSOLUTE PATH!**  
-Hint: there are 4 tags built for docker:  
+之后使用 `docker run -d --privileged -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
+**将 /path/to/judger.yaml 替换为您创建的文件的绝对路径！** （众所周知没人会仔细看）  
 
-- `hydrooj/judger:alpine` Smallest image based on AlpineLinux  
-- `hydrooj/judger:latest` No compiler installed  
-- `hydrooj/judger:default` Default compiler for vijos  
-- `hydrooj/judger:slim` C C++ Pascal  
+提示：为docker预构建了四个版本的镜像：
 
-## Configuration
+- `hydrooj/judger:alpine` 基于AlpineLinux构建的最精简镜像  
+- `hydrooj/judger:latest` 未安装任何编译器，需手动安装  
+- `hydrooj/judger:default` Vijos默认语言的编译器支持  
+- `hydrooj/judger:slim` 基于AlpineLinux，预装了 C C++ Pascal 语言支持  
 
-- Change the config file path: `--config=/path/to/config` 
-- Change the language file path: `--langs=/path/to/langs`
-- Change temp directory: `--tmp=/path/to/tmp`
-- Change cache directory: `--cache=/path/to/cache`
-- Change files directory: `--files=/path/to/files`
-- Change execution host: `--execute=http://executionhost/`
+### 手动安装
 
-## Development
+前置需求:
 
-Prerequisites:
+- Linux 4.4+
+- NodeJS 10+
 
-- Linux
-- NodeJS Version 10+
-
-Use the following command to install nodejs requirements:
+下载本仓库，并切换到仓库目录。
 
 ```sh
+npm install -g yarn # 如果已经安装yarn请跳过该步骤
 yarn
 ```
 
-Put `judger.yaml` and `langs.yaml` in the configuration directory, usually
-in `$HOME/.config/hydro/`. `judger.yaml` includes the server address, user and
-password and `langs.yaml` includes the compiler options. Examples can be found
-under the `examples` directory.
-
-Run the [executor-server](https://github.com/criyle/go-judge) first,  
-And use the following command to run the daemon:  
+创建设置目录 `~/.config/hydro` ，并放置 `judger.yaml` ，配置文件格式详见 [examples/judger.yaml](examples/judger.yaml)  
+启动 [go-sandbox](https://github.com/criyle/go-judge)，监听端口5050。  
+您应当以 root 身份运行。  
 
 ```sh
 node judger/daemon.js
 ```
 
-## Testdata format
-[Testdata format](docs/en/Testdata.md)
+## 设置
 
-## Copyright and License
+- 自定义配置文件位置: `--config=/path/to/config` 
+- 自定义语言文件位置: `--langs=/path/to/langs`
+- 自定义临时目录: `--tmp=/path/to/tmp`
+- 自定义缓存目录: `--cache=/path/to/cache`
+- 自定义文件目录: `--files=/path/to/files`
+- 自定义沙箱地址: `--execute=http://executionhost/`
 
-Copyright (c) 2020 Hydro Dev Team.  All rights reserved.
+## 测试数据格式
 
-License: GPL-3.0-only
+[测试数据格式](docs/zh/Testdata.md)
+
+在压缩包中添加 config.yaml （无此文件表示自动识别，默认1s, 256MB）。
+见 [测试数据格式](examples/testdata.yaml)
+
+为旧版评测机设计的数据包仍然可用。
+针对 problem.conf 的兼容性测试仍在进行中。

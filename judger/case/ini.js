@@ -10,9 +10,9 @@ const
     },
     chkFile = folder => (file, message) => {
         let f = path.join(folder, restrict(file));
-        if (!fs.existsSync(f)) throw new FormatError(message, [file]);
+        if (!fs.existsSync(f)) throw new FormatError(message + file);
         let stat = fs.statSync(f);
-        if (!stat.isFile()) throw new FormatError(message, [file]);
+        if (!stat.isFile()) throw new FormatError(message + file);
         return f;
     };
 
@@ -37,8 +37,8 @@ module.exports = async function readIniCases(folder) {
             time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
             memory_limit_mb: parseInt(line[4]) / 1024 || 256,
             cases: [{
-                input: checkFile(`input/${line[0].toLowerCase()}`, 'Input file {0} not found.'),
-                output: checkFile(`output/${line[1].toLowerCase()}`, 'Output file {0} not found.'),
+                input: checkFile(`input/${line[0].toLowerCase()}`, '找不到输入文件 '),
+                output: checkFile(`output/${line[1].toLowerCase()}`, '找不到输出文件 '),
                 id: config.count
             }]
         });

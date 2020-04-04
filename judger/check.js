@@ -4,21 +4,21 @@ const
 
 async function check(config) {
     if (!checkers[config.checker_type])
-        throw new SystemError('Unknown checker type:', [config.checker_type]);
+        throw new SystemError(`未知比较器类型：${config.checker_type}`);
     let { code, status, score, message } = await checkers[config.checker_type].check({
         input: config.stdin, output: config.stdout,
         user_stdout: config.user_stdout, user_stderr: config.user_stderr,
         score: config.score, copyIn: config.copyIn || {},
         detail: config.detail
     });
-    if (code) throw new SystemError('Checker returned a none-zero value', [code]);
+    if (code) throw new SystemError(`比较器返回了非零值：${code}`);
     return [status, score, message];
 }
 async function compile_checker(checker_type, checker, copyIn) {
     if (!checkers[checker_type])
-        throw new SystemError('Unknown checker type:', [checker_type]);
+        throw new SystemError(`未知比较器类型：${checker_type}`);
     let { code, status, message } = await checkers[checker_type].compile(checker, copyIn);
-    if (code) throw new SystemError('Checker compile failed', [code]);
+    if (code) throw new SystemError(`比较器编译失败：${code}`);
     return [status, message];
 }
 

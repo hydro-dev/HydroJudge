@@ -39,7 +39,7 @@ module.exports = class AxiosInstance {
                 location = res.response.headers.location;
                 if (location.includes('/fs/')) return location;
             } else if (res.response.status == 404)
-                throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
+                throw new FormatError(`没有找到测试数据 ${domain_id}/${pid}`);
             else {
                 if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
                 res.config = res.request = null;
@@ -55,7 +55,7 @@ module.exports = class AxiosInstance {
             if (res.response.status == 302)
                 return res.response.headers.location;
             else if (res.response.status == 404)
-                throw new FormatError(`Testdata not found: ${domain_id}/${pid}`);
+                throw new FormatError(`没有找到测试数据 ${domain_id}/${pid}`);
             else {
                 if (retry) return await this.problem_data_version(domain_id, pid, retry - 1);
                 res.config = res.request = null;
@@ -115,7 +115,7 @@ module.exports = class AxiosInstance {
         return save_path;
     }
     async consume(queue) {
-        log.log('Connecting: ' + this.config.server_url + 'judge/consume-conn');
+        log.log('正在连接 ' + this.config.server_url + 'judge/consume-conn');
         let res = await this.axios.get('judge/consume-conn/info');
         this.ws = new WebSocket(this.config.server_url.replace(/^http/i, 'ws') + 'judge/consume-conn/websocket?t=' + res.data.entropy, {
             headers: { cookie: this.config.cookie }
@@ -126,13 +126,13 @@ module.exports = class AxiosInstance {
                 queue.push(new JudgeTask(this, request, this.ws));
         });
         this.ws.on('close', (data, reason) => {
-            log.warn(`[${this.config.host}] Websocket closed:`, data, reason);
+            log.warn(`[${this.config.host}] Websocket 断开:`, data, reason);
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
         });
         this.ws.on('error', e => {
-            log.error(`[${this.config.host}] Websocket error:`, e);
+            log.error(`[${this.config.host}] Websocket 错误:`, e);
             setTimeout(() => {
                 this.retry(queue);
             }, 30000);
@@ -140,7 +140,7 @@ module.exports = class AxiosInstance {
         await new Promise(resolve => {
             this.ws.once('open', () => { resolve(); });
         });
-        log.info(`[${this.config.host}] Connected`);
+        log.info(`[${this.config.host}] 已连接`);
     }
     async setCookie(cookie) {
         this.config.cookie = cookie;
@@ -258,6 +258,7 @@ class JudgeTask {
                 this.next({ compiler_text: compilerText(e.stdout, e.stderr) });
                 this.end({ status: STATUS_COMPILE_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else if (e instanceof FormatError) {
+                this.next({ judge_text: '题目配置出现错误。请联系题目上传者。' });
                 this.next({ judge_text: e.message + '\n' + JSON.stringify(e.params) });
                 this.end({ status: STATUS_SYSTEM_ERROR, score: 0, time_ms: 0, memory_kb: 0 });
             } else {

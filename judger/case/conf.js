@@ -6,7 +6,8 @@ const
     { FormatError } = require('../error'),
     readAutoCases = require('./auto');
 
-module.exports = async function readConfCases(folder) {
+module.exports = async function readConfCases(folder, filename, { next }) {
+    next({judge_text:'警告：检测到 problem.conf 配置文件。暂不支持对ex测试点的评测。'});
     let
         config = {
             checker_type: 'default',
@@ -34,7 +35,7 @@ module.exports = async function readConfCases(folder) {
         assert(map.time_limit);
         assert(map.memory_limit);
     } catch (e) {
-        throw new FormatError('Invalid problem.conf file.', [e]);
+        throw new FormatError('无效的 problem.conf 文件。', [e]);
     }
     let c = await readAutoCases(folder);
     config.subtasks = c.subtasks;

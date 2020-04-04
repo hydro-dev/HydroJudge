@@ -45,7 +45,7 @@ function judgeCase(c) {
         else if (code) {
             status = STATUS_RUNTIME_ERROR;
             if (code < 32) message = signals[code];
-            else message = `Your program exited with code ${code}.`;
+            else message = `您的程序返回了 ${code}.`;
         } else[status, score, message] = await check({
             copyIn: copyInDir(path.resolve(ctx.tmpdir, 'checker')),
             stdin: c.input,

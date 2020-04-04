@@ -21,9 +21,9 @@ async function check(config) {
                 let t = pt[1].split('\n')[1];
                 let std = t.substr(2, t.length - 2).trim().split(' ');
                 if (usr.length < std.length)
-                    message = 'User output shorter than standard output.';
+                    message = '标准输出比选手输出长。';
                 else if (usr.length > std.length)
-                    message = 'User output longer than standard output.';
+                    message = '选手输出比标准输出长。';
                 else {
                     for (let i in usr)
                         if (usr[i] != std[i]) {
@@ -33,7 +33,7 @@ async function check(config) {
                         }
                     if (usr.length > 20) usr = usr.substring(0, 16) + '...';
                     if (std.length > 20) std = std.substring(0, 16) + '...';
-                    message = `Read ${usr} at ${pos} but expect ${std}`;
+                    message = `读取到 ${usr} ，应为 ${std}`;
                 }
             } catch (e) {
                 message = stdout.substring(0, stdout.length - 1 <= 30 ? stdout.length - 1 : 30);

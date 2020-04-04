@@ -13,9 +13,9 @@ const
     },
     chkFile = folder => (file, message) => {
         let f = path.join(folder, restrict(file));
-        if (!fs.existsSync(f)) throw new FormatError(message, [file]);
+        if (!fs.existsSync(f)) throw new FormatError(message + file);
         let stat = fs.statSync(f);
-        if (!stat.isFile()) throw new FormatError(message, [file]);
+        if (!stat.isFile()) throw new FormatError(message + file);
         return f;
     };
 
@@ -34,22 +34,22 @@ module.exports = async function readYamlCases(folder, name) {
     config_file = yaml.safeLoad(config_file);
     config.checker_type = config_file.checker_type || 'default';
     if (config_file.filename) config.filename = config_file.filename;
-    if (config_file.checker) config.checker = checkFile(config_file.checker, 'Checker {0} not found.');
+    if (config_file.checker) config.checker = checkFile(config_file.checker, '找不到比较器 ');
     if (config_file.judge_extra_files) {
         if (typeof config_file.judge_extra_files == 'string')
-            config.judge_extra_files = [checkFile(config_file.judge_extra_files, 'Judge extra file {0} not found.')];
+            config.judge_extra_files = [checkFile(config_file.judge_extra_files, '找不到评测额外文件 ')];
         else if (config_file.judge_extra_files instanceof Array) {
             for (let file in config_file.judge_extra_files)
-                config.judge_extra_files.push(checkFile(file, 'Judge extra file {0} not found.'));
-        } else throw new FormatError('Cannot parse option `judge_extra_files`');
+                config.judge_extra_files.push(checkFile(file, '找不到评测额外文件 '));
+        } else throw new FormatError('无效的 judge_extra_files 配置项');
     }
     if (config_file.user_extra_files) {
         if (typeof config_file.user_extra_files == 'string')
-            config.user_extra_files = [checkFile(config_file.user_extra_files, 'User extra file {0} not found.')];
+            config.user_extra_files = [checkFile(config_file.user_extra_files, '找不到用户额外文件 ')];
         else if (config_file.user_extra_files instanceof Array) {
             for (let file in config_file.user_extra_files)
-                config.user_extra_files.push(checkFile(file, 'User extra file {0} not found.'));
-        } else throw new FormatError('Cannot parse option `user_extra_files`');
+                config.user_extra_files.push(checkFile(file, '找不到用户额外文件 '));
+        } else throw new FormatError('无效的 user_extra_files 配置项');
     }
     if (config_file.cases) {
         config.subtasks = [{
@@ -62,8 +62,8 @@ module.exports = async function readYamlCases(folder, name) {
         for (let c of config_file.cases) {
             config.count++;
             config.subtasks[0].cases.push({
-                input: checkFile(c.input, 'Input file {0} not found.'),
-                output: checkFile(c.output, 'Output file {0} not found.'),
+                input: checkFile(c.input, '找不到输入文件 '),
+                output: checkFile(c.output, '找不到输出文件 '),
                 id: config.count
             });
         }
@@ -73,8 +73,8 @@ module.exports = async function readYamlCases(folder, name) {
             for (let c of subtask) {
                 config.count++;
                 cases.push({
-                    input: checkFile(c.input, 'Input file {0} not found.'),
-                    output: checkFile(c.output, 'Output file {0} not found.'),
+                    input: checkFile(c.input, '找不到输入文件 '),
+                    output: checkFile(c.output, '找不到输出文件 '),
                     id: config.count
                 });
             }

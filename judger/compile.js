@@ -16,7 +16,7 @@ try {
     process.exit(1);
 }
 async function compile(lang, code, target, copyIn, next) {
-    if (!_langs[lang]) throw new SystemError('Language not supported');
+    if (!_langs[lang]) throw new SystemError(`不支持的语言：${lang}`);
     let info = _langs[lang], f = {};
     if (info.type == 'compiler') {
         copyIn[info.code_file] = { content: code };
@@ -25,7 +25,7 @@ async function compile(lang, code, target, copyIn, next) {
             { copyIn, copyOutCached: [target] }
         );
         if (status != 'Accepted') throw new CompileError({ status, stdout, stderr });
-        if (!fileIds[target]) throw new CompileError({ stderr: 'No executable file' });
+        if (!fileIds[target]) throw new CompileError({ stderr: '没有找到可执行文件' });
         if (next) next({ compiler_text: compilerText(stdout, stderr) });
         f[target] = { fileId: fileIds[target] };
         return { execute: info.execute, copyIn: f, clean: () => del(fileIds[target]) };

@@ -15,11 +15,11 @@ const
         if (rversion != version) hasUpgrade = 1;
     }
     if (hasUpgrade == 1) {
-        log.log(`Running ${version}, Found newest version ${rversion}`);
+        log.log(`正在运行 ${version}, 最新版本为 ${rversion}`);
     } else if (typeof hasUpgrade == 'string') {
-        log.warn('Cannot connect to upgrade manager, please check your internet connection.', hasUpgrade);
+        log.warn('检查更新时发生了错误。', hasUpgrade);
     } else {
-        log.log('No upgrade aviliable.');
+        log.log('没有可用更新。');
     }
 })().catch(e => {
     log.error('Cannot check update:', e);

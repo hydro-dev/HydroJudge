@@ -40,7 +40,7 @@ function judgeCase(c) {
         else if (code) {
             status = STATUS_RUNTIME_ERROR;
             if (code < 32) message = signals[code];
-            else message = `Your program exited with code ${code}.`;
+            else message = `您的程序返回了 ${code}.`;
         } else[status, score, message] = resInteractor.files.stderr.split('\n');
         ctx_subtask.score = Score[ctx_subtask.subtask.type](ctx_subtask.score, score);
         ctx_subtask.status = Math.max(ctx_subtask.status, status);

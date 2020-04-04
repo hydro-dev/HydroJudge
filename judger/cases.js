@@ -16,7 +16,7 @@ let map = [
     ['problem.conf', readConfCases]
 ];
 
-async function readCases(folder, extra_config = {}) {
+async function readCases(folder, extra_config = {}, args) {
     let config;
     let d = fs.readdirSync(folder);
     if (d.length == 2) {
@@ -26,12 +26,15 @@ async function readCases(folder, extra_config = {}) {
     }
     for (let [filename, handler] of map)
         if (fs.existsSync(path.resolve(folder, filename))) {
-            config = await handler(folder, filename);
+            config = await handler(folder, filename, args);
             break;
         }
-    if (!config) config = await readAutoCases(folder);
+    if (!config) {
+        args.next({judge_text:'您没有提供题目配置文件。正在使用默认时空限制 1s 256M 。'});
+        config = await readAutoCases(folder, '', args);
+    }
     config = Object.assign(extra_config, config);
-    if (config.type != 'remotejudge' && !config.count) throw new FormatError('No cases found.');
+    if (config.type != 'remotejudge' && !config.count) throw new FormatError('没有找到测试数据');
     return config;
 }
 module.exports = readCases;

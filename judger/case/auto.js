@@ -137,7 +137,7 @@ async function read1(folder, files, checkFile) {
     return config;
 }
 
-module.exports = async function readAutoCases(folder) {
+module.exports = async function readAutoCases(folder, filename, { next }) {
     let
         config = {
             checker_type: 'default',
@@ -152,8 +152,9 @@ module.exports = async function readAutoCases(folder) {
         let result = await read0(folder, files, checkFile);
         if (!result.count) result = await read1(folder, files, checkFile);
         Object.assign(config, result);
+        next({ judge_text: `识别到${config.count}个测试点` });
     } catch (e) {
-        throw new SystemError('Failed to read cases.', [e]);
+        throw new SystemError('在自动识别测试点的过程中出现了错误。', [e]);
     }
     return config;
 };
