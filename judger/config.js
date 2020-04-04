@@ -52,18 +52,23 @@ if (process.env.EXECUTION_HOST || argv.execute)
 
 if (process.env.START_EXECUTOR_SERVER) {
     let args = (process.env.EXECUTOR_SERVER_ARGS || '').split(' ');
+    console.log('Starting executor server with args', args);
     let p = child.spawn(path.resolve(__dirname, process.env.START_EXECUTOR_SERVER), args);
-    p.stdout.on('data', data => {
-        let s = data.toString();
-        console.log(s.substr(0, s.length - 1));
-    });
-    p.stderr.on('data', data => {
-        let s = data.toString();
-        console.log(s.substr(0, s.length - 1));
-    });
-    global.onDestory.push(() => {
-        p.emit('exit');
-    });
+    if (!p.stdout) throw new Error('Cannot start executorserver');
+    else {
+        p.stdout.on('data', data => {
+            let s = data.toString();
+            console.log(s.substr(0, s.length - 1));
+        });
+        p.stderr.on('data', data => {
+            let s = data.toString();
+            console.log(s.substr(0, s.length - 1));
+        });
+        global.onDestory.push(() => {
+            p.emit('exit');
+        });
+    }
+    p.on('error', error => console.error(error));
 }
 
 if (!fs.existsSync(config.CONFIG_FILE)) {

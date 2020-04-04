@@ -46,6 +46,10 @@ jobs:
       with:
         name: judger.js
         path: dist/judger.js
+    - uses: actions/upload-artifact@v1
+      with:
+        name: entrypoint.js
+        path: dist/entrypoint.js
   pkg:
     name: Package
     runs-on: ubuntu-latest
@@ -58,12 +62,13 @@ jobs:
     - uses: actions/download-artifact@v1
       with:
         name: judger.js
-        path: judger.js
     - uses: actions/download-artifact@v1
       with:
         name: ExecutorServer
-        path: executorserver
     - run: |
+        mv ExecutorServer/executorserver .
+        mv judger.js __judger
+        mv __judger/judger.js .
         yarn add pkg -D
         yarn run pack
     - uses: actions/upload-artifact@v1
@@ -101,7 +106,10 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/download-artifact@v1
       with:
-        name: Judger_linux_amd64
+        name: judger.js
+    - uses: actions/download-artifact@v1
+      with:
+        name: ExecutorServer
     - uses: elgohr/Publish-Docker-Github-Action@master
       with:
         name: hydrooj/judger:alpine

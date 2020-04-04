@@ -1,7 +1,8 @@
 const config = {
     mode: 'production',
     entry: {
-        judger: './judger/daemon.js'
+        judger: './judger/daemon.js',
+        entrypoint: './judger/entrypoint.js'
     },
     output: {
         filename: '[name].js',
