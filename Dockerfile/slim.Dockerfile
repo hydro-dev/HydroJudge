@@ -10,11 +10,6 @@ RUN apk add gcc g++ && \
     tar xf "fpc.tar" && \
     cd "fpc-${FPC_VERSION}.${FPC_ARCH}" && \
     rm demo* doc* && \
-    \
-    # Workaround musl vs glibc entrypoint for `fpcmkcfg`
-    mkdir /lib64 && \
-    ln -s /lib/ld-musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 && \
-    \
     echo -e '/usr\nN\nN\nN\n' | sh ./install.sh && \
     find "/usr/lib/fpc/${FPC_VERSION}/units/${FPC_ARCH}/" -type d -mindepth 1 -maxdepth 1 \
         -not -name 'fcl-base' \
@@ -22,5 +17,5 @@ RUN apk add gcc g++ && \
         -not -name 'rtl-console' \
         -not -name 'rtl-objpas' \
         -exec rm -r {} \; && \
-    rm -r "/lib64" "/tmp/"* && \
+    rm -r "/tmp/"* && \
     rm -rf /var/cache/apk/*
