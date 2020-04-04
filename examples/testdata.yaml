@@ -2,6 +2,8 @@
 # 问题类型，允许的值有 [default, submit_answer, interactive]
 type: default
 
+# 题目模板（通常无需填写该设置项）
+# 如果设置此项，则用户程序将被插入在模板中间。
 template:
   cc:
     - >-
