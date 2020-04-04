@@ -28,20 +28,26 @@ module.exports = async function readIniCases(folder) {
         checkFile = chkFile(folder);
     let config_file = (await fsp.readFile(path.resolve(folder, 'config.ini'))).toString();
     config_file = config_file.split('\n');
-    let count = parseInt(config_file[0]);
-    for (let i = 1; i <= count; i++) {
-        let line = config_file[i].split('|');
-        config.count++;
-        config.subtasks.push({
-            score: parseInt(line[3]),
-            time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
-            memory_limit_mb: parseInt(line[4]) / 1024 || 256,
-            cases: [{
-                input: checkFile(`input/${line[0].toLowerCase()}`, '找不到输入文件 '),
-                output: checkFile(`output/${line[1].toLowerCase()}`, '找不到输出文件 '),
-                id: config.count
-            }]
-        });
+    try {
+        let count = parseInt(config_file[0]);
+        if (!count) throw new FormatError('line 1');
+        for (let i = 1; i <= count; i++) {
+            let line = config_file[i].split('|');
+            if (!parseFloat(line[2]) || !parseInt(line[3])) throw new FormatError(`line ${1 + i}`);
+            config.count++;
+            config.subtasks.push({
+                score: parseInt(line[3]),
+                time_limit_ms: parseInt(parseFloat(line[2]) * 1000),
+                memory_limit_mb: parseInt(line[4]) / 1024 || 256,
+                cases: [{
+                    input: checkFile(`input/${line[0].toLowerCase()}`, '找不到输入文件 '),
+                    output: checkFile(`output/${line[1].toLowerCase()}`, '找不到输出文件 '),
+                    id: config.count
+                }]
+            });
+        }
+    } catch (e) {
+        throw new FormatError('无效的 config.ini 。');
     }
     return config;
 };
