@@ -3,7 +3,6 @@ const
     fs = require('fs'),
     fsp = fs.promises,
     path = require('path'),
-    WebSocket = require('ws'),
     tmpfs = require('../tmpfs'),
     log = require('../log'),
     { mkdirp, rmdir, compilerText } = require('../utils'),
@@ -28,12 +27,13 @@ module.exports = class AxiosInstance {
         await this.ensureLogin();
         setInterval(() => { this.axios.get('judge/noop'); }, 30000000);
     }
-    async problem_data(domain_id, pid, save_path, retry = 3) {
-        log.info(`Getting problem data: ${this.config.host}/${domain_id}/${pid}`);
+    async problem_data(pid, save_path, retry = 3) {
+        log.info(`Getting problem data: ${this.config.host}/${pid}`);
         await this.ensureLogin();
-        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${domain_id}_${pid}`);
+        let tmp_file_path = path.resolve(CACHE_DIR, `download_${this.config.host}_${pid}`);
         try {
-            let res = await this.axios.get(`${this.config.server_url}d/${domain_id}/p/${pid}/data`, { responseType: 'stream' });
+            console.log(`${this.config.server_url}/p/${pid}/data`);
+            let res = await this.axios.get(`${this.config.server_url}/p/${pid}/data`, { responseType: 'stream' });
             let w = await fs.createWriteStream(tmp_file_path);
             res.data.pipe(w);
             await new Promise((resolve, reject) => {
@@ -50,40 +50,21 @@ module.exports = class AxiosInstance {
             await fsp.unlink(tmp_file_path);
             await this.process_data(save_path).catch();
         } catch (e) {
-            if (retry) await this.problem_data(domain_id, pid, save_path, retry - 1);
+            if (retry) await this.problem_data(pid, save_path, retry - 1);
             else throw e;
         }
         return save_path;
     }
     async consume(queue) {
-        this.ws = new WebSocket(this.config.server_url.replace(/^http/i, 'ws') + 'judge/conn');
-        this.ws.on('message', data => {
-            let request = JSON.parse(data);
-            if (!request.event)
-                queue.push(new JudgeTask(this, request, this.ws));
-        });
-        this.ws.on('close', (data, reason) => {
-            log.warn(`[${this.config.host}] Websocket closed:`, data, reason);
-            setTimeout(() => {
-                this.retry(queue);
-            }, 30000);
-        });
-        this.ws.on('error', e => {
-            log.error(`[${this.config.host}] Websocket error:`, e);
-            setTimeout(() => {
-                this.retry(queue);
-            }, 30000);
-        });
-        await new Promise(resolve => {
-            this.ws.once('open', () => {
-
-                resolve();
-            });
-        });
-        log.info(`[${this.config.host}] Connected`);
+        setInterval(async () => {
+            let res = await this.axios.get('/judge/fetch');
+            console.log(res.data);
+            if (res.data.task)
+                queue.push(new JudgeTask(this, res.data.task));
+        }, 1000);
     }
     async setCookie(cookie) {
-        console.log('SETTTTTTTTTTTT', cookie);
+        console.log('SETTTTTTTTTTTTTTTTTTTTT', cookie);
         this.config.cookie = cookie;
         this.axios = axios.create({
             baseURL: this.config.server_url,
@@ -99,11 +80,8 @@ module.exports = class AxiosInstance {
         await this.setCookie(res.headers['set-cookie'].join(';'));
     }
     async ensureLogin() {
-        try {
-            await this.axios.get('judge/noop');
-        } catch (e) {
-            await this.login();
-        }
+        let res = await this.axios.get('/judge/noop');
+        if (res.data.error) await this.login();
     }
     async process_data(folder) {
         let files = await fsp.readdir(folder), ini = false;
@@ -127,9 +105,9 @@ module.exports = class AxiosInstance {
                 await fsp.rename(`${folder}/output/${i}`, `${folder}/output/${i.toLowerCase()}`);
         }
     }
-    async cache_open(domain_id, pid, version) {
-        let domain_dir = path.join(CACHE_DIR, this.config.host, domain_id);
-        let file_path = path.join(domain_dir, pid);
+    async cache_open(pid, version) {
+        console.log(this.config.host, pid);
+        let file_path = path.join(CACHE_DIR, this.config.host, pid);
         if (fs.existsSync(file_path)) {
             let ver;
             try {
@@ -138,44 +116,36 @@ module.exports = class AxiosInstance {
             if (version == ver) return file_path;
             else rmdir(file_path);
         }
-        mkdirp(domain_dir);
-        await this.problem_data(domain_id, pid, file_path);
+        mkdirp(file_path);
+        await this.problem_data(pid, file_path);
         fs.writeFileSync(path.join(file_path, 'version'), version);
         return file_path;
-    }
-    async retry(queue) {
-        this.consume(queue).catch(() => {
-            setTimeout(() => {
-                this.retry(queue);
-            }, 30000);
-        });
     }
 };
 
 class JudgeTask {
-    constructor(session, request, ws) {
+    constructor(session, request) {
         this.stat = {};
         this.stat.receive = new Date();
         this.session = session;
         this.host = session.config.host;
         this.request = request;
-        this.ws = ws;
     }
     async handle() {
         this.stat.handle = new Date();
-        this.domain_id = this.request.domainId;
+        this.type = this.request.type;
         this.pid = this.request.pid;
         this.rid = this.request.rid;
         this.lang = this.request.lang;
         this.code = this.request.code;
         this.data = this.request.data;
         this.next = this.get_next(this);
-        this.end = this.get_end(this.ws, this.rid);
+        this.end = this.get_end(this.session, this.rid);
         this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
         this.clean = [];
         mkdirp(this.tmpdir);
         tmpfs.mount(this.tmpdir, '64m');
-        log.submission(`${this.host}/${this.domain_id}/${this.rid}`, { pid: this.pid });
+        log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
         try {
             if (this.type == 0) await this.do_submission();
             else throw new SystemError(`Unsupported type: ${this.type}`);
@@ -198,9 +168,9 @@ class JudgeTask {
     }
     async do_submission() {
         this.stat.cache_start = new Date();
-        this.folder = await this.session.cache_open(this.domain_id, this.pid, this.version);
+        this.folder = await this.session.cache_open(this.pid, this.data);
         this.stat.read_cases = new Date();
-        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        this.config = await readCases(this.folder, { detail: this.session.config.detail }, { next: this.next });
         this.stat.judge = new Date();
         await judger[this.config.type || 'default'].judge(this);
     }
@@ -212,24 +182,24 @@ class JudgeTask {
             data.rid = that.rid;
             if (id)
                 if (id == that.nextId) {
-                    that.ws.send(JSON.stringify(data));
+                    that.session.axios.post('/judge/next', data);
                     that.nextId++;
                     let t = true;
                     while (t) {
                         t = false;
                         for (let i in that.nextWaiting)
                             if (that.nextId == that.nextWaiting[i].id) {
-                                that.ws.send(JSON.stringify(that.nextWaiting[i].data));
+                                that.session.axios.post('/judge/next', that.nextWaiting[i].data);
                                 that.nextId++;
                                 that.nextWaiting.splice(i, 1);
                                 t = true;
                             }
                     }
                 } else that.nextWaiting.push({ data, id });
-            else that.ws.send(JSON.stringify(data));
+            else that.session.axios.post('/judge/next', data);
         };
     }
-    get_end(ws, rid) {
+    get_end(session, rid) {
         return data => {
             data.key = 'end';
             data.rid = rid;
@@ -239,7 +209,7 @@ class JudgeTask {
                 time_ms: data.time_ms,
                 memory_kb: data.memory_kb
             });
-            ws.send(JSON.stringify(data));
+            session.axios.post('/judge/end', data);
         };
     }
 }

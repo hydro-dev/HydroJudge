@@ -1,4 +1,5 @@
 module.exports = {
     vj4: require('./vj4'),
-    uoj: require('./uoj')
+    uoj: require('./uoj'),
+    hydro: require('./hydro')
 };

@@ -275,14 +275,14 @@ class JudgeTask {
         this.stat.cache_start = new Date();
         this.folder = await this.session.cache_open(this.domain_id, this.pid);
         this.stat.read_cases = new Date();
-        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        this.config = await readCases(this.folder, { detail: this.session.config.detail }, { next: this.next });
         this.stat.judge = new Date();
         await judger[this.config.type || 'default'].judge(this);
     }
     async do_pretest() {
         this.folder = path.resolve(this.tmpdir, 'data');
         await this.session.record_pretest_data(this.rid, this.folder);
-        this.config = await readCases(this.folder, { detail: this.session.config.detail });
+        this.config = await readCases(this.folder, { detail: this.session.config.detail }, { next: this.next });
         await judger[this.config.type || 'default'].judge(this);
     }
     get_next(that) {
