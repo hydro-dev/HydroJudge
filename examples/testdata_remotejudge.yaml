@@ -1,12 +1,16 @@
 type: remotejudge
 
-# Choices: vj4, vjudge
+# 已经支持的类型有：vj4, vjudge, hustoj, xjoi（学军）, bzoj, ybt（信奥一本通OJ） 
 server_type: vj4
+# 服务器地址
 server_url: https://vijos.org
 
-username: root # Account for submitting
+# 用于提交程序的账号
+username: root
 password: rootroot
 
-#For vj4: domain_id/pid  eg: system/1000
-#For vjudge: host_id/pid  eg: CodeForces/33A
+
+# 对于vj4按照 domain_id/pid 格式填写。 eg: system/1000
+# 对于vjudge按照 host_id/pid 格式填写。 eg: CodeForces/33A
+# 其他类型之间填写题号即可。
 pid: system/1000
