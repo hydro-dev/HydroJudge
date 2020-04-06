@@ -76,6 +76,7 @@ class HUSTOJ {
         this.CEINFO = [['编译错误', 'Compile_Error', 'Compile Error'], '/ceinfo.php?sid={rid}', /<pre class=".*?" id='errtxt' >(.*?)<\/pre>/gmi];
         this.MONIT = ['/status.php?pid={pid}&user_id={uid}'];
         this.ACCEPTED = ['正确', 'Accepted', 'AC'];
+        this.RID = /<tbody>\n<tr class="evenrow"><td>([0-9]+)<\/td>/igm;
     }
     async loginWithToken(cookie) {
         this.cookie = cookie;
@@ -118,10 +119,17 @@ class HUSTOJ {
         });
         if (res.data.find(this.SUBMIT[4])) throw new TooFrequentError();
         console.log(res.data);
+        let url = this.MONIT[0].replace('{uid}', this.state.username).replace('{pid}', pid);
+        let r = await this.axios.get(url);
+        let rid = this.RID.exec(r.data)[1];
+        return {
+            uid: this.state.username,
+            pid, rid
+        };
     }
     async monit(data, next, end) {
         if (this.supermonit) return await this.supermonit(data, next, end);
-        let url = this.MONIT[0].replace('{uid}', data.uid).replace('pid', data.pid);
+        let url = this.MONIT[0].replace('{uid}', data.uid).replace('{pid}', data.pid);
         let RE = new RegExp(`<tr.*?class="evenrow".*?><td>${data.rid}</td>.*?</td><td>.*?</td><td><font color=".*?">(.*?)</font></td><td>(.*?)<font color="red">kb</font></td><td>(.*?)<font color="red">ms`, 'gmi');
         let res = await this.axios.get(url);
         let score;
@@ -244,6 +252,7 @@ class BZOJ extends HUSTOJ {
         this.LOGIN = ['/login.php', 'user_id', 'password', { submit: 'Submit' }];
         this.SUBMIT = ['/submit.php', 'id', 'language', 'source', 'You should not submit more than twice in 10 seconds.....', {}];
         this.CEINFO = ['/ceinfo.php?sid={rid}', /<pre>([\s\S]*?)<\/pre>/igm];
+        this.RID = /Submit_Time<\/td><\/tr>\n<tr align="center" class="evenrow"><td>([0-9]+)/igm;
     }
 }
 
@@ -257,6 +266,7 @@ class XJOI extends HUSTOJ {
             /<textarea .*?>([\s\S]*?)<\/textarea>/igm,
             /time: ([0-9]+)ms, memory: ([0-9]+)kb, points: ([0-9]+), status: (.*?)/gmi
         ];
+        this.RID = /<tr class="table-bordered"><td class="status-table-text"> <a href="\/detail\/([0-9]+)"/igm;
     }
     async supermonit(data, next, end) {
         let url = `/detail${data.rid}`;
