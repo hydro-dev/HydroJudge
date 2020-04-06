@@ -50,7 +50,7 @@ module.exports = class VJudge {
         let res = await this.axios.post('/user/login', { username, password });
         await this.loginWithToken(res.headers['set-cookie'][0].split(';')[0]);
     }
-    async judge(pid_str, code, lang, next, end) {
+    async submit(pid_str, code, lang, next) {
         let [oj, probNum] = pid_str.split('/');
         if (!LANGS[oj]) throw new SystemError('Problem config error: Remote oj doesn\'t exist.', [oj]);
         let language = LANGS[oj][lang];
@@ -61,10 +61,13 @@ module.exports = class VJudge {
         });
         if (res.data.error) throw new SystemError(res.data.error);
         next({ judge_text: `Submitted: ID=${res.data.runId}` });
-        await new Promise(resolve => {
+        return { id: res.data.runId };
+    }
+    async monit(data, next, end) {
+        return await new Promise(resolve => {
             let lastStatus = null;
             let fetch = async () => {
-                let resp = await this.axios.get(`/solution/data/${res.data.runId}`);
+                let resp = await this.axios.get(`/solution/data/${data.id}`);
                 let r = resp.data;
                 if (!lastStatus)
                     next({ judge_text: `Using language: ${r.language}` });

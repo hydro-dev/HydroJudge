@@ -1,8 +1,13 @@
 class CompileError extends Error {
-    constructor({ stdout, stderr } = {}) {
+    constructor({ stdout, stderr, compiler_text } = {}) {
         super('Compile Error');
-        this.stdout = stdout || '';
-        this.stderr = stderr || '';
+        if (this.compiler_text) {
+            this.stdout = compiler_text;
+            this.stderr = '';
+        } else {
+            this.stdout = stdout || '';
+            this.stderr = stderr || '';
+        }
         this.type = 'CompileError';
     }
 }
@@ -27,10 +32,17 @@ class SystemError extends Error {
         this.params = params;
     }
 }
+class TooFrequentError extends Error {
+    constructor(message) {
+        super(message);
+        this.type = 'TooFrequentError';
+    }
+}
 
 module.exports = {
     CompileError,
     FormatError,
     RuntimeError,
-    SystemError
+    SystemError,
+    TooFrequentError
 };

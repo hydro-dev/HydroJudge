@@ -4,22 +4,33 @@ const
     RE_PASSWORD = /<j:password=(.+?)>/i,
     RE_LANGUAGE = /<j:language=(.+?)>/i,
     RE_TOKEN = /<j:token=(.+?)>/i,
-    { SystemError } = require('../error');
+    { SystemError, TooFrequentError } = require('../error'),
+    { sleep } = require('../utils');
 exports.judge = async ctx => {
-    let username = ctx.config.username;
-    let password = ctx.config.password;
-    let token = '';
+    let user_username, user_password, user_token, data;
     if (RE_TOKEN.test(ctx.code)) {
-        token = RE_TOKEN.exec(ctx.code)[1];
+        user_token = RE_TOKEN.exec(ctx.code)[1];
     } else if (RE_USERNAME.test(ctx.code) && RE_PASSWORD.test(ctx.code)) {
-        username = RE_USERNAME.exec(ctx.code)[1];
-        password = RE_PASSWORD.exec(ctx.code)[1];
+        user_username = RE_USERNAME.exec(ctx.code)[1];
+        user_password = RE_PASSWORD.exec(ctx.code)[1];
     }
-    if ((!(username && password)) && !token) throw new SystemError('无用户评测的账号');
-    if (RE_LANGUAGE.test(ctx.code)) ctx.lang = RE_LANGUAGE.exec(ctx.code)[1];
     ctx.next({ judge_text: `正在使用 RemoteJudge:  ${ctx.config.server_type} ${ctx.config.server_url}` });
+    if (RE_LANGUAGE.test(ctx.code)) ctx.lang = RE_LANGUAGE.exec(ctx.code)[1];
     let remote = new api[ctx.config.server_type](ctx.config.server_url);
-    if (token) await remote.loginWithToken(token);
-    else await remote.login(username, password);
-    return await remote.judge(ctx.config.pid, ctx.code, ctx.lang, ctx.next, ctx.end);
+    if ((user_username && user_password) || user_token) {
+        if (user_token) await remote.loginWithToken(user_token);
+        else await remote.login(user_username, user_password);
+    } else if (ctx.config.username && ctx.config.password) {
+        await remote.login(ctx.config.username, ctx.config.password);
+    } else throw new SystemError('无用于评测的账号');
+    try {
+        data = await remote.submit(ctx.config.pid, ctx.code, ctx.lang, ctx.next);
+    } catch (e) {
+        if (e instanceof TooFrequentError) {
+            ctx.next({ judge_text: '远端OJ提交过于频繁, 将在5秒后重试。' });
+            await sleep(5);
+            data = await remote.submit(ctx.config.pid, ctx.code, ctx.lang, ctx.next);
+        } else throw e;
+    }
+    await remote.monit(data, ctx.next, ctx.end);
 };
