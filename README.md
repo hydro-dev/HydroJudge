@@ -45,7 +45,7 @@ chmod +x ./Judger
 
 ### 使用docker部署
 
-创建 `judger.yaml`，文件如下所示
+创建 `config.yaml`，文件如下所示
 
 ```yaml
 hosts:
@@ -56,8 +56,8 @@ hosts:
     password: 填写密码
 ```
 
-之后使用 `docker run -d --privileged -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` 即可启动。
-**将 /path/to/judger.yaml 替换为您创建的文件的绝对路径！** （众所周知没人会仔细看）  
+之后使用 `docker run -d --privileged -v /path/to/config.yaml:/config/config.yaml hydrooj/judger:default` 即可启动。
+**将 /path/to/config.yaml 替换为您创建的文件的绝对路径！** 
 
 提示：为docker预构建了四个版本的镜像：
 

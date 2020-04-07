@@ -42,7 +42,7 @@ chmod +x ./Judger
 
 ### Run with docker
 
-Create `judger.yaml`:
+Create `config.yaml`:
 
 ```yaml
 hosts:
@@ -52,7 +52,7 @@ hosts:
     password: Judge account password
 ```
 
-Then use `docker run --privileged -d -v /path/to/judger.yaml:/config/judger.yaml hydrooj/judger:default` to start.  
+Then use `docker run --privileged -d -v /path/to/config.yaml:/config/config.yaml hydrooj/judger:default` to start.  
 **Replace /path/to/judger.yaml with your ABSOLUTE PATH!**  
 Hint: there are 4 tags built for docker:  
 
