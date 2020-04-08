@@ -17,6 +17,8 @@ let map = [
 ];
 
 async function readCases(folder, extra_config = {}, args) {
+    args = args || {};
+    args.next = args.next || (() => { });
     let config;
     let d = fs.readdirSync(folder);
     if (d.length == 2) {

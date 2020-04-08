@@ -12,7 +12,7 @@ const
     _compile = require('../compile');
 
 async function check(config) {
-    let { code, stdout } = await run('%dir%/checker input stdout usrout', {
+    let { code, stdout } = await run('${dir}/checker input stdout usrout', {
         copyIn: {
             usrout: { src: config.user_stdout },
             stdout: { src: config.output },
