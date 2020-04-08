@@ -84,7 +84,7 @@ module.exports = async function readYamlCases(folder, name, { next }) {
                 memory_limit_mb: parseMemoryMB(subtask.memory || config_file.time)
             });
         }
-    else if (config.type != 'remotejudge') {
+    else if (config_file.type != 'remotejudge') {
         let c = await readAutoCases(folder, '', { next });
         config.subtasks = c.subtasks;
         config.count = c.count;
