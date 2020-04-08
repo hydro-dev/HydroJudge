@@ -1,5 +1,5 @@
 ## 如何使用 RemoteJudge 功能
-题目的样例配置文件 `config.yaml` 已放置于 [testdata_remotejudge.md](../examples/testdata_remotejudge.yaml)。  
+题目的样例配置文件 `config.yaml` 已放置于 [testdata_remotejudge.yaml](../../examples/testdata_remotejudge.yaml)。  
 如果 `username` 或 `password` 项没有填写，用户需要自行指定评测用账户。  
 
 您可以在您的代码中使用以下注释来传入参数： `<j:optionName=optionValue>`   
