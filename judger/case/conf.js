@@ -7,7 +7,7 @@ const
     readAutoCases = require('./auto');
 
 module.exports = async function readConfCases(folder, filename, { next }) {
-    next({judge_text:'警告：检测到 problem.conf 配置文件。暂不支持对ex测试点的评测。'});
+    next({ judge_text: '警告：检测到 problem.conf 配置文件。暂不支持对ex测试点的评测。' });
     let
         config = {
             checker_type: 'default',
@@ -37,7 +37,7 @@ module.exports = async function readConfCases(folder, filename, { next }) {
     } catch (e) {
         throw new FormatError('无效的 problem.conf 文件。', [e]);
     }
-    let c = await readAutoCases(folder);
+    let c = await readAutoCases(folder, '', { next });
     config.subtasks = c.subtasks;
     config.count = c.count;
     for (let i in config.subtasks) {

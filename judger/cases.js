@@ -30,7 +30,7 @@ async function readCases(folder, extra_config = {}, args) {
             break;
         }
     if (!config) {
-        args.next({judge_text:'您没有提供题目配置文件。正在使用默认时空限制 1s 256M 。'});
+        args.next({ judge_text: '您没有提供题目配置文件。正在使用默认时空限制 1s 256M 。' });
         config = await readAutoCases(folder, '', args);
     }
     config = Object.assign(extra_config, config);
