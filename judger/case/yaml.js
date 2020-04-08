@@ -19,7 +19,7 @@ const
         return f;
     };
 
-module.exports = async function readYamlCases(folder, name) {
+module.exports = async function readYamlCases(folder, name, { next }) {
     let
         config = {
             checker_type: 'default',
@@ -85,7 +85,7 @@ module.exports = async function readYamlCases(folder, name) {
             });
         }
     else if (config.type != 'remotejudge') {
-        let c = await readAutoCases(folder);
+        let c = await readAutoCases(folder, '', { next });
         config.subtasks = c.subtasks;
         config.count = c.count;
     }
