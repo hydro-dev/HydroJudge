@@ -1,13 +1,17 @@
-const
-    api = require('../remotejudge'),
-    RE_USERNAME = /<j:username=(.+?)>/i,
-    RE_PASSWORD = /<j:password=(.+?)>/i,
-    RE_LANGUAGE = /<j:language=(.+?)>/i,
-    RE_TOKEN = /<j:token=(.+?)>/i,
-    { SystemError, TooFrequentError } = require('../error'),
-    { sleep } = require('../utils');
-exports.judge = async ctx => {
-    let user_username, user_password, user_token, data;
+const api = require('../remotejudge');
+const { SystemError, TooFrequentError } = require('../error');
+const { sleep } = require('../utils');
+
+const RE_USERNAME = /<j:username=(.+?)>/i;
+const RE_PASSWORD = /<j:password=(.+?)>/i;
+const RE_LANGUAGE = /<j:language=(.+?)>/i;
+const RE_TOKEN = /<j:token=(.+?)>/i;
+
+exports.judge = async (ctx) => {
+    let user_username;
+    let user_password;
+    let user_token;
+    let data;
     if (RE_TOKEN.test(ctx.code)) {
         user_token = RE_TOKEN.exec(ctx.code)[1];
     } else if (RE_USERNAME.test(ctx.code) && RE_PASSWORD.test(ctx.code)) {
@@ -16,7 +20,7 @@ exports.judge = async ctx => {
     }
     ctx.next({ judge_text: `正在使用 RemoteJudge:  ${ctx.config.server_type} ${ctx.config.server_url}` });
     if (RE_LANGUAGE.test(ctx.code)) ctx.lang = RE_LANGUAGE.exec(ctx.code)[1];
-    let remote = new api[ctx.config.server_type](ctx.config.server_url);
+    const remote = new api[ctx.config.server_type](ctx.config.server_url);
     if ((user_username && user_password) || user_token) {
         if (user_token) await remote.loginWithToken(user_token);
         else await remote.login(user_username, user_password);

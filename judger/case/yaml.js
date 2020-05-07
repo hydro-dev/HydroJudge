@@ -1,93 +1,84 @@
-const
-    fs = require('fs'),
-    fsp = fs.promises,
-    yaml = require('js-yaml'),
-    path = require('path'),
-    { FormatError } = require('../error'),
-    { parseTimeMS, parseMemoryMB } = require('../utils'),
-    readAutoCases = require('./auto'),
-    restrict = p => {
-        if (!p) return '/';
-        if (p[0] == '/') p = '';
-        return p.replace(/\.\./i, '');
-    },
-    chkFile = folder => (file, message) => {
-        let f = path.join(folder, restrict(file));
-        if (!fs.existsSync(f)) throw new FormatError(message + file);
-        let stat = fs.statSync(f);
-        if (!stat.isFile()) throw new FormatError(message + file);
-        return f;
-    };
+const fs = require('fs');
+const yaml = require('js-yaml');
+const path = require('path');
+const { FormatError } = require('../error');
+const { parseTimeMS, parseMemoryMB, ensureFile } = require('../utils');
+const readAutoCases = require('./auto');
+
+const fsp = fs.promises;
 
 module.exports = async function readYamlCases(folder, name, { next }) {
-    let
+    const
         config = {
             checker_type: 'default',
             count: 0,
             subtasks: [],
             judge_extra_files: [],
-            user_extra_files: []
-        },
-        checkFile = chkFile(folder),
-        config_file = (await fsp.readFile(path.resolve(folder, name))).toString();
+            user_extra_files: [],
+        };
+    const checkFile = ensureFile(folder);
+    let configFile = (await fsp.readFile(path.resolve(folder, name))).toString();
 
-    config_file = yaml.safeLoad(config_file);
-    config.checker_type = config_file.checker_type || 'default';
-    if (config_file.filename) config.filename = config_file.filename;
-    if (config_file.checker) config.checker = checkFile(config_file.checker, '找不到比较器 ');
-    if (config_file.judge_extra_files) {
-        if (typeof config_file.judge_extra_files == 'string')
-            config.judge_extra_files = [checkFile(config_file.judge_extra_files, '找不到评测额外文件 ')];
-        else if (config_file.judge_extra_files instanceof Array) {
-            for (let file in config_file.judge_extra_files)
+    configFile = yaml.safeLoad(configFile);
+    config.checker_type = configFile.checker_type || 'default';
+    if (configFile.filename) config.filename = configFile.filename;
+    if (configFile.checker) config.checker = checkFile(configFile.checker, '找不到比较器 ');
+    if (configFile.judge_extra_files) {
+        if (typeof configFile.judge_extra_files === 'string') {
+            config.judge_extra_files = [checkFile(configFile.judge_extra_files, '找不到评测额外文件 ')];
+        } else if (configFile.judge_extra_files instanceof Array) {
+            for (const file in configFile.judge_extra_files) {
                 config.judge_extra_files.push(checkFile(file, '找不到评测额外文件 '));
+            }
         } else throw new FormatError('无效的 judge_extra_files 配置项');
     }
-    if (config_file.user_extra_files) {
-        if (typeof config_file.user_extra_files == 'string')
-            config.user_extra_files = [checkFile(config_file.user_extra_files, '找不到用户额外文件 ')];
-        else if (config_file.user_extra_files instanceof Array) {
-            for (let file in config_file.user_extra_files)
+    if (configFile.user_extra_files) {
+        if (typeof configFile.user_extra_files === 'string') {
+            config.user_extra_files = [checkFile(configFile.user_extra_files, '找不到用户额外文件 ')];
+        } else if (configFile.user_extra_files instanceof Array) {
+            for (const file in configFile.user_extra_files) {
                 config.user_extra_files.push(checkFile(file, '找不到用户额外文件 '));
+            }
         } else throw new FormatError('无效的 user_extra_files 配置项');
     }
-    if (config_file.cases) {
+    if (configFile.cases) {
         config.subtasks = [{
-            score: parseInt(config_file.score) || Math.floor(100 / config.count),
-            time_limit_ms: parseTimeMS(config_file.time),
-            memory_limit_mb: parseMemoryMB(config_file.memory),
+            score: parseInt(configFile.score) || Math.floor(100 / config.count),
+            time_limit_ms: parseTimeMS(configFile.time),
+            memory_limit_mb: parseMemoryMB(configFile.memory),
             cases: [],
-            type: 'sum'
+            type: 'sum',
         }];
-        for (let c of config_file.cases) {
+        for (const c of configFile.cases) {
             config.count++;
             config.subtasks[0].cases.push({
                 input: checkFile(c.input, '找不到输入文件 '),
                 output: checkFile(c.output, '找不到输出文件 '),
-                id: config.count
+                id: config.count,
             });
         }
-    } else if (config_file.subtasks)
-        for (let subtask of config_file.subtasks) {
-            let cases = [];
-            for (let c of subtask) {
+    } else if (configFile.subtasks) {
+        for (const subtask of configFile.subtasks) {
+            const cases = [];
+            for (const c of subtask) {
                 config.count++;
                 cases.push({
                     input: checkFile(c.input, '找不到输入文件 '),
                     output: checkFile(c.output, '找不到输出文件 '),
-                    id: config.count
+                    id: config.count,
                 });
             }
             config.subtasks.push({
-                score: parseInt(subtask.score), cases,
-                time_limit_ms: parseTimeMS(subtask.time || config_file.time),
-                memory_limit_mb: parseMemoryMB(subtask.memory || config_file.time)
+                score: parseInt(subtask.score),
+                cases,
+                time_limit_ms: parseTimeMS(subtask.time || configFile.time),
+                memory_limit_mb: parseMemoryMB(subtask.memory || configFile.time),
             });
         }
-    else if (config_file.type != 'remotejudge') {
-        let c = await readAutoCases(folder, '', { next });
+    } else if (configFile.type !== 'remotejudge') {
+        const c = await readAutoCases(folder, '', { next });
         config.subtasks = c.subtasks;
         config.count = c.count;
     }
-    return Object.assign(config_file, config);
+    return Object.assign(configFile, config);
 };

@@ -4,5 +4,5 @@ module.exports = {
     lemon: require('./lemon'),
     qduoj: require('./qduoj'),
     syzoj: require('./syzoj'),
-    testlib: require('./testlib')
+    testlib: require('./testlib'),
 };

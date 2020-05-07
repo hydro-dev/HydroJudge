@@ -1,7 +1,7 @@
 function warp(func) {
-    return function () {
-        let dt = (new Date()).toString();
-        func(dt, ...arguments);
+    return (...args) => {
+        const dt = (new Date()).toString();
+        func(dt, ...args);
     };
 }
 
@@ -13,5 +13,5 @@ module.exports = {
     debug: warp(console.debug),
     submission(id, payload = {}) {
         console.log(`${new Date()} ${id}`, payload);
-    }
+    },
 };

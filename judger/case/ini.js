@@ -1,38 +1,27 @@
-const
-    fs = require('fs'),
-    fsp = fs.promises,
-    path = require('path'),
-    { FormatError } = require('../error'),
-    restrict = p => {
-        if (!p) return '/';
-        if (p[0] == '/') p = '';
-        return p.replace(/\.\./i, '');
-    },
-    chkFile = folder => (file, message) => {
-        let f = path.join(folder, restrict(file));
-        if (!fs.existsSync(f)) throw new FormatError(message + file);
-        let stat = fs.statSync(f);
-        if (!stat.isFile()) throw new FormatError(message + file);
-        return f;
-    };
+const fs = require('fs');
+const path = require('path');
+const { FormatError } = require('../error');
+const { ensureFile } = require('../utils');
+
+const fsp = fs.promises;
 
 module.exports = async function readIniCases(folder) {
-    let
+    const
         config = {
             checker_type: 'default',
             count: 0,
             subtasks: [],
             judge_extra_files: [],
-            user_extra_files: []
-        },
-        checkFile = chkFile(folder);
-    let config_file = (await fsp.readFile(path.resolve(folder, 'config.ini'))).toString();
-    config_file = config_file.split('\n');
+            user_extra_files: [],
+        };
+    const checkFile = ensureFile(folder);
+    let configFile = (await fsp.readFile(path.resolve(folder, 'config.ini'))).toString();
+    configFile = configFile.split('\n');
     try {
-        let count = parseInt(config_file[0]);
+        const count = parseInt(configFile[0]);
         if (!count) throw new FormatError('line 1');
         for (let i = 1; i <= count; i++) {
-            let line = config_file[i].split('|');
+            const line = configFile[i].split('|');
             if (!parseFloat(line[2]) || !parseInt(line[3])) throw new FormatError(`line ${1 + i}`);
             config.count++;
             config.subtasks.push({
@@ -42,8 +31,8 @@ module.exports = async function readIniCases(folder) {
                 cases: [{
                     input: checkFile(`input/${line[0].toLowerCase()}`, '找不到输入文件 '),
                     output: checkFile(`output/${line[1].toLowerCase()}`, '找不到输出文件 '),
-                    id: config.count
-                }]
+                    id: config.count,
+                }],
             });
         }
     } catch (e) {

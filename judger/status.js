@@ -8,5 +8,5 @@ module.exports = {
     STATUS_SYSTEM_ERROR: 8,
     STATUS_JUDGING: 20,
     STATUS_COMPILING: 21,
-    STATUS_IGNORED: 30
+    STATUS_IGNORED: 30,
 };
