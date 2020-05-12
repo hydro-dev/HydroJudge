@@ -4,10 +4,11 @@ const { run, del } = require('./sandbox');
 const { CompileError, SystemError } = require('./error');
 const log = require('./log');
 const { compilerText } = require('./utils');
-const { LANGS_FILE } = require('./config');
+const { LANGS_FILE, LANGS } = require('./config');
 
 let _langs = {};
 try {
+    if (LANGS) _langs = LANGS;
     _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE));
 } catch (e) {
     log.error('Invalidate Language file %s', LANGS_FILE);

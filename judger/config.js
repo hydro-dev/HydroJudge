@@ -17,6 +17,8 @@ const config = {
     RETRY_DELAY_SEC: 15,
     TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judger'),
     EXECUTION_HOST: 'http://localhost:5050',
+    CONFIG: null,
+    LANGS: null,
     changeDefault(name, from, to) {
         if (config[name] === from) config[name] = to;
     },
@@ -69,10 +71,6 @@ if (process.env.START_EXECUTOR_SERVER) {
         });
     }
     p.on('error', (error) => console.error(error));
-}
-if (!fs.existsSync(config.CONFIG_FILE)) {
-    log.error('Config file not found.');
-    process.exit(1);
 }
 if (!fs.existsSync(config.LANGS_FILE)) {
     if (!fs.existsSync(path.dirname(config.LANGS_FILE))) mkdirp(path.dirname(config.LANGS_FILE));

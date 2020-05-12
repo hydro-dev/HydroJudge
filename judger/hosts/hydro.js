@@ -7,7 +7,7 @@ const tmpfs = require('../tmpfs');
 const log = require('../log');
 const { mkdirp, rmdir, compilerText } = require('../utils');
 const { CACHE_DIR, TEMP_DIR } = require('../config');
-const { FormatError, CompileError, SystemError } = require('../error');
+const { FormatError, CompileError } = require('../error');
 const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status');
 const readCases = require('../cases');
 const judger = require('../judger');
@@ -24,23 +24,21 @@ class JudgeTask {
     }
 
     async handle() {
-        this.stat.handle = new Date();
-        this.type = this.request.type;
-        this.pid = this.request.pid;
-        this.rid = this.request.rid;
-        this.lang = this.request.lang;
-        this.code = this.request.code;
-        this.data = this.request.data;
-        this.next = this.getNext(this);
-        this.end = this.getEnd(this.session, this.rid);
-        this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
-        this.clean = [];
-        mkdirp(this.tmpdir);
-        tmpfs.mount(this.tmpdir, '64m');
-        log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
         try {
-            if (this.type === 0) await this.submission();
-            else throw new SystemError(`Unsupported type: ${this.type}`);
+            this.stat.handle = new Date();
+            this.pid = this.request.pid;
+            this.rid = this.request.rid;
+            this.lang = this.request.lang;
+            this.code = this.request.code;
+            this.data = this.request.data;
+            this.next = this.getNext(this);
+            this.end = this.getEnd(this.session, this.rid);
+            this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
+            this.clean = [];
+            mkdirp(this.tmpdir);
+            tmpfs.mount(this.tmpdir, '64m');
+            log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
+            await this.submission();
         } catch (e) {
             if (e instanceof CompileError) {
                 this.next({ compiler_text: compilerText(e.stdout, e.stderr) });

@@ -14,7 +14,9 @@
   },
   "license": "GPL-3.0-only",
   "devDependencies": {
-    "eslint": "^6.2.2"
+    "eslint": "^6.2.2",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2"
   },
   "bin": {
     "judger": "judger/entrypoint.js"

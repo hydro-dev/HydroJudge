@@ -19,7 +19,7 @@ const yaml = require('js-yaml');
 const Session = require('./hosts/index');
 const { sleep, Queue } = require('./utils');
 const log = require('./log');
-const { RETRY_DELAY_SEC, CONFIG_FILE } = require('./config');
+const { RETRY_DELAY_SEC, CONFIG_FILE, CONFIG } = require('./config');
 
 const terminate = async () => {
     log.log('正在保存数据');
@@ -43,13 +43,16 @@ process.on('unhandledRejection', (reason, p) => {
     console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
 
-async function daemon(_CONFIG_FILE) {
-    const FILE = _CONFIG_FILE || CONFIG_FILE;
-    let config = await fsp.readFile(FILE);
+async function daemon() {
+    let config;
     try {
-        config = yaml.safeLoad(config.toString());
+        if (CONFIG) config = CONFIG;
+        else {
+            config = (await fsp.readFile(CONFIG_FILE)).toString();
+            config = yaml.safeLoad(config);
+        }
     } catch (e) {
-        log.error('配置文件无效。');
+        log.error('配置文件无效或未找到。');
         process.exit(1);
     }
     const hosts = {};
@@ -60,21 +63,23 @@ async function daemon(_CONFIG_FILE) {
         await hosts[i].init();
     }
     global.hosts = hosts;
-    global.onDestory.push(async () => {
-        const cfg = { hosts: {} };
-        for (const i in hosts) {
-            cfg.hosts[i] = {
-                host: i,
-                type: hosts[i].config.type || 'vj4',
-                uname: hosts[i].config.uname,
-                password: hosts[i].config.password,
-                server_url: hosts[i].config.server_url,
-            };
-            if (hosts[i].config.cookie) cfg.hosts[i].cookie = hosts[i].config.cookie;
-            if (hosts[i].config.detail) cfg.hosts[i].detail = hosts[i].config.detail;
-        }
-        await fsp.writeFile(FILE, yaml.safeDump(cfg));
-    });
+    if (!CONFIG) {
+        global.onDestory.push(async () => {
+            const cfg = { hosts: {} };
+            for (const i in hosts) {
+                cfg.hosts[i] = {
+                    host: i,
+                    type: hosts[i].config.type || 'vj4',
+                    uname: hosts[i].config.uname,
+                    password: hosts[i].config.password,
+                    server_url: hosts[i].config.server_url,
+                };
+                if (hosts[i].config.cookie) cfg.hosts[i].cookie = hosts[i].config.cookie;
+                if (hosts[i].config.detail) cfg.hosts[i].detail = hosts[i].config.detail;
+            }
+            await fsp.writeFile(CONFIG_FILE, yaml.safeDump(cfg));
+        });
+    }
     while ('Orz twd2') {
         try {
             for (const i in hosts) await hosts[i].consume(queue);
