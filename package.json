@@ -24,7 +24,7 @@
   "scripts": {
     "webpack": "webpack --config webpack.config.js",
     "pack": "pkg .",
-    "lint": "eslint judger --fix"
+    "lint": "eslint judger build.js service.js --fix"
   },
   "pkg": {
     "scripts": [
