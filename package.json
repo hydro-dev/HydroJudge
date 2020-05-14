@@ -16,13 +16,15 @@
   "devDependencies": {
     "eslint": "^6.2.2",
     "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2"
+    "eslint-plugin-import": "^2.20.2",
+    "hydro-build": "^0.0.3"
   },
   "bin": {
     "judger": "judger/entrypoint.js"
   },
   "scripts": {
     "webpack": "webpack --config webpack.config.js",
+    "build": "hydro-build",
     "pack": "pkg .",
     "lint": "eslint judger build.js service.js --fix"
   },
