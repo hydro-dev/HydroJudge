@@ -34,7 +34,7 @@ class JudgeTask {
         this.rid = this.request.rid;
         this.lang = this.request.lang;
         this.code = this.request.code;
-        this.next = this.get_next(this);
+        this.next = this.getNext(this);
         this.end = this.getEnd(this.ws, this.tag);
         this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
         this.clean = [];

@@ -155,8 +155,8 @@ function restrictFile(p) {
     return p.replace(/\.\./i, '');
 }
 
-function ensureFile() {
-    return (folder) => (file, message) => {
+function ensureFile(folder) {
+    return (file, message) => {
         const f = path.join(folder, restrictFile(file));
         if (!fs.existsSync(f)) throw new FormatError(message + file);
         const stat = fs.statSync(f);
