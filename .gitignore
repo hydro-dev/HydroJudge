@@ -4,3 +4,4 @@ dist
 *.log
 __*
 .build
+*.hydro
