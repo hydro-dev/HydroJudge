@@ -5,19 +5,19 @@ const path = require('path');
 const child = require('child_process');
 
 async function postInit() {
-    const config = require('./judger/config');
+    const config = require('../judger/config');
     // eslint-disable-next-line import/no-unresolved
     config.LANGS = require('./__langs.json');
-    const { mkdirp, rmdir, compilerText } = require('./judger/utils');
-    const log = require('./judger/log');
-    const tmpfs = require('./judger/tmpfs');
-    const { FormatError, CompileError, SystemError } = require('./judger/error');
-    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./judger/status');
-    const readCases = require('./judger/cases');
-    const judger = require('./judger/judger');
+    const { mkdirp, rmdir, compilerText } = require('../judger/utils');
+    const log = require('../judger/log');
+    const tmpfs = require('../judger/tmpfs');
+    const { FormatError, CompileError, SystemError } = require('../judger/error');
+    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judger/status');
+    const readCases = require('../judger/cases');
+    const judger = require('../judger/judger');
 
     const fsp = fs.promises;
-    const { problem, task } = global.Hydro.model;
+    const { problem, file, task } = global.Hydro.model;
     const { judge } = global.Hydro.handler;
 
     async function processData(folder) {
@@ -42,9 +42,10 @@ async function postInit() {
         }
     }
 
-    async function problemData(pid, savePath) {
-        const tmpFilePath = path.resolve(config.CACHE_DIR, `download_${pid}`);
-        const data = await problem.getData(pid);
+    async function problemData(domainId, pid, savePath) {
+        const tmpFilePath = path.resolve(config.CACHE_DIR, `download_${domainId}_${pid}`);
+        const pdoc = await problem.get(domainId, pid);
+        const data = await file.get(pdoc.data);
         if (!data) throw new SystemError('Problem data not found.');
         const w = await fs.createWriteStream(tmpFilePath);
         data.pipe(w);
@@ -64,8 +65,8 @@ async function postInit() {
         return savePath;
     }
 
-    async function cacheOpen(pid, version) {
-        const filePath = path.join(config.CACHE_DIR, pid);
+    async function cacheOpen(domainId, pid, version) {
+        const filePath = path.join(config.CACHE_DIR, domainId, pid);
         if (fs.existsSync(filePath)) {
             let ver;
             try {
@@ -75,7 +76,7 @@ async function postInit() {
             rmdir(filePath);
         }
         mkdirp(filePath);
-        await problemData(pid, filePath);
+        await problemData(domainId, pid, filePath);
         fs.writeFileSync(path.join(filePath, 'version'), version);
         return filePath;
     }
@@ -86,6 +87,7 @@ async function postInit() {
         return (data, id) => {
             data.key = 'next';
             data.rid = that.rid;
+            data.domainId = that.domainId;
             if (id) {
                 if (id === that.nextId) {
                     judge.next(data);
@@ -107,10 +109,11 @@ async function postInit() {
         };
     }
 
-    function getEnd(rid) {
+    function getEnd(domainId, rid) {
         return (data) => {
             data.key = 'end';
             data.rid = rid;
+            data.domainId = domainId;
             log.log({
                 status: data.status,
                 score: data.score,
@@ -135,11 +138,12 @@ async function postInit() {
                 this.event = this.request.event;
                 this.pid = this.request.pid.toString();
                 this.rid = this.request.rid.toString();
+                this.domainId = this.request.domainId;
                 this.lang = this.request.lang;
                 this.code = this.request.code;
                 this.data = this.request.data;
                 this.next = getNext(this);
-                this.end = getEnd(this.rid);
+                this.end = getEnd(this.domainId, this.rid);
                 console.log(config.TEMP_DIR, 'tmp', this.rid);
                 this.tmpdir = path.resolve(config.TEMP_DIR, 'tmp', this.rid);
                 this.clean = [];
@@ -175,7 +179,7 @@ async function postInit() {
 
         async submission() {
             this.stat.cache_start = new Date();
-            this.folder = await cacheOpen(this.pid, this.data);
+            this.folder = await cacheOpen(this.domainId, this.pid, this.data);
             this.stat.read_cases = new Date();
             this.config = await readCases(
                 this.folder,
