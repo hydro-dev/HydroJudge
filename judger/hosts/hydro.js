@@ -5,6 +5,7 @@ const path = require('path');
 const child = require('child_process');
 const tmpfs = require('../tmpfs');
 const log = require('../log');
+const sysinfo = require('../sysinfo');
 const { mkdirp, rmdir, compilerText } = require('../utils');
 const { CACHE_DIR, TEMP_DIR } = require('../config');
 const { FormatError, CompileError } = require('../error');
@@ -131,7 +132,12 @@ module.exports = class AxiosInstance {
     async init() {
         await this.setCookie(this.config.cookie || '');
         await this.ensureLogin();
-        setInterval(() => { this.axios.get('judge/noop'); }, 30000000);
+        const info = await sysinfo.get();
+        this.axios.post('/status/update', info);
+        setInterval(async () => {
+            const [_id, info] = await sysinfo.update();
+            this.axios.post('/status/update', { _id, ...info });
+        }, 1200000);
     }
 
     async problemData(pid, savePath, retry = 3) {
