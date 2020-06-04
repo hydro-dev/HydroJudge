@@ -17,7 +17,7 @@ async function check(config) {
             input: { src: config.input },
         },
     });
-    const st = (status === 'Accepted') ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
+    const st = (status === STATUS_ACCEPTED) ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
     return { status: st, score: (st === STATUS_ACCEPTED) ? config.score : 0, message: stdout };
 }
 

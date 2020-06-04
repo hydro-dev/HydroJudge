@@ -4,6 +4,7 @@ const fs = require('fs');
 const {
     STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
     STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED,
+    STATUS_ACCEPTED,
 } = require('../status');
 const { CompileError } = require('../error');
 const { copyInDir, parseFilename } = require('../utils');
@@ -40,32 +41,35 @@ function judgeCase(c) {
             },
         );
         const { code, time_usage_ms, memory_usage_kb } = res;
+        let { status } = res;
         if (res.files[`${filename}.out`] || !fs.existsSync(stdout)) {
             fs.writeFileSync(stdout, res.files[`${filename}.out`] || '');
         }
-        let status;
         let message = '';
         let score;
-        if (time_usage_ms > ctxSubtask.subtask.time_limit_ms) {
-            status = STATUS_TIME_LIMIT_EXCEEDED;
-        } else if (memory_usage_kb > ctxSubtask.subtask.memory_limit_mb * 1024) {
-            status = STATUS_MEMORY_LIMIT_EXCEEDED;
+        if (status === STATUS_ACCEPTED) {
+            if (time_usage_ms > ctxSubtask.subtask.time_limit_ms) {
+                status = STATUS_TIME_LIMIT_EXCEEDED;
+            } else if (
+                memory_usage_kb > ctxSubtask.subtask.memory_limit_mb * 1024) {
+                status = STATUS_MEMORY_LIMIT_EXCEEDED;
+            } else {
+                [status, score, message] = await check({
+                    copyIn: copyInDir(path.resolve(ctx.tmpdir, 'checker')),
+                    stdin: c.input,
+                    stdout: c.output,
+                    user_stdout: stdout,
+                    user_stderr: stderr,
+                    checker: ctx.config.checker,
+                    checker_type: ctx.config.checker_type,
+                    score: ctxSubtask.subtask.score,
+                    detail: ctx.config.detail,
+                });
+            }
         } else if (code) {
             status = STATUS_RUNTIME_ERROR;
             if (code < 32) message = signals[code];
             else message = `您的程序返回了 ${code}.`;
-        } else {
-            [status, score, message] = await check({
-                copyIn: copyInDir(path.resolve(ctx.tmpdir, 'checker')),
-                stdin: c.input,
-                stdout: c.output,
-                user_stdout: stdout,
-                user_stderr: stderr,
-                checker: ctx.config.checker,
-                checker_type: ctx.config.checker_type,
-                score: ctxSubtask.subtask.score,
-                detail: ctx.config.detail,
-            });
         }
         ctxSubtask.score = Score[ctxSubtask.subtask.type](ctxSubtask.score, score);
         ctxSubtask.status = Math.max(ctxSubtask.status, status);

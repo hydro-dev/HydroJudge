@@ -3,6 +3,7 @@ const fs = require('fs');
 const { run, del } = require('./sandbox');
 const { CompileError, SystemError } = require('./error');
 const log = require('./log');
+const { STATUS_ACCEPTED } = require('./status');
 const { compilerText } = require('./utils');
 const { LANGS_FILE, LANGS } = require('./config');
 
@@ -27,7 +28,7 @@ async function compile(lang, code, target, copyIn, next) {
             info.compile.replace(/\$\{name\}/g, target),
             { copyIn, copyOutCached: [target] },
         );
-        if (status !== 'Accepted') throw new CompileError({ status, stdout, stderr });
+        if (status !== STATUS_ACCEPTED) throw new CompileError({ status, stdout, stderr });
         if (!fileIds[target]) throw new CompileError({ stderr: '没有找到可执行文件' });
         if (next) next({ compiler_text: compilerText(stdout, stderr) });
         f[target] = { fileId: fileIds[target] };

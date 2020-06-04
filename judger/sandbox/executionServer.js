@@ -4,11 +4,20 @@ const {
     SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT, SYSTEM_TIME_LIMIT_MS, EXECUTION_HOST,
 } = require('../config');
 const { SystemError } = require('../error');
+const status = require('../status');
 const { cmd } = require('../utils');
 
 const fsp = fs.promises;
 const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
 const axios = Axios.create({ baseURL: EXECUTION_HOST });
+
+
+const statusMap = {
+    'Time Limit Exceeded': status.STATUS_TIME_LIMIT_EXCEEDED,
+    'Memory Limit Exceeded': status.STATUS_MEMORY_LIMIT_EXCEEDED,
+    Accepted: status.STATUS_ACCEPTED,
+    'Nonzero Exit Status': status.STATUS_RUNTIME_ERROR,
+};
 
 function proc({
     execute,
@@ -29,7 +38,7 @@ function proc({
             { name: 'stderr', max: 10240 },
         ],
         cpuLimit: time_limit_ms * 1000 * 1000,
-        readCpuLimit: time_limit_ms * 1200 * 1000,
+        realCpuLimit: time_limit_ms * 1400 * 1000,
         memoryLimit: memory_limit_mb * 1024 * 1024,
         procLimit: process_limit,
         copyIn,
@@ -82,7 +91,7 @@ async function run(execute, params) {
         throw new SystemError('Cannot connect to sandbox service');
     }
     const ret = {
-        status: result.status,
+        status: statusMap[result.status],
         time_usage_ms: result.time / 1000000,
         memory_usage_kb: result.memory / 1024,
         files: result.files,

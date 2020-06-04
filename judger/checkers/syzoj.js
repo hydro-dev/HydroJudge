@@ -24,7 +24,7 @@ async function check(config) {
             code: { content: config.code },
         },
     });
-    if (status !== 'Accepted') throw new SystemError('Checker returned a non-zero value', [status]);
+    if (status !== STATUS_ACCEPTED) throw new SystemError('Checker returned a non-zero value', [status]);
     const score = parseInt(stdout);
     status = score === config.score ? STATUS_ACCEPTED : STATUS_WRONG_ANSWER;
     return { status, score, message: stderr };
