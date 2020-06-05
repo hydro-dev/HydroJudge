@@ -15,8 +15,11 @@ const axios = Axios.create({ baseURL: EXECUTION_HOST });
 const statusMap = {
     'Time Limit Exceeded': status.STATUS_TIME_LIMIT_EXCEEDED,
     'Memory Limit Exceeded': status.STATUS_MEMORY_LIMIT_EXCEEDED,
+    'Output Limit Exceeded': status.STATUS_RUNTIME_ERROR,
     Accepted: status.STATUS_ACCEPTED,
     'Nonzero Exit Status': status.STATUS_RUNTIME_ERROR,
+    'Internal Error': status.STATUS_SYSTEM_ERROR,
+    'File Error': status.STATUS_SYSTEM_ERROR,
 };
 
 function proc({
@@ -38,7 +41,7 @@ function proc({
             { name: 'stderr', max: 10240 },
         ],
         cpuLimit: time_limit_ms * 1000 * 1000,
-        realCpuLimit: time_limit_ms * 1400 * 1000,
+        realCpuLimit: time_limit_ms * 2000 * 1000,
         memoryLimit: memory_limit_mb * 1024 * 1024,
         procLimit: process_limit,
         copyIn,

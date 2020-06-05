@@ -50,8 +50,7 @@ function judgeCase(c) {
         if (status === STATUS_ACCEPTED) {
             if (time_usage_ms > ctxSubtask.subtask.time_limit_ms) {
                 status = STATUS_TIME_LIMIT_EXCEEDED;
-            } else if (
-                memory_usage_kb > ctxSubtask.subtask.memory_limit_mb * 1024) {
+            } else if (memory_usage_kb > ctxSubtask.subtask.memory_limit_mb * 1024) {
                 status = STATUS_MEMORY_LIMIT_EXCEEDED;
             } else {
                 [status, score, message] = await check({
