@@ -42,10 +42,19 @@ jobs:
         yarn
         yarn add webpack webpack-cli -D
         yarn run webpack
+        yarn run build
+        node .github/upload.js
+      env:
+        upload_username: ${{ SECRETS.VIJOS_USERNAME }}
+        upload_password: $${ SECRETS.VIJOS_PASSWORD }}
     - uses: actions/upload-artifact@v1
       with:
         name: judger.js
         path: dist/judger.js
+    - uses: actions/upload-artifact@v1
+      with:
+        name: judger.hydro
+        path: judger.hydro
     - uses: actions/upload-artifact@v1
       with:
         name: entrypoint.js
