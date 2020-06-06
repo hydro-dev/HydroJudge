@@ -54,7 +54,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: judger.hydro
-        path: judger.hydro
+        path: module/judger.hydro
     - uses: actions/upload-artifact@v1
       with:
         name: entrypoint.js
