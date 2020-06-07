@@ -1,4 +1,4 @@
-const { STATUS_TEXT } = require('./status');
+const { STATUS_TEXTS } = require('./status');
 
 class CompileError extends Error {
     constructor(obj) {
@@ -9,7 +9,7 @@ class CompileError extends Error {
         } else {
             this.stdout = obj.stdout || '';
             this.stderr = obj.stderr || '';
-            this.status = obj.status ? STATUS_TEXT[obj.status] || '' : '';
+            this.status = obj.status ? STATUS_TEXTS[obj.status] || '' : '';
         }
         this.type = 'CompileError';
     }
