@@ -129,28 +129,28 @@ async function postInit() {
             this.stat = {};
             this.stat.receive = new Date();
             this.request = request;
-            console.log(this.request);
         }
 
         async handle() {
             try {
                 this.stat.handle = new Date();
                 this.event = this.request.event;
-                this.pid = this.request.pid.toString();
+                this.pid = (this.request.pid || 'unknown').toString();
                 this.rid = this.request.rid.toString();
                 this.domainId = this.request.domainId;
                 this.lang = this.request.lang;
                 this.code = this.request.code;
                 this.data = this.request.data;
+                this.config = this.request.config;
                 this.next = getNext(this);
                 this.end = getEnd(this.domainId, this.rid);
-                console.log(config.TEMP_DIR, 'tmp', this.rid);
                 this.tmpdir = path.resolve(config.TEMP_DIR, 'tmp', this.rid);
                 this.clean = [];
                 mkdirp(this.tmpdir);
                 tmpfs.mount(this.tmpdir, '64m');
                 log.submission(`${this.rid}`, { pid: this.pid });
                 if (!this.event) await this.submission();
+                else if (this.event === 'run') await this.run();
                 else throw new SystemError(`Unsupported type: ${this.type}`);
             } catch (e) {
                 if (e instanceof CompileError) {
@@ -189,9 +189,18 @@ async function postInit() {
             this.stat.judge = new Date();
             await judger[this.config.type || 'default'].judge(this);
         }
+
+        async run() {
+            this.stat.judge = new Date();
+            await judger.run.judge(this);
+        }
     }
+
     task.consume({ type: 'judge' }, (t) => {
         (new JudgeTask(t)).handle().catch((e) => log.error(e));
+    });
+    task.consume({ type: 'run' }, (t) => {
+        (new JudgeTask(t).handle().catch((e) => log.error(e)));
     });
 }
 

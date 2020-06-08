@@ -77,6 +77,11 @@ class JudgeTask {
         await judger[this.config.type || 'default'].judge(this);
     }
 
+    async run() {
+        this.stat.judge = new Date();
+        await judger.run.judge(this);
+    }
+
     getNext(that) { // eslint-disable-line class-methods-use-this
         that.nextId = 1;
         that.nextWaiting = [];

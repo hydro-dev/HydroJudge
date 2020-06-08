@@ -1,6 +1,6 @@
 {
   "name": "hydrojudger",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "main": "judger/daemon.js",
   "author": "masnn",
   "dependencies": {
@@ -27,7 +27,7 @@
     "webpack": "webpack --config webpack.config.js",
     "build": "cd module && hydro-build",
     "pack": "pkg .",
-    "lint": "eslint judger build.js service.js --fix"
+    "lint": "eslint judger module --fix"
   },
   "pkg": {
     "scripts": [
