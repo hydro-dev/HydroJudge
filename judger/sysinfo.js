@@ -1,4 +1,9 @@
+const path = require('path');
 const systeminformation = require('systeminformation');
+const { judge } = require('./judger/run');
+const { TEMP_DIR } = require('./config');
+const { mkdirp, rmdir } = require('./utils');
+const tmpfs = require('./tmpfs');
 
 function size(s, base = 1) {
     s *= base;
@@ -13,8 +18,50 @@ function size(s, base = 1) {
 
 const cache = {};
 
+async function stackSize() {
+    let output = '';
+    const context = {
+        lang: 'ccWithoutO2',
+        code: `
+#include <iostream>
+using namespace std;
+int i=1;
+int main(){
+    char a[1048576]={'1'};
+    cout<<" "<<i<<flush;
+    i++;
+    if (i>256) return 0;
+    main();
+}`,
+        config: {
+            time: 3000,
+            memory: 256,
+        },
+        stat: {},
+        clean: [],
+        next: () => { },
+        end: (data) => {
+            if (data.stdout) output = data.stdout;
+        },
+    };
+    context.tmpdir = path.resolve(TEMP_DIR, 'tmp', 'sysinfo');
+    mkdirp(context.tmpdir);
+    tmpfs.mount(context.tmpdir, '64m');
+    await judge(context).catch((e) => console.error(e));
+    // eslint-disable-next-line no-await-in-loop
+    for (const clean of context.clean) await clean().catch();
+    tmpfs.umount(context.tmpdir);
+    await rmdir(context.tmpdir);
+    const a = output.split(' ');
+    return parseInt(a[a.length - 1]);
+}
+
 async function get() {
-    const [Cpu, Memory, OsInfo, CurrentLoad, CpuFlags, CpuTemp, Battery] = await Promise.all([
+    const [
+        Cpu, Memory, OsInfo,
+        CurrentLoad, CpuFlags, CpuTemp,
+        Battery, stack,
+    ] = await Promise.all([
         systeminformation.cpu(),
         systeminformation.mem(),
         systeminformation.osInfo(),
@@ -22,6 +69,7 @@ async function get() {
         systeminformation.cpuFlags(),
         systeminformation.cpuTemperature(),
         systeminformation.battery(),
+        stackSize(),
     ]);
     const cpu = `${Cpu.manufacturer} ${Cpu.brand}`;
     const memory = `${size(Memory.active)}/${size(Memory.total)}`;
@@ -31,13 +79,14 @@ async function get() {
     let battery;
     if (!Battery.hasbattery) battery = 'No battery';
     else battery = `${Battery.type} ${Battery.model} ${Battery.percent}%${Battery.ischarging ? ' Charging' : ''}`;
-    const _id = OsInfo.serial;
+    const mid = OsInfo.serial;
     cache.cpu = cpu;
     cache.osinfo = osinfo;
     cache.flags = flags;
-    cache._id = _id;
+    cache.mid = mid;
+    cache.stack = stack;
     return {
-        _id, cpu, memory, osinfo, load, flags, CpuTemp, battery,
+        mid, cpu, memory, osinfo, load, flags, CpuTemp, battery, stack,
     };
 }
 
@@ -49,7 +98,7 @@ async function update() {
         systeminformation.battery(),
     ]);
     const {
-        _id, cpu, osinfo, flags,
+        mid, cpu, osinfo, flags, stack,
     } = cache;
     const memory = `${size(Memory.active)}/${size(Memory.total)}`;
     const load = `${CurrentLoad.avgload}`;
@@ -57,12 +106,12 @@ async function update() {
     if (!Battery.hasbattery) battery = 'No battery';
     else battery = `${Battery.type} ${Battery.model} ${Battery.percent}%${Battery.ischarging ? ' Charging' : ''}`;
     return [
-        _id,
+        mid,
         {
             memory, load, battery, CpuTemp,
         },
         {
-            _id, cpu, memory, osinfo, load, flags, battery, CpuTemp,
+            mid, cpu, memory, osinfo, load, flags, battery, CpuTemp, stack,
         },
     ];
 }

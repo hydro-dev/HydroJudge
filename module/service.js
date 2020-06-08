@@ -15,10 +15,18 @@ async function postInit() {
     const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judger/status');
     const readCases = require('../judger/cases');
     const judger = require('../judger/judger');
+    const sysinfo = require('../judger/sysinfo');
 
     const fsp = fs.promises;
     const { problem, file, task } = global.Hydro.model;
-    const { judge } = global.Hydro.handler;
+    const { judge, misc } = global.Hydro.handler;
+
+    const info = await sysinfo.get();
+    misc.updateStatus(info);
+    setInterval(async () => {
+        const [mid, info] = await sysinfo.update();
+        misc.updateStatus({ mid, ...info });
+    }, 1200000);
 
     async function processData(folder) {
         let files = await fsp.readdir(folder);

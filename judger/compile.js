@@ -10,7 +10,7 @@ const { LANGS_FILE, LANGS } = require('./config');
 let _langs = {};
 try {
     if (LANGS) _langs = LANGS;
-    _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE));
+    else _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE));
 } catch (e) {
     log.error('Invalidate Language file %s', LANGS_FILE);
     log.error(e);

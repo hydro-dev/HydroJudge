@@ -27,11 +27,13 @@ class JudgeTask {
     async handle() {
         try {
             this.stat.handle = new Date();
-            this.pid = this.request.pid;
-            this.rid = this.request.rid;
+            this.pid = (this.request.pid || 'unknown').toString();
+            this.rid = this.request.rid.toString();
+            this.domainId = this.request.domainId;
             this.lang = this.request.lang;
             this.code = this.request.code;
             this.data = this.request.data;
+            this.config = this.request.config;
             this.next = this.getNext(this);
             this.end = this.getEnd(this.session, this.rid);
             this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
@@ -124,7 +126,7 @@ class JudgeTask {
     }
 }
 
-module.exports = class AxiosInstance {
+class Hydro {
     constructor(config) {
         this.config = config;
         this.config.detail = this.config.detail || true;
@@ -249,4 +251,7 @@ module.exports = class AxiosInstance {
         fs.writeFileSync(path.join(filePath, 'version'), version);
         return filePath;
     }
-};
+}
+
+Hydro.JudgeTask = JudgeTask;
+module.exports = Hydro;
