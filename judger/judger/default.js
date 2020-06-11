@@ -46,7 +46,7 @@ function judgeCase(c) {
             fs.writeFileSync(stdout, res.files[`${filename}.out`] || '');
         }
         let message = '';
-        let score;
+        let score = 0;
         if (status === STATUS_ACCEPTED) {
             if (time_usage_ms > ctxSubtask.subtask.time_limit_ms) {
                 status = STATUS_TIME_LIMIT_EXCEEDED;

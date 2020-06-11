@@ -33,7 +33,7 @@ function judgeCase(c) {
             },
         ]);
         let status;
-        let score;
+        let score = 0;
         let message = '';
         if (time_usage_ms > ctxSubtask.subtask.time_limit_ms) {
             status = STATUS_TIME_LIMIT_EXCEEDED;
