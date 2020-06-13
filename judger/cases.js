@@ -25,10 +25,15 @@ async function readCases(folder, extra_config = {}, args) {
         const s = fs.statSync(path.resolve(folder, d[0]));
         if (s.isDirectory()) folder = path.resolve(folder, d[0]);
     }
-    for (const [filename, handler] of map) {
-        if (fs.existsSync(path.resolve(folder, filename))) {
-            config = await handler(folder, filename, args); // eslint-disable-line no-await-in-loop
-            break;
+    if (args.config) {
+        config = readYamlCases(folder, null, args);
+    } else {
+        for (const [filename, handler] of map) {
+            if (fs.existsSync(path.resolve(folder, filename))) {
+                // eslint-disable-next-line no-await-in-loop
+                config = await handler(folder, filename, args);
+                break;
+            }
         }
     }
     if (!config) {
@@ -39,4 +44,5 @@ async function readCases(folder, extra_config = {}, args) {
     if (config.type !== 'remotejudge' && !config.count) throw new FormatError('没有找到测试数据');
     return config;
 }
+
 module.exports = readCases;

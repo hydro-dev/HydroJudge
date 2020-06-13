@@ -7,17 +7,17 @@ const readAutoCases = require('./auto');
 
 const fsp = fs.promises;
 
-module.exports = async function readYamlCases(folder, name, { next }) {
-    const
-        config = {
-            checker_type: 'default',
-            count: 0,
-            subtasks: [],
-            judge_extra_files: [],
-            user_extra_files: [],
-        };
+module.exports = async function readYamlCases(folder, name, args) {
+    const config = {
+        checker_type: 'default',
+        count: 0,
+        subtasks: [],
+        judge_extra_files: [],
+        user_extra_files: [],
+    };
+    const next = args.next;
     const checkFile = ensureFile(folder);
-    let configFile = (await fsp.readFile(path.resolve(folder, name))).toString();
+    let configFile = args.config || (await fsp.readFile(path.resolve(folder, name))).toString();
 
     configFile = yaml.safeLoad(configFile);
     config.checker_type = configFile.checker_type || 'default';

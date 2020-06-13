@@ -33,7 +33,6 @@ class JudgeTask {
             this.lang = this.request.lang;
             this.code = this.request.code;
             this.data = this.request.data;
-            this.config = this.request.config;
             this.next = this.getNext(this);
             this.end = this.getEnd(this.session, this.rid);
             this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
@@ -73,7 +72,7 @@ class JudgeTask {
         this.config = await readCases(
             this.folder,
             { detail: this.session.config.detail },
-            { next: this.next },
+            { next: this.next, config: this.request.config },
         );
         this.stat.judge = new Date();
         await judger[this.config.type || 'default'].judge(this);
@@ -88,18 +87,18 @@ class JudgeTask {
         that.nextId = 1;
         that.nextWaiting = [];
         return (data, id) => {
-            data.key = 'next';
+            data.operation = 'next';
             data.rid = that.rid;
             if (id) {
                 if (id === that.nextId) {
-                    that.session.axios.post('/judge/next', data);
+                    that.session.axios.post('/judge', data);
                     that.nextId++;
                     let t = true;
                     while (t) {
                         t = false;
                         for (const i in that.nextWaiting) {
                             if (that.nextId === that.nextWaiting[i].id) {
-                                that.session.axios.post('/judge/next', that.nextWaiting[i].data);
+                                that.session.axios.post('/judge', that.nextWaiting[i].data);
                                 that.nextId++;
                                 that.nextWaiting.splice(i, 1);
                                 t = true;
@@ -107,13 +106,13 @@ class JudgeTask {
                         }
                     }
                 } else that.nextWaiting.push({ data, id });
-            } else that.session.axios.post('/judge/next', data);
+            } else that.session.axios.post('/judge', data);
         };
     }
 
     getEnd(session, rid) { // eslint-disable-line class-methods-use-this
         return (data) => {
-            data.key = 'end';
+            data.operation = 'end';
             data.rid = rid;
             log.log({
                 status: data.status,
@@ -121,7 +120,7 @@ class JudgeTask {
                 time_ms: data.time_ms,
                 memory_kb: data.memory_kb,
             });
-            session.axios.post('/judge/end', data);
+            session.axios.post('/judge', data);
         };
     }
 }
