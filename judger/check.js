@@ -2,7 +2,7 @@ const checkers = require('./checkers');
 const { SystemError } = require('./error');
 
 async function check(config) {
-    if (!checkers[config.checker_type]) { throw new SystemError(`未知比较器类型：${config.checker_type}`); }
+    if (!checkers[config.checker_type]) throw new SystemError(`未知比较器类型：${config.checker_type}`);
     const {
         code, status, score, message,
     } = await checkers[config.checker_type].check({

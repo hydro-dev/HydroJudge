@@ -6,6 +6,7 @@ const {
 const { SystemError } = require('../error');
 const status = require('../status');
 const { cmd } = require('../utils');
+const { STATUS_ACCEPTED } = require('../status');
 
 const fsp = fs.promises;
 const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
@@ -20,6 +21,7 @@ const statusMap = {
     'Nonzero Exit Status': status.STATUS_RUNTIME_ERROR,
     'Internal Error': status.STATUS_SYSTEM_ERROR,
     'File Error': status.STATUS_SYSTEM_ERROR,
+    Signalled: status.STATUS_RUNTIME_ERROR,
 };
 
 function proc({
@@ -93,8 +95,9 @@ async function run(execute, params) {
     } catch (e) {
         throw new SystemError('Cannot connect to sandbox service');
     }
+    // FIXME: Signalled?
     const ret = {
-        status: statusMap[result.status],
+        status: statusMap[result.status] || STATUS_ACCEPTED,
         time_usage_ms: result.time / 1000000,
         memory_usage_kb: result.memory / 1024,
         files: result.files,

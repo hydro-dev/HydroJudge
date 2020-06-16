@@ -177,7 +177,7 @@ class Hydro {
 
     async consume(queue) {
         setInterval(async () => {
-            const res = await this.axios.get('/judge/fetch');
+            const res = await this.axios.get('/judge');
             console.log(res.data);
             if (res.data.task) queue.push(new JudgeTask(this, res.data.task));
         }, 1000);
@@ -201,7 +201,7 @@ class Hydro {
     }
 
     async ensureLogin() {
-        const res = await this.axios.get('/judge/noop');
+        const res = await this.axios.get('/judge?check=true');
         if (res.data.error) await this.login();
     }
 
