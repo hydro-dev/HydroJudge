@@ -2,14 +2,18 @@
 /* eslint-disable no-await-in-loop */
 const fs = require('fs');
 const path = require('path');
+const cluster = require('cluster');
 const child = require('child_process');
+const yaml = require('js-yaml');
 
 async function postInit() {
+    // Only start a single daemon
+    if (cluster.isMaster || cluster.worker.id > 1) return;
     const config = require('../judger/config');
-    // eslint-disable-next-line import/no-unresolved
-    config.LANGS = require('./__langs.json');
-    const { mkdirp, rmdir, compilerText } = require('../judger/utils');
     const log = require('../judger/log');
+    log.logger(global.Hydro.lib.logger);
+    config.LANGS = yaml.safeLoad(await global.Hydro.model.system.get('judger.langs'));
+    const { mkdirp, rmdir, compilerText } = require('../judger/utils');
     const tmpfs = require('../judger/tmpfs');
     const { FormatError, CompileError, SystemError } = require('../judger/error');
     const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judger/status');

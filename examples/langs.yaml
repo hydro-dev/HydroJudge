@@ -56,7 +56,7 @@ py3:
 php:
     type: interpreter
     code_file: foo.php
-    execute: /usr/bin/php foo.php
+    execute: /usr/bin/php ${name}
 rs:
     type: compiler
     compile: /usr/bin/rustc -O -o ${dir}/${name} ${dir}/foo.rs
@@ -70,7 +70,7 @@ hs:
 js:
     type: interpreter
     code_file: foo.js
-    execute: /usr/bin/jsc ${dir}/foo.js
+    execute: /usr/bin/jsc ${dir}/${name}
 go:
     type: compiler
     compile: /usr/bin/go build -o ${name} foo.go
@@ -79,7 +79,7 @@ go:
 rb:
     type: interpreter
     code_file: foo.rb
-    execute: /usr/bin/ruby foo.rb
+    execute: /usr/bin/ruby ${name}
 cs:
     type: compiler
     compile: /usr/bin/mcs -optimize+ -out:${dir}/${name} ${dir}/foo.cs

@@ -1,6 +1,5 @@
 {
     "id": "judger",
     "version": "1.2.0",
-    "description": "HydroJudger",
-    "master": true
+    "description": "HydroJudger"
 }
