@@ -1622,10 +1622,10 @@ https-browserify@^1.0.0:
   resolved "https://registry.yarnpkg.com/https-browserify/-/https-browserify-1.0.0.tgz#ec06c10e0a34c0f2faf199f7fd7fc78fffd03c73"
   integrity sha1-7AbBDgo0wPL68Zn3/X/Hj//QPHM=
 
-hydro-build@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/hydro-build/-/hydro-build-1.0.4.tgz#662038c60417d89e0ba087f8af04e129a828fba4"
-  integrity sha512-7T7A6ztCGMObs3KoatFyaT+D9xhC3vT2srpGesmIOtm39o6A9zNZ947IdbWvLvz/rVcuTt5Nd/xXSp8IdXlA6g==
+hydro-build@^1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/hydro-build/-/hydro-build-1.0.5.tgz#0b2cfb44df2ff9fd4c7f116f275a3a6489aa4f43"
+  integrity sha512-zG74MNONhNe3KDnTIbGdTPTjT5pm1lskMlcXh3AW64INn+40nU0mcWcSPuu3OtSGnnNxgixz0R4JBEQVE8+DRw==
   dependencies:
     friendly-errors-webpack-plugin "^1.7.0"
     js-yaml "^3.14.0"
