@@ -40,7 +40,7 @@ const terminate = async () => {
 process.on('SIGINT', terminate);
 process.on('SIGTERM', terminate);
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    console.log('Unhandled Rejection at: Promise ', p);
 });
 
 async function daemon() {

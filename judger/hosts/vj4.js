@@ -136,7 +136,6 @@ class JudgeTask {
     }
 }
 
-
 module.exports = class AxiosInstance {
     constructor(config) {
         this.config = config;
@@ -193,6 +192,7 @@ module.exports = class AxiosInstance {
     async problemData(domainId, pid, savePath, retry = 3) {
         log.info(`Getting problem data: ${this.config.host}/${domainId}/${pid}`);
         await this.ensureLogin();
+        this.next({ judge_text: '正在同步测试数据，请稍后' });
         const tmpFilePath = path.resolve(CACHE_DIR, `download_${this.config.host}_${domainId}_${pid}`);
         try {
             const res = await this.axios.get(

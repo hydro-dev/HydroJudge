@@ -12,7 +12,6 @@ const fsp = fs.promises;
 const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
 const axios = Axios.create({ baseURL: EXECUTION_HOST });
 
-
 const statusMap = {
     'Time Limit Exceeded': status.STATUS_TIME_LIMIT_EXCEEDED,
     'Memory Limit Exceeded': status.STATUS_MEMORY_LIMIT_EXCEEDED,
@@ -31,14 +30,11 @@ function proc({
     process_limit = SYSTEM_PROCESS_LIMIT,
     stdin, copyIn = {}, copyOut = [], copyOutCached = [],
 } = {}) {
-    for (const i in copyIn) {
-        if (copyIn[i].src) { copyIn[i] = { content: fs.readFileSync(copyIn[i].src).toString() }; }
-    }
     return {
         args: cmd(execute.replace(/\$\{dir\}/g, '/w')),
         env,
         files: [
-            stdin ? { content: fs.readFileSync(stdin).toString() } : { content: '' },
+            stdin ? { src: stdin } : { content: '' },
             { name: 'stdout', max: 10240 },
             { name: 'stderr', max: 10240 },
         ],
@@ -93,7 +89,8 @@ async function run(execute, params) {
         const res = await axios.post('/run', body);
         [result] = res.data;
     } catch (e) {
-        throw new SystemError('Cannot connect to sandbox service');
+        // FIXME request body larger than maxBodyLength limit
+        throw new SystemError('Cannot connect to sandbox service ', e.message);
     }
     // FIXME: Signalled?
     const ret = {
