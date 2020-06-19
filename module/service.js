@@ -8,7 +8,7 @@ const yaml = require('js-yaml');
 
 async function postInit() {
     // Only start a single daemon
-    if (cluster.isMaster || cluster.worker.id > 1) return;
+    if (cluster.isMaster || !cluster.isFirstWorker) return;
     const config = require('../judger/config');
     const log = require('../judger/log');
     log.logger(global.Hydro.lib.logger);
