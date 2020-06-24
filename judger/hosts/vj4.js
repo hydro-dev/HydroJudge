@@ -72,7 +72,9 @@ class JudgeTask {
 
     async doSubmission() {
         this.stat.cache_start = new Date();
-        this.folder = await this.session.cacheOpen(this.domain_id, this.pid);
+        this.folder = await this.session.cacheOpen(
+            this.domain_id, this.pid, (...args) => this.next(...args),
+        );
         this.stat.read_cases = new Date();
         this.config = await readCases(
             this.folder,
@@ -153,8 +155,8 @@ module.exports = class AxiosInstance {
     }
 
     async problemDataVersion(domainId, pid, retry = 3) {
-        let location; let
-            err;
+        let location;
+        let err;
         await this.ensureLogin();
         try {
             await this.axios.get(`d/${domainId}/p/${pid}/data`, { maxRedirects: 0 });
@@ -189,10 +191,10 @@ module.exports = class AxiosInstance {
         return 'unknown';
     }
 
-    async problemData(domainId, pid, savePath, retry = 3) {
+    async problemData(domainId, pid, savePath, retry = 3, next) {
         log.info(`Getting problem data: ${this.config.host}/${domainId}/${pid}`);
         await this.ensureLogin();
-        this.next({ judge_text: '正在同步测试数据，请稍后' });
+        if (next) next({ judge_text: '正在同步测试数据，请稍后' });
         const tmpFilePath = path.resolve(CACHE_DIR, `download_${this.config.host}_${domainId}_${pid}`);
         try {
             const res = await this.axios.get(
@@ -332,7 +334,7 @@ module.exports = class AxiosInstance {
         }
     }
 
-    async cacheOpen(domainId, pid) {
+    async cacheOpen(domainId, pid, next) {
         const domainDir = path.join(CACHE_DIR, this.config.host, domainId);
         const filePath = path.join(domainDir, pid);
         const version = await this.problemDataVersion(domainId, pid);
@@ -345,7 +347,7 @@ module.exports = class AxiosInstance {
             rmdir(filePath);
         }
         mkdirp(domainDir);
-        await this.problemData(domainId, pid, filePath);
+        await this.problemData(domainId, pid, filePath, 3, next);
         fs.writeFileSync(path.join(filePath, 'version'), version);
         return filePath;
     }

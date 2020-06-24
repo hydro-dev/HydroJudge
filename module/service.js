@@ -185,8 +185,14 @@ async function postInit() {
             }
             // eslint-disable-next-line no-await-in-loop
             for (const clean of this.clean) await clean().catch();
-            tmpfs.umount(this.tmpdir);
-            await rmdir(this.tmpdir);
+            setTimeout(() => {
+                try {
+                    tmpfs.umount(this.tmpdir);
+                    rmdir(this.tmpdir);
+                } catch (e) {
+                    log.error(e);
+                }
+            }, 100);
         }
 
         async submission() {
