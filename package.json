@@ -11,7 +11,8 @@
     "p-queue": "^6.4.0",
     "shell-quote": "^1.7.2",
     "systeminformation": "^4.26.9",
-    "ws": "^7.3.0"
+    "ws": "^7.3.0",
+    "snyk": "^1.355.0"
   },
   "license": "GPL-3.0-only",
   "devDependencies": {
@@ -27,7 +28,9 @@
     "webpack": "webpack --config webpack.config.js",
     "build": "cd module && hydro-build",
     "pack": "pkg .",
-    "lint": "eslint judge module --fix"
+    "lint": "eslint judge module --fix",
+    "snyk-protect": "snyk protect",
+    "prepare": "yarn run snyk-protect"
   },
   "pkg": {
     "scripts": [
@@ -38,5 +41,6 @@
       "executorserver",
       "examples/*"
     ]
-  }
+  },
+  "snyk": true
 }
