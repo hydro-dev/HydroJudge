@@ -130,7 +130,7 @@ function compilerText(stdout, stderr) {
     const ret = [];
     if (!EMPTY_STR.test(stdout)) ret.push(stdout);
     if (!EMPTY_STR.test(stderr)) ret.push(stderr);
-    ret.push('自豪的采用 HydroJudger 进行评测(github.com/hydro-dev/HydroJudger)');
+    ret.push('自豪的采用 HydroJudge 进行评测(github.com/hydro-dev/HydroJudge)');
     return ret.join('\n');
 }
 

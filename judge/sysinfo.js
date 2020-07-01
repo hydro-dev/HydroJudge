@@ -1,6 +1,6 @@
 const path = require('path');
 const systeminformation = require('systeminformation');
-const { judge } = require('./judger/run');
+const { judge } = require('./judge/run');
 const { TEMP_DIR } = require('./config');
 const { mkdirp, rmdir } = require('./utils');
 const tmpfs = require('./tmpfs');

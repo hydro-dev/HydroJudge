@@ -9,21 +9,21 @@ const yaml = require('js-yaml');
 async function postInit() {
     // Only start a single daemon
     if (cluster.isMaster || !cluster.isFirstWorker) return;
-    const config = require('../judger/config');
-    const log = require('../judger/log');
+    const config = require('../judge/config');
+    const log = require('../judge/log');
     log.logger(global.Hydro.lib.logger);
-    config.LANGS = yaml.safeLoad(await global.Hydro.model.system.get('judger.langs'));
-    const { mkdirp, rmdir, compilerText } = require('../judger/utils');
-    const tmpfs = require('../judger/tmpfs');
-    const { FormatError, CompileError, SystemError } = require('../judger/error');
-    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judger/status');
-    const readCases = require('../judger/cases');
-    const judger = require('../judger/judger');
-    const sysinfo = require('../judger/sysinfo');
+    config.LANGS = yaml.safeLoad(await global.Hydro.model.system.get('judge.langs'));
+    const { mkdirp, rmdir, compilerText } = require('../judge/utils');
+    const tmpfs = require('../judge/tmpfs');
+    const { FormatError, CompileError, SystemError } = require('../judge/error');
+    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judge/status');
+    const readCases = require('../judge/cases');
+    const judge = require('../judge/judge');
+    const sysinfo = require('../judge/sysinfo');
 
     const fsp = fs.promises;
     const { problem, file, task } = global.Hydro.model;
-    const { judge, misc } = global.Hydro.handler;
+    const { judge: _judge, misc } = global.Hydro.handler;
 
     const info = await sysinfo.get();
     misc.updateStatus(info);
@@ -102,14 +102,14 @@ async function postInit() {
             data.domainId = that.domainId;
             if (id) {
                 if (id === that.nextId) {
-                    judge.next(data);
+                    _judge.next(data);
                     that.nextId++;
                     let t = true;
                     while (t) {
                         t = false;
                         for (const i in that.nextWaiting) {
                             if (that.nextId === that.nextWaiting[i].id) {
-                                judge.next(that.nextWaiting[i].data);
+                                _judge.next(that.nextWaiting[i].data);
                                 that.nextId++;
                                 that.nextWaiting.splice(i, 1);
                                 t = true;
@@ -117,7 +117,7 @@ async function postInit() {
                         }
                     }
                 } else that.nextWaiting.push({ data, id });
-            } else judge.next(data);
+            } else _judge.next(data);
         };
     }
 
@@ -132,7 +132,7 @@ async function postInit() {
                 time_ms: data.time_ms,
                 memory_kb: data.memory_kb,
             });
-            judge.end(data);
+            _judge.end(data);
         };
     }
 
@@ -185,14 +185,8 @@ async function postInit() {
             }
             // eslint-disable-next-line no-await-in-loop
             for (const clean of this.clean) await clean().catch();
-            setTimeout(() => {
-                try {
-                    tmpfs.umount(this.tmpdir);
-                    rmdir(this.tmpdir);
-                } catch (e) {
-                    log.error(e);
-                }
-            }, 100);
+            tmpfs.umount(this.tmpdir);
+            rmdir(this.tmpdir);
         }
 
         async submission() {
@@ -205,21 +199,17 @@ async function postInit() {
                 { next: this.next },
             );
             this.stat.judge = new Date();
-            await judger[this.config.type || 'default'].judge(this);
+            await judge[this.config.type || 'default'].judge(this);
         }
 
         async run() {
             this.stat.judge = new Date();
-            await judger.run.judge(this);
+            await judge.run.judge(this);
         }
     }
 
-    task.consume({ type: 'judge' }, (t) => {
-        (new JudgeTask(t)).handle().catch((e) => log.error(e));
-    });
-    task.consume({ type: 'run' }, (t) => {
-        (new JudgeTask(t).handle().catch((e) => log.error(e)));
-    });
+    task.consume({ type: 'judge' }, (t) => (new JudgeTask(t)).handle().catch((e) => log.error(e)));
+    task.consume({ type: 'run' }, (t) => (new JudgeTask(t)).handle().catch((e) => log.error(e)));
 }
 
-global.Hydro.service.judger = module.exports = { postInit };
+global.Hydro.service.judge = module.exports = { postInit };

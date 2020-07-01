@@ -11,7 +11,7 @@ const { CACHE_DIR, TEMP_DIR } = require('../config');
 const { FormatError, CompileError, SystemError } = require('../error');
 const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status');
 const readCases = require('../cases');
-const judger = require('../judger');
+const judge = require('../judge');
 
 const fsp = fs.promises;
 
@@ -82,7 +82,7 @@ class JudgeTask {
             { next: this.next },
         );
         this.stat.judge = new Date();
-        await judger[this.config.type || 'default'].judge(this);
+        await judge[this.config.type || 'default'].judge(this);
     }
 
     async doPretest() {
@@ -93,7 +93,7 @@ class JudgeTask {
             { detail: this.session.config.detail },
             { next: this.next },
         );
-        await judger[this.config.type || 'default'].judge(this);
+        await judge[this.config.type || 'default'].judge(this);
     }
 
     getNext(that) { // eslint-disable-line class-methods-use-this

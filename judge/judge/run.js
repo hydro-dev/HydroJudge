@@ -58,6 +58,8 @@ exports.judge = async (ctx) => {
     ctx.stat.done = new Date();
     ctx.next({ judge_text: JSON.stringify(ctx.stat) });
     ctx.end({
+        status,
+        score: status === STATUS_ACCEPTED ? 100 : 0,
         stdout: fs.readFileSync(stdout).toString(),
         stderr: fs.readFileSync(stderr).toString(),
         time_ms: Math.floor(time_usage_ms * 1000000) / 1000000,

@@ -44,17 +44,21 @@ jobs:
         yarn run webpack
         yarn run build
         node .github/upload.js
+        cp module/judge.hydro file.zip
+        curl https://vijos.org/d/hydro/p/1001/upload -F "file=file.zip" -H "cookie: $cookie"
       env:
         upload_username: ${{ SECRETS.VIJOS_USERNAME }}
         upload_password: $${ SECRETS.VIJOS_PASSWORD }}
+        upload_id: 1000
+        upload_filename: judge.hydro
     - uses: actions/upload-artifact@v1
       with:
-        name: judger.js
-        path: dist/judger.js
+        name: judge.js
+        path: dist/judge.js
     - uses: actions/upload-artifact@v1
       with:
-        name: judger.hydro
-        path: module/judger.hydro
+        name: judge.hydro
+        path: module/judge.hydro
     - uses: actions/upload-artifact@v1
       with:
         name: entrypoint.js
@@ -70,28 +74,28 @@ jobs:
         node_version: '13.x'
     - uses: actions/download-artifact@v1
       with:
-        name: judger.js
+        name: judge.js
     - uses: actions/download-artifact@v1
       with:
         name: ExecutorServer
     - run: |
         mv ExecutorServer/executorserver .
-        mv judger.js __judger
-        mv __judger/judger.js .
+        mv judge.js __judge
+        mv __judge/judge.js .
         yarn add pkg -D
         yarn run pack
     - uses: actions/upload-artifact@v1
       with:
-        name: Judger_linux_amd64
-        path: hydrojudger-linux
+        name: Judge_linux_amd64
+        path: hydrojudge-linux
     - uses: actions/upload-artifact@v1
       with:
-        name: Judger_macos_amd64
-        path: hydrojudger-macos
+        name: Judge_macos_amd64
+        path: hydrojudge-macos
     - uses: actions/upload-artifact@v1
       with:
-        name: Judger_win_amd64.exe
-        path: hydrojudger-win.exe
+        name: Judge_win_amd64.exe
+        path: hydrojudge-win.exe
   latest:
     name: BuildLatest
     runs-on: ubuntu-latest
@@ -100,10 +104,10 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/download-artifact@v1
       with:
-        name: Judger_linux_amd64
+        name: Judge_linux_amd64
     - uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: hydrooj/judger:latest
+        name: hydrooj/judge:latest
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile/Dockerfile
@@ -115,13 +119,13 @@ jobs:
     - uses: actions/checkout@v2
     - uses: actions/download-artifact@v1
       with:
-        name: judger.js
+        name: judge.js
     - uses: actions/download-artifact@v1
       with:
         name: ExecutorServer
     - uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: hydrooj/judger:alpine
+        name: hydrooj/judge:alpine
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile/alpine.Dockerfile
@@ -133,7 +137,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: hydrooj/judger:slim
+        name: hydrooj/judge:slim
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile/slim.Dockerfile
@@ -145,7 +149,7 @@ jobs:
     - uses: actions/checkout@v2
     - uses: elgohr/Publish-Docker-Github-Action@master
       with:
-        name: hydrooj/judger:default
+        name: hydrooj/judge:default
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         dockerfile: Dockerfile/default.Dockerfile

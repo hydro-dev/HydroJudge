@@ -55,7 +55,7 @@ judge_extra_files:                                                              
   - extra_file.txt                                                                  #
 
 # Test Cases 测试数据列表
-# If neither CASES or SUBTASKS are set(or config.yaml doesn't exist), judger will try to locate them automaticly.
+# If neither CASES or SUBTASKS are set(or config.yaml doesn't exist), judge will try to locate them automaticly.
 # 如果 CASES 和 SUBTASKS 都没有设置或 config.yaml 不存在， 系统会自动尝试识别数据点。
 # We support these names for auto mode: 自动识别支持以下命名方式：
 # 1. [name(optional)][number].(in/out/ans)         RegExp: /^([a-zA-Z]*)([0-9]+).in$/

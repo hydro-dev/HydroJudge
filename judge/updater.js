@@ -2,7 +2,7 @@ const axios = require('axios');
 const log = require('./log');
 const { version } = require('../package.json');
 
-const remote = 'https://cdn.jsdelivr.net/gh/hydro-dev/HydroJudger/package.json';
+const remote = 'https://cdn.jsdelivr.net/gh/hydro-dev/HydroJudge/package.json';
 
 (async () => {
     let hasUpgrade = 0; let

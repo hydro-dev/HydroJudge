@@ -23,7 +23,7 @@ module.exports = async function readConfCases(folder, filename, { next }) {
             const i = line.split(' ');
             map[i[0]] = i[1]; // eslint-disable-line prefer-destructuring
         }
-        assert(map.use_builtin_judger);
+        assert(map.use_builtin_judge);
         assert(map.use_builtin_checker);
         assert(map.n_tests);
         assert(map.n_ex_tests);

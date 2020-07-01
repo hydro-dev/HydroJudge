@@ -9,7 +9,7 @@ const { CACHE_DIR, TEMP_DIR } = require('../config');
 const { FormatError, CompileError } = require('../error');
 const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status');
 const readCases = require('../cases');
-const judger = require('../judger');
+const judge = require('../judge');
 
 const fsp = fs.promises;
 const LANGS_MAP = {
@@ -94,7 +94,7 @@ class JudgeTask {
         this.stat.read_cases = new Date();
         this.config = await readCases(this.folder, { detail: this.session.config.detail });
         this.stat.judge = new Date();
-        await judger[this.config.type || 'default'].judge(this);
+        await judge[this.config.type || 'default'].judge(this);
     }
 
     async next(data) {
@@ -173,7 +173,7 @@ module.exports = class UOJ {
             transformRequest: [
                 (data) => {
                     Object.assign(data, {
-                        judger_name: uname,
+                        judge_name: uname,
                         password,
                     });
                     let ret = '';

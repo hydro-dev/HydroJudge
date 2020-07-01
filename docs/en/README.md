@@ -4,8 +4,8 @@
 
 ## Introduction
 
-HydroJudger is a judging daemon for programming contests like OI and ACM. 
-HydroJudger supports custom judge, subtask and other many new features.
+HydroJudge is a judging daemon for programming contests like OI and ACM. 
+HydroJudge supports custom judge, subtask and other many new features.
 
 ## Help Center
 
@@ -15,17 +15,17 @@ HydroJudger supports custom judge, subtask and other many new features.
 
 ### Run packed executable file (suggested)
 
-Step 1: Download the latest packed files at [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  
+Step 1: Download the latest packed files at [GithubActions](https://github.com/hydro-dev/HydroJudge/actions)  
 You should download one of the files below:
 
-- Judger_win_amd64.exe
-- Judger_linux_amd64
-- Judger_macos_amd64
+- Judge_win_amd64.exe
+- Judge_linux_amd64
+- Judge_macos_amd64
 
 Step 2: Create configuration file  
 
 ```yaml
-#$HOME/.config/hydro/judger.yaml
+#$HOME/.config/hydro/judge.yaml
 hosts:
   localhost:
     server_url: e.g. https://vijos.org
@@ -36,8 +36,8 @@ hosts:
 Step 3: Run! 
 
 ```sh
-chmod +x ./Judger
-./Judger
+chmod +x ./Judge
+./Judge
 ```
 
 ### Run with docker
@@ -52,14 +52,14 @@ hosts:
     password: Judge account password
 ```
 
-Then use `docker run --privileged -d -v /path/to/config.yaml:/config/config.yaml hydrooj/judger:default` to start.  
-**Replace /path/to/judger.yaml with your ABSOLUTE PATH!**  
+Then use `docker run --privileged -d -v /path/to/config.yaml:/config/config.yaml hydrooj/judge:default` to start.  
+**Replace /path/to/judge.yaml with your ABSOLUTE PATH!**  
 Hint: there are 4 tags built for docker:  
 
-- `hydrooj/judger:alpine` Smallest image based on AlpineLinux  
-- `hydrooj/judger:latest` No compiler installed  
-- `hydrooj/judger:default` Default compiler for vijos  
-- `hydrooj/judger:slim` C C++ Pascal  
+- `hydrooj/judge:alpine` Smallest image based on AlpineLinux  
+- `hydrooj/judge:latest` No compiler installed  
+- `hydrooj/judge:default` Default compiler for vijos  
+- `hydrooj/judge:slim` C C++ Pascal  
 
 ## Configuration
 
@@ -83,8 +83,8 @@ Use the following command to install nodejs requirements:
 yarn
 ```
 
-Put `judger.yaml` and `langs.yaml` in the configuration directory, usually
-in `$HOME/.config/hydro/`. `judger.yaml` includes the server address, user and
+Put `judge.yaml` and `langs.yaml` in the configuration directory, usually
+in `$HOME/.config/hydro/`. `judge.yaml` includes the server address, user and
 password and `langs.yaml` includes the compiler options. Examples can be found
 under the `examples` directory.
 
@@ -92,7 +92,7 @@ Run the [executor-server](https://github.com/criyle/go-judge) first,
 And use the following command to run the daemon:  
 
 ```sh
-node judger/daemon.js
+node judge/daemon.js
 ```
 
 ## Testdata format

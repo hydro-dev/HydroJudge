@@ -1,9 +1,9 @@
-FROM hydrooj/judger:alpine
+FROM hydrooj/judge:alpine
 ENV FPC_VERSION="3.0.4" \
     FPC_ARCH="x86_64-linux"
 
 RUN apk add gcc g++ && \
-    curl -sSL https://raw.githubusercontent.com/hydro-dev/HydroJudger/master/examples/langs.slim.yaml >/config/langs.yaml && \
+    curl -sSL https://raw.githubusercontent.com/hydro-dev/HydroJudge/master/examples/langs.slim.yaml >/config/langs.yaml && \
     apk add --no-cache binutils && \
     cd /tmp && \
     wget "ftp://ftp.hu.freepascal.org/pub/fpc/dist/${FPC_VERSION}/${FPC_ARCH}/fpc-${FPC_VERSION}.${FPC_ARCH}.tar" -O fpc.tar && \

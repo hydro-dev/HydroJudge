@@ -7,15 +7,15 @@ const { mkdirp } = require('./utils');
 const log = require('./log');
 
 const config = {
-    CONFIG_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'judger.yaml'),
+    CONFIG_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'judge.yaml'),
     LANGS_FILE: path.resolve(os.homedir(), '.config', 'hydro', 'langs.yaml'),
-    CACHE_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'judger'),
-    FILES_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'files', 'judger'),
+    CACHE_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'judge'),
+    FILES_DIR: path.resolve(os.homedir(), '.cache', 'hydro', 'files', 'judge'),
     SYSTEM_MEMORY_LIMIT_MB: 1024,
     SYSTEM_TIME_LIMIT_MS: 16000,
     SYSTEM_PROCESS_LIMIT: 32,
     RETRY_DELAY_SEC: 15,
-    TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judger'),
+    TEMP_DIR: path.resolve(os.tmpdir(), 'hydro', 'judge'),
     EXECUTION_HOST: 'http://localhost:5050',
     CONFIG: null,
     LANGS: null,
