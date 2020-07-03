@@ -1,4 +1,4 @@
-function warp(func) {
+function wrap(func) {
     return (...args) => {
         const dt = (new Date()).toString();
         func(dt, ...args);
@@ -7,22 +7,22 @@ function warp(func) {
 
 class Logger {
     constructor() {
-        this.log = warp(console.log, 'log');
-        this.error = warp(console.error, 'error');
-        this.info = warp(console.info, 'info');
-        this.warn = warp(console.warn, 'warn');
-        this.debug = warp(console.debug, 'debug');
+        this.log = wrap(console.log, 'log');
+        this.error = wrap(console.error, 'error');
+        this.info = wrap(console.info, 'info');
+        this.warn = wrap(console.warn, 'warn');
+        this.debug = wrap(console.debug, 'debug');
         this.submission = (id, payload = {}) => {
             console.log(`${new Date()} ${id}`, payload);
         };
     }
 
     logger(logger) {
-        this.log = warp(logger.log, 'log');
-        this.error = warp(logger.error, 'error');
-        this.info = warp(logger.info, 'info');
-        this.warn = warp(logger.warn, 'warn');
-        this.debug = warp(logger.debug, 'debug');
+        this.log = wrap(logger.log, 'log');
+        this.error = wrap(logger.error, 'error');
+        this.info = wrap(logger.info, 'info');
+        this.warn = wrap(logger.warn, 'warn');
+        this.debug = wrap(logger.debug, 'debug');
         this.submission = (id, payload = {}) => {
             logger.log(`${new Date()} ${id}`, payload);
         };
