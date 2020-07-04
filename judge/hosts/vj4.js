@@ -313,8 +313,14 @@ module.exports = class AxiosInstance {
     }
 
     async processData(folder) { // eslint-disable-line class-methods-use-this
-        let files = await fsp.readdir(folder); let
-            ini = false;
+        let files = await fsp.readdir(folder);
+        let ini = false;
+        if (files.length <= 2) {
+            if (files.length === 2) files.splice(files.indexOf('version'), 1);
+            const s = fs.statSync(path.resolve(folder, files[0]));
+            if (s.isDirectory()) folder = path.resolve(folder, files[0]);
+        }
+        files = await fsp.readdir(folder);
         for (const i of files) {
             if (i.toLowerCase() === 'config.ini') {
                 ini = true;

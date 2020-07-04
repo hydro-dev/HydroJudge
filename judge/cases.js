@@ -21,9 +21,9 @@ async function readCases(folder, extra_config = {}, args) {
     let config;
     const d = fs.readdirSync(folder);
     if (d.length === 2) {
-        d.splice(d.indexOf('version'));
+        d.splice(d.indexOf('version'), 1);
         const s = fs.statSync(path.resolve(folder, d[0]));
-        if (s.isDirectory()) folder = path.resolve(folder, d[0]);
+        if (s.isDirectory()) return await readCases(path.resolve(folder, d[0]), extra_config, args);
     }
     if (args.config) {
         config = readYamlCases(folder, null, args);
