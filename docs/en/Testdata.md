@@ -19,7 +19,7 @@ Testdata.zip
 +- output2.out
 ```
 
-Judger will use `1s, 256MB` limit as default.
+Judge will use `1s, 256MB` limit as default.
 Filename should be as below:
 
 Input files: `([a-zA-Z0-9]*[0-9]+.in)|(input[0-9]+.txt)`  

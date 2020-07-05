@@ -1,15 +1,15 @@
 const config = {
     mode: 'production',
     entry: {
-        judger: './judger/daemon.js',
-        entrypoint: './judger/entrypoint.js'
+        judge: './judge/daemon.js',
+        entrypoint: './judge/entrypoint.js',
     },
     output: {
         filename: '[name].js',
-        path: __dirname + '/dist'
+        path: `${__dirname}/dist`,
     },
     target: 'node',
-    module: {}
+    module: {},
 };
 
 module.exports = config;

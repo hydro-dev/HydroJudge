@@ -3,8 +3,8 @@
 [English](docs/en/README.md)
 
 ## 介绍
-HydroJudger 是一个用于信息学算法竞赛的高效评测后端。  
-和之前的版本相比，HydroJudger 支持了自定义比较器、子任务、交互器等多种新特性。  
+HydroJudge 是一个用于信息学算法竞赛的高效评测后端。  
+和之前的版本相比，HydroJudge 支持了自定义比较器、子任务、交互器等多种新特性。  
 
 
 ## 帮助中心
@@ -12,36 +12,6 @@ HydroJudger 是一个用于信息学算法竞赛的高效评测后端。
 - [RemoteJudge](docs/zh/RemoteJudge.md)
 
 ## 安装与使用
-
-### 直接运行可执行文件
-### Run packed executable file (suggested)
-
-1. 从 [GithubActions](https://github.com/hydro-dev/HydroJudger/actions)  下载自动打包的可执行文件。  
-根据您使用的操作系统选择下面三者中的一个：  
-
-- Judger_win_amd64.exe
-- Judger_linux_amd64
-- Judger_macos_amd64
-
-2. 创建配置文件
-
-`$HOME` 为用户目录，在linux下通常为`/root`或`/home/用户名`，在Windows下通常为`C:\Users\用户名`  
-
-```yaml
-#$HOME/.config/hydro/judger.yaml
-hosts:
-  localhost:
-    server_url: e.g. https://vijos.org
-    uname: Judge account username
-    password: Judge account password
-```
-
-3. 运行
-
-```sh
-chmod +x ./Judger
-./Judger
-```
 
 ### 使用docker部署
 
@@ -56,15 +26,15 @@ hosts:
     password: 填写密码
 ```
 
-之后使用 `docker run -d --privileged -v /path/to/config.yaml:/config/config.yaml hydrooj/judger:default` 即可启动。
+之后使用 `docker run -d --privileged -v /path/to/config.yaml:/config/config.yaml hydrooj/judge:default` 即可启动。
 **将 /path/to/config.yaml 替换为您创建的文件的绝对路径！** 
 
 提示：为docker预构建了四个版本的镜像：
 
-- `hydrooj/judger:alpine` 基于AlpineLinux构建的最精简镜像  
-- `hydrooj/judger:latest` 未安装任何编译器，需手动安装  
-- `hydrooj/judger:default` Vijos默认语言的编译器支持  
-- `hydrooj/judger:slim` 基于AlpineLinux，预装了 C C++ Pascal 语言支持  
+- `hydrooj/judge:alpine` 基于AlpineLinux构建的最精简镜像  
+- `hydrooj/judge:latest` 未安装任何编译器，需手动安装  
+- `hydrooj/judge:default` Vijos默认语言的编译器支持  
+- `hydrooj/judge:slim` 基于AlpineLinux，预装了 C C++ Pascal 语言支持  
 
 ### 手动安装
 
@@ -80,12 +50,12 @@ npm install -g yarn # 如果已经安装yarn请跳过该步骤
 yarn
 ```
 
-创建设置目录 `~/.config/hydro` ，并放置 `judger.yaml` ，配置文件格式详见 [examples/judger.yaml](examples/judger.yaml)  
+创建设置目录 `~/.config/hydro` ，并放置 `judge.yaml` ，配置文件格式详见 [examples/judge.yaml](examples/judge.yaml)  
 启动 [go-sandbox](https://github.com/criyle/go-judge)，监听端口5050。  
 您应当以 root 身份运行。  
 
 ```sh
-node judger/daemon.js
+node judge/daemon.js
 ```
 
 ## 设置
