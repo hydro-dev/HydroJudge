@@ -2,11 +2,11 @@ const Axios = require('axios');
 const fs = require('fs');
 const {
     SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT, SYSTEM_TIME_LIMIT_MS, EXECUTION_HOST,
-} = require('../config');
-const { SystemError } = require('../error');
-const status = require('../status');
-const { cmd } = require('../utils');
-const { STATUS_ACCEPTED } = require('../status');
+} = require('./config');
+const { SystemError } = require('./error');
+const status = require('./status');
+const { cmd } = require('./utils');
+const { STATUS_ACCEPTED } = require('./status');
 
 const fsp = fs.promises;
 const env = ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME=/w'];
