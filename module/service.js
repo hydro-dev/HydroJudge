@@ -146,7 +146,7 @@ async function postInit() {
         async handle() {
             try {
                 this.stat.handle = new Date();
-                this.event = this.request.event;
+                this.event = this.request.event || 'judge';
                 this.pid = (this.request.pid || 'unknown').toString();
                 this.rid = this.request.rid.toString();
                 this.domainId = this.request.domainId;
@@ -161,9 +161,9 @@ async function postInit() {
                 mkdirp(this.tmpdir);
                 tmpfs.mount(this.tmpdir, '64m');
                 log.submission(`${this.rid}`, { pid: this.pid });
-                if (!this.event) await this.submission();
+                if (this.event === 'judge') await this.submission();
                 else if (this.event === 'run') await this.run();
-                else throw new SystemError(`Unsupported type: ${this.type}`);
+                else throw new SystemError(`Unsupported type: ${this.event}`);
             } catch (e) {
                 if (e instanceof CompileError) {
                     this.next({ compiler_text: compilerText(e.stdout, e.stderr) });
