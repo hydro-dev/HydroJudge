@@ -35,11 +35,11 @@ function proc({
         env,
         files: [
             stdin ? { src: stdin } : { content: '' },
-            { name: 'stdout', max: 10240 },
-            { name: 'stderr', max: 10240 },
+            { name: 'stdout', max: 1024 * 1024 * 16 },
+            { name: 'stderr', max: 1024 * 1024 * 16 },
         ],
         cpuLimit: time_limit_ms * 1000 * 1000,
-        realCpuLimit: time_limit_ms * 2000 * 1000,
+        realCpuLimit: time_limit_ms * 3000 * 1000,
         memoryLimit: memory_limit_mb * 1024 * 1024,
         procLimit: process_limit,
         copyIn,
@@ -98,6 +98,7 @@ async function run(execute, params) {
         time_usage_ms: result.time / 1000000,
         memory_usage_kb: result.memory / 1024,
         files: result.files,
+        code: result.exitStatus,
     };
     result.files = result.files || {};
     if (params.stdout) await fsp.writeFile(params.stdout, result.files.stdout || '');
