@@ -40,10 +40,10 @@ jobs:
         node-version: '13.x'
     - run: |
         yarn
-        yarn add webpack webpack-cli -D
         yarn run webpack
-        yarn run build
-        cp module/judge.hydro judge.zip
+        mkdir hydrojudge
+        cp dist/service.js package.json setting.yaml hydrojudge
+        zip -r judge.zip hydrojudge
         chmod +x .github/upload.sh
         ./.github/upload.sh
       env:
@@ -57,12 +57,12 @@ jobs:
         path: dist/judge.js
     - uses: actions/upload-artifact@v1
       with:
-        name: judge.hydro
-        path: module/judge.hydro
-    - uses: actions/upload-artifact@v1
-      with:
         name: entrypoint.js
         path: dist/entrypoint.js
+    - uses: actions/upload-artifact@v1
+      with:
+        name: judge.hydro
+        path: hydrojudge
   pkg:
     name: Package
     runs-on: ubuntu-latest

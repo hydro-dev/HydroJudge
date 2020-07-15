@@ -9,17 +9,17 @@ const yaml = require('js-yaml');
 async function postInit() {
     // Only start a single daemon
     if (cluster.isMaster || !cluster.isFirstWorker) return;
-    const config = require('../judge/config');
-    const log = require('../judge/log');
+    const config = require('./judge/config');
+    const log = require('./judge/log');
     log.logger(global.Hydro.lib.logger);
     config.LANGS = yaml.safeLoad(await global.Hydro.model.system.get('judge.langs'));
-    const { mkdirp, rmdir, compilerText } = require('../judge/utils');
-    const tmpfs = require('../judge/tmpfs');
-    const { FormatError, CompileError, SystemError } = require('../judge/error');
-    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../judge/status');
-    const readCases = require('../judge/cases');
-    const judge = require('../judge/judge');
-    const sysinfo = require('../judge/sysinfo');
+    const { mkdirp, rmdir, compilerText } = require('./judge/utils');
+    const tmpfs = require('./judge/tmpfs');
+    const { FormatError, CompileError, SystemError } = require('./judge/error');
+    const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./judge/status');
+    const readCases = require('./judge/cases');
+    const judge = require('./judge/judge');
+    const sysinfo = require('./judge/sysinfo');
 
     const fsp = fs.promises;
     const { problem, file, task } = global.Hydro.model;

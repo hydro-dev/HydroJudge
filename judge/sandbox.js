@@ -100,6 +100,9 @@ async function run(execute, params) {
         files: result.files,
         code: result.exitStatus,
     };
+    if (ret.time_usage_ms >= (params.time_limit_ms || SYSTEM_TIME_LIMIT_MS)) {
+        ret.status = status.STATUS_TIME_LIMIT_EXCEEDED;
+    }
     result.files = result.files || {};
     if (params.stdout) await fsp.writeFile(params.stdout, result.files.stdout || '');
     else ret.stdout = result.files.stdout || '';

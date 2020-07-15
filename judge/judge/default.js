@@ -65,7 +65,7 @@ function judgeCase(c) {
                     detail: ctx.config.detail,
                 });
             }
-        } else if (code) {
+        } else if (status === STATUS_RUNTIME_ERROR && code) {
             status = STATUS_RUNTIME_ERROR;
             if (code < 32) message = signals[code];
             else message = `您的程序返回了 ${code}.`;
