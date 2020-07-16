@@ -1,5 +1,5 @@
 const Axios = require('axios');
-const fs = require('fs');
+const fs = require('fs-extra');
 const {
     SYSTEM_MEMORY_LIMIT_MB, SYSTEM_PROCESS_LIMIT, SYSTEM_TIME_LIMIT_MS, EXECUTION_HOST,
 } = require('./config');

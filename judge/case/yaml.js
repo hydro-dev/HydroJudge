@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const yaml = require('js-yaml');
 const path = require('path');
 const { FormatError } = require('../error');

@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const { SystemError } = require('../error');
 const { ensureFile } = require('../utils');

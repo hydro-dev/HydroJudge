@@ -1,5 +1,5 @@
 const yaml = require('js-yaml');
-const fs = require('fs');
+const fs = require('fs-extra');
 const { run, del } = require('./sandbox');
 const { CompileError, SystemError } = require('./error');
 const log = require('./log');
@@ -10,11 +10,11 @@ const { LANGS_FILE, LANGS } = require('./config');
 let _langs = {};
 try {
     if (LANGS) _langs = LANGS;
-    else _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE));
+    else _langs = yaml.safeLoad(fs.readFileSync(LANGS_FILE).toString());
 } catch (e) {
     log.error('Invalidate Language file %s', LANGS_FILE);
     log.error(e);
-    process.exit(1);
+    if (!global.Hydro) process.exit(1);
 }
 async function compile(lang, code, target, copyIn, next) {
     if (!_langs[lang]) throw new SystemError(`不支持的语言：${lang}`);

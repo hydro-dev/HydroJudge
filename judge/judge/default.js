@@ -1,6 +1,6 @@
 const { default: Queue } = require('p-queue');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs-extra');
 const {
     STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
     STATUS_TIME_LIMIT_EXCEEDED, STATUS_MEMORY_LIMIT_EXCEEDED,
