@@ -1,12 +1,12 @@
 /* eslint-disable no-await-in-loop */
-const axios = require('axios');
-const fs = require('fs');
 const path = require('path');
 const child = require('child_process');
+const axios = require('axios');
+const fs = require('fs-extra');
 const tmpfs = require('../tmpfs');
 const log = require('../log');
 const sysinfo = require('../sysinfo');
-const { mkdirp, rmdir, compilerText } = require('../utils');
+const { compilerText } = require('../utils');
 const { CACHE_DIR, TEMP_DIR } = require('../config');
 const { FormatError, CompileError } = require('../error');
 const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status');
@@ -37,7 +37,7 @@ class JudgeTask {
             this.end = this.getEnd(this.session, this.rid);
             this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
             this.clean = [];
-            mkdirp(this.tmpdir);
+            fs.ensureDirSync(this.tmpdir);
             tmpfs.mount(this.tmpdir, '64m');
             log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
             await this.submission();
@@ -62,7 +62,7 @@ class JudgeTask {
         }
         for (const clean of this.clean) await clean().catch();
         tmpfs.umount(this.tmpdir);
-        await rmdir(this.tmpdir);
+        fs.removeSync(this.tmpdir);
     }
 
     async submission() {
@@ -159,7 +159,7 @@ class Hydro {
                 w.on('finish', resolve);
                 w.on('error', reject);
             });
-            mkdirp(path.dirname(savePath));
+            fs.ensureDirSync(path.dirname(savePath));
             await new Promise((resolve, reject) => {
                 child.exec(`unzip ${tmpFilePath} -d ${savePath}`, (e) => {
                     if (e) reject(e);
@@ -243,9 +243,9 @@ class Hydro {
                 ver = fs.readFileSync(path.join(filePath, 'version')).toString();
             } catch (e) { /* ignore */ }
             if (version === ver) return filePath;
-            rmdir(filePath);
+            fs.removeSync(filePath);
         }
-        mkdirp(filePath);
+        fs.ensureDirSync(filePath);
         await this.problemData(pid, filePath);
         fs.writeFileSync(path.join(filePath, 'version'), version);
         return filePath;

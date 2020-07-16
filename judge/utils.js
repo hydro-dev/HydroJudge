@@ -12,38 +12,6 @@ const MEMORY_RE = /^([0-9]+(?:\.[0-9]*)?)([kmg])b?$/i;
 const MEMORY_UNITS = { k: 0.1, m: 1, g: 1024 };
 const EMPTY_STR = /^[ \r\n\t]*$/i;
 
-function mkdirp(p) {
-    p = path.resolve(p);
-    try {
-        fs.mkdirSync(p);
-    } catch (err0) {
-        if (err0.code === 'ENOENT') {
-            mkdirp(path.dirname(p));
-            fs.mkdirSync(p);
-        } else {
-            let stat;
-            try {
-                stat = fs.statSync(p);
-            } catch (err1) {
-                throw err0;
-            }
-            if (!stat.isDirectory()) throw err0;
-        }
-    }
-}
-
-function copyFolder(src, dst) {
-    if (!fs.existsSync(dst)) mkdirp(dst);
-    if (!fs.existsSync(src)) return false;
-    const dirs = fs.readdirSync(src);
-    for (const item of dirs) {
-        const itemPath = path.join(src, item);
-        const temp = fs.statSync(itemPath);
-        if (temp.isFile()) fs.copyFileSync(itemPath, path.join(dst, item));
-        else if (temp.isDirectory()) copyFolder(itemPath, path.join(dst, item));
-    }
-}
-
 function parseTimeMS(str) {
     const match = TIME_RE.exec(str);
     if (!match) throw new FormatError(str, 'error parsing time');
@@ -62,28 +30,6 @@ function sleep(timeout) {
             resolve();
         }, timeout);
     });
-}
-
-function rmdir(path, recursive = true) {
-    if (!fs.existsSync(path)) return;
-    if (recursive) {
-        fs.readdirSync(path).forEach((file) => {
-            const curPath = `${path}/${file}`;
-            if (fs.statSync(curPath).isDirectory()) rmdir(curPath);
-            else fs.unlinkSync(curPath);
-        });
-    }
-    fs.rmdirSync(path);
-}
-
-function cleandir(path) {
-    if (fs.existsSync(path)) {
-        fs.readdirSync(path).forEach((file) => {
-            const curPath = `${path}/${file}`;
-            if (fs.statSync(curPath).isDirectory()) rmdir(curPath);
-            else fs.unlinkSync(curPath);
-        });
-    }
 }
 
 function parseFilename(path) {
@@ -167,17 +113,13 @@ function ensureFile(folder) {
 
 module.exports = {
     Queue,
-    mkdirp,
     max,
-    rmdir,
     sleep,
-    copyFolder,
     compilerText,
     copyInDir,
     parseMemoryMB,
     parseTimeMS,
     parseFilename,
     cmd: parse,
-    cleandir,
     ensureFile,
 };

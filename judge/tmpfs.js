@@ -1,9 +1,8 @@
 const child = require('child_process');
 const fs = require('fs');
-const { mkdirp } = require('./utils');
 
 function mount(path, size = '32m') {
-    if (!fs.existsSync(path)) mkdirp(path);
+    fs.ensureDirSync(path);
     child.execSync(`mount tmpfs ${path} -t tmpfs -o size=${size}`);
 }
 

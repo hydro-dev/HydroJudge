@@ -1,9 +1,8 @@
 const argv = require('minimist')(process.argv.slice(2));
 const os = require('os');
 const child = require('child_process');
-const fs = require('fs');
 const path = require('path');
-const { mkdirp } = require('./utils');
+const fs = require('fs-extra');
 const log = require('./log');
 
 const config = {
@@ -72,8 +71,8 @@ if (process.env.START_EXECUTOR_SERVER) {
     }
     p.on('error', (error) => console.error(error));
 }
-if (!fs.existsSync(config.LANGS_FILE)) {
-    if (!fs.existsSync(path.dirname(config.LANGS_FILE))) mkdirp(path.dirname(config.LANGS_FILE));
+if (!(fs.existsSync(config.LANGS_FILE) || global.Hydro)) {
+    fs.ensureDirSync(path.dirname(config.LANGS_FILE));
     if (fs.existsSync(path.join(__dirname, '..', 'examples', 'langs.yaml'))) {
         log.error('Language file not found, using default.');
         config.LANGS_FILE = path.join(__dirname, '..', 'examples', 'langs.yaml');

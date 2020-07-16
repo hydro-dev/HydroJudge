@@ -1,8 +1,8 @@
 const path = require('path');
+const fs = require('fs-extra');
 const systeminformation = require('systeminformation');
 const { judge } = require('./judge/run');
 const { TEMP_DIR } = require('./config');
-const { mkdirp, rmdir } = require('./utils');
 const tmpfs = require('./tmpfs');
 
 function size(s, base = 1) {
@@ -45,13 +45,13 @@ int main(){
         },
     };
     context.tmpdir = path.resolve(TEMP_DIR, 'tmp', 'sysinfo');
-    mkdirp(context.tmpdir);
+    fs.ensureDirSync(context.tmpdir);
     tmpfs.mount(context.tmpdir, '64m');
     await judge(context).catch((e) => console.error(e));
     // eslint-disable-next-line no-await-in-loop
     for (const clean of context.clean) await clean().catch();
     tmpfs.umount(context.tmpdir);
-    await rmdir(context.tmpdir);
+    fs.removeSync(context.tmpdir);
     const a = output.split(' ');
     return parseInt(a[a.length - 1]);
 }

@@ -1,10 +1,10 @@
 // Hydro Integration
 /* eslint-disable no-await-in-loop */
-const fs = require('fs');
 const path = require('path');
 const cluster = require('cluster');
 const child = require('child_process');
 const yaml = require('js-yaml');
+const fs = require('fs-extra');
 
 async function postInit() {
     // Only start a single daemon
@@ -13,7 +13,7 @@ async function postInit() {
     const log = require('./judge/log');
     log.logger(global.Hydro.lib.logger);
     config.LANGS = yaml.safeLoad(await global.Hydro.model.system.get('judge.langs'));
-    const { mkdirp, rmdir, compilerText } = require('./judge/utils');
+    const { compilerText } = require('./judge/utils');
     const tmpfs = require('./judge/tmpfs');
     const { FormatError, CompileError, SystemError } = require('./judge/error');
     const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('./judge/status');
@@ -65,7 +65,7 @@ async function postInit() {
             w.on('finish', resolve);
             w.on('error', reject);
         });
-        mkdirp(path.dirname(savePath));
+        fs.ensureDirSync(path.dirname(savePath));
         await new Promise((resolve, reject) => {
             child.exec(`unzip ${tmpFilePath} -d ${savePath}`, (e) => {
                 if (e) reject(e);
@@ -85,9 +85,9 @@ async function postInit() {
                 ver = fs.readFileSync(path.join(filePath, 'version')).toString();
             } catch (e) { /* ignore */ }
             if (version === ver) return filePath;
-            rmdir(filePath);
+            fs.removeSync(filePath);
         }
-        mkdirp(filePath);
+        fs.ensureDirSync(filePath);
         await problemData(domainId, pid, filePath);
         fs.writeFileSync(path.join(filePath, 'version'), version);
         return filePath;
@@ -158,7 +158,7 @@ async function postInit() {
                 this.end = getEnd(this.domainId, this.rid);
                 this.tmpdir = path.resolve(config.TEMP_DIR, 'tmp', this.rid);
                 this.clean = [];
-                mkdirp(this.tmpdir);
+                fs.ensureDirSync(this.tmpdir);
                 tmpfs.mount(this.tmpdir, '64m');
                 log.submission(`${this.rid}`, { pid: this.pid });
                 if (this.event === 'judge') await this.submission();
@@ -186,7 +186,7 @@ async function postInit() {
             // eslint-disable-next-line no-await-in-loop
             for (const clean of this.clean) await clean().catch();
             tmpfs.umount(this.tmpdir);
-            rmdir(this.tmpdir);
+            fs.removeSync(this.tmpdir);
         }
 
         async submission() {

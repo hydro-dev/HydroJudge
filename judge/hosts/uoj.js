@@ -1,10 +1,10 @@
-const axios = require('axios');
-const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 const child = require('child_process');
+const axios = require('axios');
+const fs = require('fs-extra');
 const log = require('../log');
-const { mkdirp, rmdir, compilerText } = require('../utils');
+const { compilerText } = require('../utils');
 const { CACHE_DIR, TEMP_DIR } = require('../config');
 const { FormatError, CompileError } = require('../error');
 const { STATUS_COMPILE_ERROR, STATUS_SYSTEM_ERROR } = require('../status');
@@ -47,7 +47,7 @@ class JudgeTask {
             compiler_text: [],
             judge_text: [],
         };
-        mkdirp(this.tmpdir);
+        fs.ensureDirSync(this.tmpdir);
         log.submission(`${this.host}/${this.rid}`, { pid: this.pid });
         try {
             await this.submission();
@@ -70,7 +70,7 @@ class JudgeTask {
                 });
             }
         }
-        await rmdir(this.tmpdir);
+        fs.removeSync(this.tmpdir);
     }
 
     dir(p) {
@@ -194,12 +194,12 @@ module.exports = class UOJ {
                 ver = fs.readFileSync(path.join(filePath, 'version')).toString();
             } catch (e) { /* ignore */ }
             if (version === ver) return `${filePath}/${pid}`;
-            rmdir(filePath);
+            fs.removeSync(filePath);
         }
         log.info(`Getting problem data: ${this.config.host}/${pid}`);
         const tmpFilePath = path.resolve(CACHE_DIR, `download_${this.config.host}_${pid}`);
         await this.download(`/problem/${pid}`, tmpFilePath);
-        mkdirp(path.dirname(filePath));
+        fs.ensureDirSync(path.dirname(filePath));
         await new Promise((resolve, reject) => {
             child.exec(`unzip ${tmpFilePath} -d ${filePath}`, (e) => {
                 if (e) reject(e);
