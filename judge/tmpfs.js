@@ -1,5 +1,5 @@
 const child = require('child_process');
-const fs = require('fs');
+const fs = require('fs-extra');
 
 function mount(path, size = '32m') {
     fs.ensureDirSync(path);

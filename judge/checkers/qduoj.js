@@ -3,7 +3,7 @@
  * argv[2]：选手输出
  * exit code：返回判断结果
  */
-const fs = require('fs');
+const fs = require('fs-extra');
 const { run } = require('../sandbox');
 const { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status');
 const _compile = require('../compile');

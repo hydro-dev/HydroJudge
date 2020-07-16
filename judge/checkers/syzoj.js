@@ -6,7 +6,7 @@
  * stdout：输出最终得分
  * stderr：输出错误报告
  */
-const fs = require('fs');
+const fs = require('fs-extra');
 const { run } = require('../sandbox');
 const { SystemError } = require('../error');
 const { STATUS_ACCEPTED, STATUS_WRONG_ANSWER } = require('../status');

@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const {
     STATUS_JUDGING, STATUS_COMPILING, STATUS_RUNTIME_ERROR,
