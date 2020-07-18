@@ -34,7 +34,7 @@ class JudgeTask {
             this.code = this.request.code;
             this.data = this.request.data;
             this.next = this.getNext(this);
-            this.end = this.getEnd(this.session, this.rid);
+            this.end = this.getEnd(this.session, this.domainId, this.rid);
             this.tmpdir = path.resolve(TEMP_DIR, 'tmp', this.host, this.rid);
             this.clean = [];
             fs.ensureDirSync(this.tmpdir);
@@ -88,7 +88,20 @@ class JudgeTask {
         that.nextWaiting = [];
         return (data, id) => {
             data.operation = 'next';
+            data.domainId = that.domainId;
             data.rid = that.rid;
+            data.time = data.time_ms || data.time;
+            data.memory = data.memory_kb || data.memory;
+            data.message = data.judge_text || data.message;
+            data.compilerText = data.compiler_text || data.compilerText;
+            if (data.case) {
+                data.case = {
+                    status: data.case.status,
+                    time: data.case.time_ms || data.case.time,
+                    memory: data.case.memory_kb || data.case.memory,
+                    message: data.judge_text || data.message || data.judgeText,
+                };
+            }
             if (id) {
                 if (id === that.nextId) {
                     that.session.axios.post('/judge', data);
@@ -110,10 +123,13 @@ class JudgeTask {
         };
     }
 
-    getEnd(session, rid) { // eslint-disable-line class-methods-use-this
+    getEnd(session, domainId, rid) { // eslint-disable-line class-methods-use-this
         return (data) => {
             data.operation = 'end';
+            data.domainId = domainId;
             data.rid = rid;
+            data.time = data.time_ms || data.time;
+            data.memory = data.memory_kb || data.memory;
             log.log({
                 status: data.status,
                 score: data.score,

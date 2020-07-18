@@ -21,7 +21,6 @@ async function postInit() {
     const judge = require('./judge/judge');
     const sysinfo = require('./judge/sysinfo');
 
-    const fsp = fs.promises;
     const { problem, file, task } = global.Hydro.model;
     const { judge: _judge, misc } = global.Hydro.handler;
 
@@ -33,24 +32,24 @@ async function postInit() {
     }, 1200000);
 
     async function processData(folder) {
-        let files = await fsp.readdir(folder);
+        let files = await fs.readdir(folder);
         let ini = false;
         for (const i of files) {
             if (i.toLowerCase() === 'config.ini') {
                 ini = true;
-                await fsp.rename(`${folder}/${i}`, `${folder}/config.ini`);
+                await fs.rename(`${folder}/${i}`, `${folder}/config.ini`);
                 break;
             }
         }
         if (ini) {
             for (const i of files) {
-                if (i.toLowerCase() === 'input') await fsp.rename(`${folder}/${i}`, `${folder}/input`);
-                else if (i.toLowerCase() === 'output') await fsp.rename(`${folder}/${i}`, `${folder}/output`);
+                if (i.toLowerCase() === 'input') await fs.rename(`${folder}/${i}`, `${folder}/input`);
+                else if (i.toLowerCase() === 'output') await fs.rename(`${folder}/${i}`, `${folder}/output`);
             }
-            files = await fsp.readdir(`${folder}/input`);
-            for (const i of files) await fsp.rename(`${folder}/input/${i}`, `${folder}/input/${i.toLowerCase()}`);
-            files = await fsp.readdir(`${folder}/output`);
-            for (const i of files) await fsp.rename(`${folder}/output/${i}`, `${folder}/output/${i.toLowerCase()}`);
+            files = await fs.readdir(`${folder}/input`);
+            for (const i of files) await fs.rename(`${folder}/input/${i}`, `${folder}/input/${i.toLowerCase()}`);
+            files = await fs.readdir(`${folder}/output`);
+            for (const i of files) await fs.rename(`${folder}/output/${i}`, `${folder}/output/${i.toLowerCase()}`);
         }
     }
 
@@ -72,7 +71,7 @@ async function postInit() {
                 else resolve();
             });
         });
-        await fsp.unlink(tmpFilePath);
+        await fs.unlink(tmpFilePath);
         await processData(savePath).catch();
         return savePath;
     }
@@ -97,9 +96,20 @@ async function postInit() {
         that.nextId = 1;
         that.nextWaiting = [];
         return (data, id) => {
-            data.key = 'next';
-            data.rid = that.rid;
             data.domainId = that.domainId;
+            data.rid = that.rid;
+            data.time = data.time_ms || data.time;
+            data.memory = data.memory_kb || data.memory;
+            data.message = data.judge_text || data.message;
+            data.compilerText = data.compiler_text || data.compilerText;
+            if (data.case) {
+                data.case = {
+                    status: data.case.status,
+                    time: data.case.time_ms || data.case.time,
+                    memory: data.case.memory_kb || data.case.memory,
+                    message: data.judge_text || data.message || data.judgeText,
+                };
+            }
             if (id) {
                 if (id === that.nextId) {
                     _judge.next(data);
@@ -126,6 +136,9 @@ async function postInit() {
             data.key = 'end';
             data.rid = rid;
             data.domainId = domainId;
+            data.rid = rid;
+            data.time = data.time_ms || data.time;
+            data.memory = data.memory_kb || data.memory;
             log.log({
                 status: data.status,
                 score: data.score,
