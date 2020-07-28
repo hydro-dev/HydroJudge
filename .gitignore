@@ -5,3 +5,6 @@ dist
 __*
 .build
 *.hydro
+*.js.map
+*.d.ts
+service.js
