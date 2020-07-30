@@ -1,6 +1,6 @@
 {
   "name": "@hydrooj/hydrojudge",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "main": "judge/daemon.js",
   "author": "masnn",
   "os": [
@@ -8,6 +8,7 @@
   ],
   "dependencies": {
     "axios": "^0.19.0",
+    "bson": "^4.0.4",
     "fs-extra": "^9.0.1",
     "js-yaml": "^3.14.0",
     "lodash": "^4.17.19",
@@ -19,15 +20,16 @@
   },
   "license": "GPL-3.0-only",
   "devDependencies": {
+    "@types/bson": "^4.0.2",
     "@types/fs-extra": "^9.0.1",
     "@types/js-yaml": "^3.12.5",
-    "@types/node": "^14.0.26",
+    "@types/node": "^14.0.27",
     "eslint": "^7.5.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
-    "hydrooj": "^2.10.7",
+    "hydrooj": "^2.10.12",
     "typescript": "^3.9.7",
-    "webpack": "^4.44.0",
+    "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
   "bin": {

@@ -4,6 +4,7 @@ import 'hydrooj';
 import path from 'path';
 import cluster from 'cluster';
 import child from 'child_process';
+import { ObjectID } from 'bson';
 import yaml from 'js-yaml';
 import fs from 'fs-extra';
 
@@ -55,7 +56,7 @@ async function postInit() {
         }
     }
 
-    async function problemData(domainId, pid, savePath) {
+    async function problemData(domainId: string, pid: string, savePath: string) {
         const tmpFilePath = path.resolve(config.CACHE_DIR, `download_${domainId}_${pid}`);
         const pdoc = await problem.get(domainId, pid);
         const data = await file.get(pdoc.data);
@@ -78,10 +79,10 @@ async function postInit() {
         return savePath;
     }
 
-    async function cacheOpen(domainId, pid, version) {
+    async function cacheOpen(domainId: string, pid: string, version: string) {
         const filePath = path.join(config.CACHE_DIR, domainId, pid);
         if (fs.existsSync(filePath)) {
-            let ver;
+            let ver: string;
             try {
                 ver = fs.readFileSync(path.join(filePath, 'version')).toString();
             } catch (e) { /* ignore */ }
@@ -99,7 +100,7 @@ async function postInit() {
         that.nextWaiting = [];
         return (data, id) => {
             data.domainId = that.domainId;
-            data.rid = that.rid;
+            data.rid = new ObjectID(that.rid);
             data.time = data.time_ms || data.time;
             data.memory = data.memory_kb || data.memory;
             data.message = data.judge_text || data.message;
@@ -133,12 +134,11 @@ async function postInit() {
         };
     }
 
-    function getEnd(domainId, rid) {
+    function getEnd(domainId: string, rid: string) {
         return (data) => {
             data.key = 'end';
-            data.rid = rid;
+            data.rid = new ObjectID(rid);
             data.domainId = domainId;
-            data.rid = rid;
             data.time = data.time_ms || data.time;
             data.memory = data.memory_kb || data.memory;
             log.log({
@@ -154,13 +154,13 @@ async function postInit() {
     class JudgeTask {
         stat: any;
         request: any;
-        event: any;
-        pid: any;
-        rid: any;
-        domainId: any;
-        lang: any;
-        code: any;
-        data: any;
+        event: string;
+        pid: string;
+        rid: string;
+        domainId: string;
+        lang: string;
+        code: string;
+        data: string;
         config: any;
         next: (data: any, id?: any) => void;
         end: (data: any) => void;

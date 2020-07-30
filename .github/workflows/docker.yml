@@ -4,34 +4,8 @@ on:
     branches: 
     - master
 jobs:
-  ExecutorServer:
-    name: Build ExecutorServer
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/setup-go@v1
-      with:
-        go-version: 1.13
-    - run: |
-        git clone https://github.com/criyle/go-judge.git
-        cd go-judge
-        go mod download
-        go build -o executorserver ./cmd/executorserver
-        go build -o cinit ./cmd/cinit
-        go build -buildmode=c-shared -o executorserver.so ./cmd/executorserver
-    - uses: actions/upload-artifact@master
-      with:
-        name: ExecutorServer
-        path: go-judge/executorserver
-    - uses: actions/upload-artifact@master
-      with:
-        name: cinit
-        path: go-judge/cinit
-    - uses: actions/upload-artifact@master
-      with:
-        name: ExecutorServer.so
-        path: go-judge/executorserver.so
-  webpack:
-    name: Webpack
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -40,17 +14,9 @@ jobs:
         node-version: '13.x'
     - run: |
         yarn
-        yarn run webpack
-        mkdir hydrojudge
-        cp dist/service.js package.json setting.yaml hydrojudge
-        zip -r judge.zip hydrojudge
-        chmod +x .github/upload.sh
-        ./.github/upload.sh
-      env:
-        upload_username: ${{ SECRETS.VIJOS_USERNAME }}
-        upload_password: ${{ SECRETS.VIJOS_PASSWORD }}
-        upload_id: 1000
-        upload_name: judge
+        yarn build
+        yarn webpack
+    
     - uses: actions/upload-artifact@v1
       with:
         name: judge.js
@@ -59,97 +25,6 @@ jobs:
       with:
         name: entrypoint.js
         path: dist/entrypoint.js
-    - uses: actions/upload-artifact@v1
+    - uses: JS-DevTools/npm-publish@v1
       with:
-        name: judge.hydro
-        path: hydrojudge
-  pkg:
-    name: Package
-    runs-on: ubuntu-latest
-    needs: [ExecutorServer, webpack]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: '13.x'
-    - uses: actions/download-artifact@v1
-      with:
-        name: judge.js
-    - uses: actions/download-artifact@v1
-      with:
-        name: ExecutorServer
-    - run: |
-        mv ExecutorServer/executorserver .
-        mv judge.js __judge
-        mv __judge/judge.js .
-        yarn add pkg -D
-        yarn run pack
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Judge_linux_amd64
-        path: hydrojudge-linux
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Judge_macos_amd64
-        path: hydrojudge-macos
-    - uses: actions/upload-artifact@v1
-      with:
-        name: Judge_win_amd64.exe
-        path: hydrojudge-win.exe
-  latest:
-    name: BuildLatest
-    runs-on: ubuntu-latest
-    needs: pkg
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v1
-      with:
-        name: Judge_linux_amd64
-    - uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: hydrooj/judge:latest
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: Dockerfile/Dockerfile
-  alpine:
-    name: BuildAlpine
-    runs-on: ubuntu-latest
-    needs: pkg
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/download-artifact@v1
-      with:
-        name: judge.js
-    - uses: actions/download-artifact@v1
-      with:
-        name: ExecutorServer
-    - uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: hydrooj/judge:alpine
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: Dockerfile/alpine.Dockerfile
-  slim:
-    name: BuildSlim
-    runs-on: ubuntu-latest
-    needs: alpine
-    steps:
-    - uses: actions/checkout@v2
-    - uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: hydrooj/judge:slim
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: Dockerfile/slim.Dockerfile
-  default:
-    name: BuildDefault
-    runs-on: ubuntu-latest
-    needs: latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: elgohr/Publish-Docker-Github-Action@master
-      with:
-        name: hydrooj/judge:default
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        dockerfile: Dockerfile/default.Dockerfile
+        token: ${{ secrets.NPM_TOKEN }}

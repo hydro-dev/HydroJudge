@@ -13,31 +13,6 @@ HydroJudge 是一个用于信息学算法竞赛的高效评测后端。
 
 ## 安装与使用
 
-### 使用docker部署
-
-创建 `config.yaml`，文件如下所示
-
-```yaml
-hosts:
-  localhost: #ID,可更改
-    type: vj4 # [vj4,uoj]
-    server_url: https://vijos.org/ # 填写vijos服务端地址
-    uname: 填写拥有评测权限的用户名
-    password: 填写密码
-```
-
-之后使用 `docker run -d --privileged -v /path/to/config.yaml:/config/config.yaml hydrooj/judge:default` 即可启动。
-**将 /path/to/config.yaml 替换为您创建的文件的绝对路径！** 
-
-提示：为docker预构建了四个版本的镜像：
-
-- `hydrooj/judge:alpine` 基于AlpineLinux构建的最精简镜像  
-- `hydrooj/judge:latest` 未安装任何编译器，需手动安装  
-- `hydrooj/judge:default` Vijos默认语言的编译器支持  
-- `hydrooj/judge:slim` 基于AlpineLinux，预装了 C C++ Pascal 语言支持  
-
-### 手动安装
-
 前置需求:
 
 - Linux 4.4+
