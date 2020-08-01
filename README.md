@@ -6,7 +6,6 @@
 HydroJudge 是一个用于信息学算法竞赛的高效评测后端。  
 和之前的版本相比，HydroJudge 支持了自定义比较器、子任务、交互器等多种新特性。  
 
-
 ## 帮助中心
 
 - [RemoteJudge](docs/zh/RemoteJudge.md)
