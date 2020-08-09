@@ -116,8 +116,8 @@ async function read1(folder, files, checkFile) {
         subtask[i].cases.sort((a, b) => (a.id - b.id));
         subtasks.push(subtask[i]);
     }
-    const base = Math.floor(100 / subtask.length);
-    const extra = subtasks.length - (100 % subtask.length);
+    const base = Math.floor(100 / subtasks.length);
+    const extra = subtasks.length - (100 % subtasks.length);
     const config = { count: 0, subtasks };
     for (const i in subtask) {
         if (extra < i) subtask[i].score = base;
