@@ -1,4 +1,6 @@
 # Judge Daemon
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhydro-dev%2FHydroJudge.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhydro-dev%2FHydroJudge?ref=badge_shield)
+
 
 [English](docs/en/README.md)
 
@@ -50,3 +52,7 @@ node judge/daemon.js
 
 为旧版评测机设计的数据包仍然可用。
 针对 problem.conf 的兼容性测试仍在进行中。
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fhydro-dev%2FHydroJudge.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fhydro-dev%2FHydroJudge?ref=badge_large)
