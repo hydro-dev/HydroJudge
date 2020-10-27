@@ -15,7 +15,7 @@
     "minimist": "^1.2.5",
     "p-queue": "^6.6.0",
     "shell-quote": "^1.7.2",
-    "systeminformation": "^4.26.10",
+    "systeminformation": "^4.27.11",
     "ws": "^7.3.1"
   },
   "license": "GPL-3.0-only",
