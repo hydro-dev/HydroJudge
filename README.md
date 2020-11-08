@@ -1,3 +1,5 @@
+# Moved to [Hydro](https://github.com/hydro-dev/Hydro)
+
 # Judge Daemon
 
 [English](docs/en/README.md)
